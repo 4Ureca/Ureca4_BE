@@ -1,0 +1,16 @@
+spring:
+  datasource:
+    url: jdbc:mysql://localhost:13306/crm
+    username: crm
+    password: crm
+
+  data:
+    mongodb:
+      uri: mongodb://localhost:27018/crm
+
+  redis:
+    host: localhost
+    port: 6380
+
+  elasticsearch:
+    uris: http://localhost:9201
