@@ -23,5 +23,5 @@ public class Permission {
     private String permDesc;
 
     @Column(name = "is_deleted", nullable = false)
-    private Integer isDeleted;
+    private Boolean isDeleted;
 }

@@ -22,6 +22,6 @@ public class Department {
     @Column(name = "location", length = 225)
     private String location;
 
-    @Column(name = "phone", length = 20)
-    private String phone;
+    @Column(name = "phone_number", length = 20)
+    private String phoneNumber;
 }
