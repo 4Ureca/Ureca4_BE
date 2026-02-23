@@ -29,5 +29,5 @@ public class DeptPermission {
     private LocalDateTime assignedAt;
 
     @Column(name = "is_deleted", nullable = false)
-    private Integer isDeleted;
+    private Boolean isDeleted;
 }

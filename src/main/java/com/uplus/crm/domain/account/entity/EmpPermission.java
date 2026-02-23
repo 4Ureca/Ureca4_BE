@@ -2,8 +2,6 @@ package com.uplus.crm.domain.account.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
-
-import java.security.Permission;
 import java.time.LocalDateTime;
 
 @Entity
@@ -25,11 +23,11 @@ public class EmpPermission {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "perm_id", nullable = false)
-    private Permission permission;
+    private Permission permission;  // ← 이 타입이 com.uplus.crm.domain.account.entity.Permission 이어야 해요
 
     @Column(name = "assigned_at")
     private LocalDateTime assignedAt;
 
     @Column(name = "is_deleted", nullable = false)
-    private Integer isDeleted;
+    private Boolean isDeleted;
 }

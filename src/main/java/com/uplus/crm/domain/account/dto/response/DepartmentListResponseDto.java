@@ -24,7 +24,7 @@ public class DepartmentListResponseDto {
         private Integer deptId;                     // 부서 ID
         private String deptName;                    // 부서명
         private String location;                    // 위치 (nullable)
-        private String phone;                       // 부서 전화번호 (nullable)
+        private String phoneNumber;                       // 부서 전화번호 (nullable)
         private List<PermissionDto> permissions;    // 부서 권한 목록
 
         @Getter
