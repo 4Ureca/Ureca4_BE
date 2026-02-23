@@ -1,5 +1,6 @@
 package com.uplus.crm.domain.account.dto.request;
 
+import java.time.LocalDate;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
@@ -14,10 +15,10 @@ public class EmployeeCreateRequestDto {
     private String name;              // 이름
     private String email;             // 이메일
     private String phone;             // 전화번호 (nullable)
-    private String birth;             // 생년월일 (nullable, "1998-05-15")
+    private LocalDate birth;             // 생년월일 (nullable, "1998-05-15")
     private String gender;            // 성별 (nullable, male/female/other)
     private Integer deptId;           // 부서 ID
     private Integer jobRoleId;        // 역할 ID
-    private String joinedAt;          // 입사일 (nullable, "2026-02-22")
+    private LocalDate joinedAt;          // 입사일 (nullable, "2026-02-22")
     private List<Integer> permissionIds; // 개별 권한 ID 목록 (nullable)
 }

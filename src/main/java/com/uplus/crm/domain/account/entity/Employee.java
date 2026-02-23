@@ -49,4 +49,8 @@ public class Employee {
     public void updatePassword(String encodedPassword) {
         this.password = encodedPassword;
     }
+
+    public void changeActiveStatus(Boolean isActive) {
+        this.isActive = isActive;
+    }
 }

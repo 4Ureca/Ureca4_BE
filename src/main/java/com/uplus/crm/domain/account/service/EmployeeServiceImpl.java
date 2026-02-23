@@ -121,6 +121,9 @@ public class EmployeeServiceImpl implements EmployeeService{
         .orElseThrow(() -> new IllegalArgumentException("해당 직원이 존재하지 않습니다."));
 
     if (request.getPermissionIds() == null || request.getPermissionIds().isEmpty()) {
+
+      empPermissionRepository.softDeleteByEmployeeId(empId);
+
       return new EmployeePermissionUpdateResponseDto(
           employee.getEmpId(),
           employee.getName(),

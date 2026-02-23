@@ -22,7 +22,8 @@ public class SecurityConfig {
             .requestMatchers(
                 "/swagger-ui/**",
                 "/v3/api-docs/**",
-                "/webjars/**"
+                "/webjars/**",
+                "/admin/**"   // 테스트용 임시 추가
             )
             .permitAll()
             .anyRequest().authenticated()
