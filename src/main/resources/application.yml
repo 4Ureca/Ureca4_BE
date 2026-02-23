@@ -49,3 +49,13 @@ logging:
     org.flywaydb: DEBUG
     org.springframework.jdbc: DEBUG
     com.zaxxer.hikari: DEBUG
+
+# Google OAuth 추가
+# Client ID/Secret은 환경변수로 관리
+# Run/Debug Configurations → Environment Variables에 추가
+# GOOGLE_CLIENT_ID=발급받은_클라이언트_ID
+# GOOGLE_CLIENT_SECRET=발급받은_클라이언트_시크릿
+google:
+  oauth:
+    client-id: ${GOOGLE_CLIENT_ID}
+    client-secret: ${GOOGLE_CLIENT_SECRET}

@@ -1,5 +1,6 @@
 package com.uplus.crm.domain.account.service.impl;
 
+import com.uplus.crm.common.util.GoogleOAuthUtil;
 import com.uplus.crm.domain.account.dto.request.GoogleAuthRequestDto;
 import com.uplus.crm.domain.account.dto.request.LoginRequestDto;
 import com.uplus.crm.domain.account.dto.request.PasswordChangeRequestDto;
@@ -31,6 +32,7 @@ public class AuthServiceImpl implements AuthService {
     private final EmployeeRepository employeeRepository;
     private final RefreshTokenRepository refreshTokenRepository;
     private final PasswordEncoder passwordEncoder;
+    private final GoogleOAuthUtil googleOAuthUtil;
 
     // ─────────────────────────────────────────────
     // POST /auth/google
@@ -39,7 +41,7 @@ public class AuthServiceImpl implements AuthService {
     @Transactional
     public GoogleAuthResponseDto googleLogin(GoogleAuthRequestDto request, HttpServletResponse response) {
 
-        // 1. Google로부터 이메일 추출 (Google API 연동 로직 추가 필요)
+        // 1. Google로부터 이메일 추출
         String email = extractEmailFromGoogle(request.getAuthorizationCode(), request.getRedirectUri());
 
         // 2. 이메일로 직원 조회
@@ -180,7 +182,7 @@ public class AuthServiceImpl implements AuthService {
             throw new RuntimeException("새 비밀번호와 확인 비밀번호가 일치하지 않습니다.");
         }
 
-        // 4. 비밀번호 변경 (Entity에 updatePassword 메서드 추가 필요)
+        // 4. 비밀번호 변경
         employee.updatePassword(passwordEncoder.encode(request.getNewPassword()));
 
         return PasswordChangeResponseDto.builder()
@@ -193,8 +195,7 @@ public class AuthServiceImpl implements AuthService {
     // ─────────────────────────────────────────────
 
     private String extractEmailFromGoogle(String authorizationCode, String redirectUri) {
-        // TODO: Google OAuth API 연동 로직 구현 필요
-        throw new UnsupportedOperationException("Google OAuth 연동 구현 필요");
+        return googleOAuthUtil.getEmailFromAuthCode(authorizationCode, redirectUri);
     }
 
     private String generateAccessToken(Employee employee) {
@@ -221,7 +222,7 @@ public class AuthServiceImpl implements AuthService {
         cookie.setHttpOnly(true);
         cookie.setSecure(true);
         cookie.setPath("/");
-        cookie.setMaxAge(7 * 24 * 60 * 60); // 7일
+        cookie.setMaxAge(7 * 24 * 60 * 60);
         response.addCookie(cookie);
     }
 
