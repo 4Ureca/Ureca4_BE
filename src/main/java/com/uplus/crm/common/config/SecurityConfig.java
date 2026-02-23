@@ -1,4 +1,4 @@
-package com.uplus.crm.config;
+package com.uplus.crm.common.config;
 
 
 import lombok.RequiredArgsConstructor;
