@@ -15,4 +15,9 @@ public interface EmpPermissionRepository extends JpaRepository<EmpPermission, In
            "AND (:isDeleted IS NULL OR ep.isDeleted = :isDeleted)")
     List<EmpPermission> findByEmpIdWithPermission(@Param("empId") Integer empId, 
                                                    @Param("isDeleted") Boolean isDeleted);
+    
+    @Query("SELECT p.permCode FROM EmpPermission ep " +
+    	       "JOIN ep.permission p " +
+    	       "WHERE ep.employee.empId = :empId AND ep.isDeleted = false")
+    List<String> findPermCodesByEmpId(@Param("empId") Integer empId);
 }

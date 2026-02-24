@@ -14,4 +14,9 @@ public interface DeptPermissionRepository extends JpaRepository<DeptPermission, 
            "WHERE dp.department.deptId = :deptId " +
            "AND dp.isDeleted = false")
     List<DeptPermission> findByDeptIdWithPermission(@Param("deptId") Integer deptId);
+    
+    @Query("SELECT p.permCode FROM DeptPermission dp " +
+    	       "JOIN dp.permission p " +
+    	       "WHERE dp.department.deptId = :deptId AND dp.isDeleted = false")
+    	List<String> findPermCodesByDeptId(@Param("deptId") Integer deptId);
 }

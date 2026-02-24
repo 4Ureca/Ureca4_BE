@@ -24,7 +24,7 @@ public class SecurityConfig {
                 "/v3/api-docs/**",
                 "/webjars/**",
                 "/admin/**",
-                "/auth/google/**"
+                "/auth/**"
                 
             )
             .permitAll()
