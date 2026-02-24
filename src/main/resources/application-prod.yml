@@ -1,0 +1,34 @@
+spring:
+  datasource:
+    url: ${DB_URL}
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
+
+  data:
+    mongodb:
+      uri: ${MONGODB_URI}
+
+  redis:
+    host: ${REDIS_HOST}
+    port: ${REDIS_PORT:6379}
+
+  elasticsearch:
+    uris: ${ES_URIS}
+
+  kafka:
+    bootstrap-servers: ${KAFKA_SERVERS}
+
+  jpa:
+    show-sql: false
+
+logging:
+  level:
+    root: INFO
+
+google:
+  oauth:
+    client-id: ${GOOGLE_CLIENT_ID}
+    client-secret: ${GOOGLE_CLIENT_SECRET}
+
+jwt:
+  secret: ${JWT_SECRET}
