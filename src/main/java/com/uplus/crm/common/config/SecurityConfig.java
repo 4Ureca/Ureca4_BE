@@ -23,7 +23,8 @@ public class SecurityConfig {
                 "/swagger-ui/**",
                 "/v3/api-docs/**",
                 "/webjars/**",
-                "/admin/**"
+                "/admin/**",
+                "/auth/google/**"
                 
             )
             .permitAll()

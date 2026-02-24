@@ -11,7 +11,9 @@ import org.springframework.data.repository.query.Param;
 import com.uplus.crm.domain.account.entity.Employee;
 
 public interface EmployeeRepository extends JpaRepository<Employee, Integer> {
-
+	
+	boolean existsByEmail(String email);
+	
     @Query(value = "SELECT e FROM Employee e " +
            "JOIN FETCH e.employeeDetail ed " +
            "JOIN FETCH ed.department d " +
