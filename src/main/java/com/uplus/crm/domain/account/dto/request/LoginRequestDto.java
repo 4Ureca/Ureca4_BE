@@ -1,5 +1,6 @@
 package com.uplus.crm.domain.account.dto.request;
-//POST /auth/login — 일반 로그인
+
+import jakarta.validation.constraints.NotBlank;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -10,6 +11,10 @@ import lombok.NoArgsConstructor;
 @Builder
 @AllArgsConstructor
 public class LoginRequestDto {
-    private String loginId;           // 로그인 ID
-    private String password;          // 비밀번호
+
+    @NotBlank(message = "로그인 ID는 필수입니다.")
+    private String loginId;
+
+    @NotBlank(message = "비밀번호는 필수입니다.")
+    private String password;
 }
