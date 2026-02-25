@@ -6,7 +6,7 @@ import com.uplus.crm.domain.account.dto.request.EmployeeStatusUpdateRequestDto;
 import com.uplus.crm.domain.account.dto.response.EmployeeCreateResponseDto;
 import com.uplus.crm.domain.account.dto.response.EmployeePermissionUpdateResponseDto;
 import com.uplus.crm.domain.account.dto.response.EmployeeStatusUpdateResponseDto;
-import com.uplus.crm.domain.account.service.EmployeeService;
+import com.uplus.crm.domain.account.service.EmployeeAdminService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
@@ -15,14 +15,14 @@ import org.springframework.web.bind.annotation.*;
 @RequiredArgsConstructor
 public class EmployeeAdminController {
 
-  private final EmployeeService employeeService;
+  private final EmployeeAdminService employeeAdminService;
 
   /** 1. 직원 계정 생성 */
   @PostMapping
   public EmployeeCreateResponseDto createEmployee(
       @RequestBody EmployeeCreateRequestDto request
   ) {
-    return employeeService.createEmployee(request);
+    return employeeAdminService.createEmployee(request);
   }
 
   /** 2. 직원 개별 권한 편집 */
@@ -31,7 +31,7 @@ public class EmployeeAdminController {
       @PathVariable Integer empId,
       @RequestBody EmployeePermissionUpdateRequestDto request
   ) {
-    return employeeService.updateEmployeePermissions(empId, request);
+    return employeeAdminService.updateEmployeePermissions(empId, request);
   }
 
   /** 3. 직원 계정 활성화 / 비활성화 */
@@ -40,6 +40,6 @@ public class EmployeeAdminController {
       @PathVariable Integer empId,
       @RequestBody EmployeeStatusUpdateRequestDto request
   ) {
-    return employeeService.updateEmployeeStatus(empId, request);
+    return employeeAdminService.updateEmployeeStatus(empId, request);
   }
 }

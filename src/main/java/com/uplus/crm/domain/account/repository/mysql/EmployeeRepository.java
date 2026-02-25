@@ -5,6 +5,7 @@ import com.uplus.crm.domain.account.entity.Employee;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
@@ -52,5 +53,17 @@ public interface EmployeeRepository extends JpaRepository<Employee, Integer> {
            "JOIN FETCH ed.jobRole j " +
            "WHERE e.empId = :empId")
     Optional<Employee> findByIdWithDetails(@Param("empId") Integer empId);
+
+
+
+
+    @Modifying
+    @Query("""
+    UPDATE EmpPermission ep
+       SET ep.isDeleted = true
+     WHERE ep.employee.empId = :empId
+       AND ep.isDeleted = false
+""")
+    void softDeleteByEmployeeId(@Param("empId") Integer empId);
 }
 

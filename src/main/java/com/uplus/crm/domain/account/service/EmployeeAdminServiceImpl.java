@@ -22,13 +22,14 @@ import com.uplus.crm.domain.account.repository.mysql.PermissionRepository;
 import java.time.LocalDateTime;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
 @Transactional
-public class EmployeeServiceImpl implements EmployeeService{
+public class EmployeeAdminServiceImpl implements EmployeeAdminService{
 
   private final EmployeeRepository employeeRepository;
   private final EmployeeDetailRepository employeeDetailRepository;
@@ -36,6 +37,7 @@ public class EmployeeServiceImpl implements EmployeeService{
   private final DepartmentRepository departmentRepository;
   private final JobRoleRepository jobRoleRepository;
   private final PermissionRepository permissionRepository;
+  private final PasswordEncoder passwordEncoder;
 
   /** 1. 직원 계정 생성 */
   @Override
@@ -44,7 +46,7 @@ public class EmployeeServiceImpl implements EmployeeService{
     // 1) 직원 기본 계정 생성
     Employee employee = Employee.builder()
         .loginId(request.getLoginId())
-        .password(request.getPassword()) // TODO: 암호화 필요
+        .password(passwordEncoder.encode(request.getPassword()))
         .name(request.getName())
         .email(request.getEmail())
         .phone(request.getPhone())
@@ -179,16 +181,16 @@ public class EmployeeServiceImpl implements EmployeeService{
   @Override
   public EmployeeStatusUpdateResponseDto updateEmployeeStatus(Integer empId,
       EmployeeStatusUpdateRequestDto request) {
-        Employee employee = employeeRepository.findById(empId)
-            .orElseThrow(() -> new IllegalArgumentException("해당 직원이 존재하지 않습니다."));
+    Employee employee = employeeRepository.findById(empId)
+        .orElseThrow(() -> new IllegalArgumentException("해당 직원이 존재하지 않습니다."));
 
-        employee.changeActiveStatus(request.getIsActive());
+    employee.changeActiveStatus(request.getIsActive());
 
-        return new EmployeeStatusUpdateResponseDto(
-            employee.getEmpId(),
-            employee.getName(),
-            employee.getIsActive(),
-            employee.getIsActive() ? "계정이 활성화되었습니다." : "계정이 비활성화되었습니다."
-        );
-    }
+    return new EmployeeStatusUpdateResponseDto(
+        employee.getEmpId(),
+        employee.getName(),
+        employee.getIsActive(),
+        employee.getIsActive() ? "계정이 활성화되었습니다." : "계정이 비활성화되었습니다."
+    );
+  }
 }
