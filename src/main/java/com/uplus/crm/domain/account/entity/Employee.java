@@ -49,4 +49,7 @@ public class Employee {
     public void updatePassword(String encodedPassword) {
         this.password = encodedPassword;
     }
+    
+    @OneToOne(mappedBy = "employee", fetch = FetchType.LAZY)
+    private EmployeeDetail employeeDetail;
 }

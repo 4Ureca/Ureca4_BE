@@ -6,6 +6,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
@@ -19,6 +20,7 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import java.util.List;
 
 @Configuration
+@EnableWebSecurity
 @RequiredArgsConstructor
 public class SecurityConfig {
 
@@ -29,20 +31,29 @@ public class SecurityConfig {
         http
             .cors(cors -> cors.configurationSource(corsConfigurationSource()))
             .csrf(AbstractHttpConfigurer::disable)
+            // JWT를 사용하므로 세션은 사용하지 않음 (STATELESS)
             .sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers(
+                    // 1. Swagger 관련 경로 허용 (문서 확인용)
                     "/swagger-ui/**",
                     "/v3/api-docs/**",
                     "/webjars/**",
+                    
+                    // 2. 인증 관련 공개 경로 허용
                     "/auth/login",
-                    "/auth/google",
+                    "/auth/google/**", // 승혁님이 만든 이메일 중복 체크 포함
                     "/auth/refresh",
-                    "/auth/logout"
-                )
-                .permitAll()
+                    "/auth/logout",
+                    
+                    // 3. 관리자 기능 (개발 편의를 위해 일단 전체 허용)
+                    "/admin/**"
+                ).permitAll()
+                
+                // 그 외 모든 요청(예: /auth/me)은 인증(토큰)이 있어야만 접근 가능
                 .anyRequest().authenticated()
             )
+            // JWT 필터를 UsernamePasswordAuthenticationFilter 앞에 추가하여 토큰 검증
             .addFilterBefore(new JwtAuthFilter(jwtUtil),
                     UsernamePasswordAuthenticationFilter.class);
 
