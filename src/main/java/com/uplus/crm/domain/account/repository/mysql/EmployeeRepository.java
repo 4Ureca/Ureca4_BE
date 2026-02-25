@@ -21,6 +21,8 @@ public interface EmployeeRepository extends JpaRepository<Employee, Integer> {
 
     boolean existsByEmail(String email);
 
+    boolean existsByLoginId(String loginId);
+
 
     // --- 2. 어드민 계정 관리: 검색 및 페이징 (HEAD) ---
     

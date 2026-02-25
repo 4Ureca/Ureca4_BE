@@ -1,14 +1,20 @@
 package com.uplus.crm.domain.account.dto.request;
 
 import java.time.LocalDate;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 import java.util.List;
+import lombok.Setter;
 
 // POST /admin/employees — 직원 계정 정보 생성
 @Getter
+@Setter
+@Builder
 @NoArgsConstructor
+@AllArgsConstructor
 public class EmployeeCreateRequestDto {
     private String loginId;           // 사번 (중복불가)
     private String password;          // 초기 비밀번호

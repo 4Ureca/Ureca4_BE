@@ -8,6 +8,7 @@ import com.uplus.crm.domain.account.dto.response.EmployeePermissionUpdateRespons
 import com.uplus.crm.domain.account.dto.response.EmployeeStatusUpdateResponseDto;
 import com.uplus.crm.domain.account.service.EmployeeAdminService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -19,6 +20,7 @@ public class EmployeeAdminController {
 
   /** 1. 직원 계정 생성 */
   @PostMapping
+  @ResponseStatus(HttpStatus.CREATED)
   public EmployeeCreateResponseDto createEmployee(
       @RequestBody EmployeeCreateRequestDto request
   ) {

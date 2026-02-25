@@ -1,5 +1,7 @@
 package com.uplus.crm.domain.account.service;
 
+import com.uplus.crm.common.exception.BusinessException;
+import com.uplus.crm.common.exception.ErrorCode;
 import com.uplus.crm.domain.account.dto.request.EmployeeCreateRequestDto;
 import com.uplus.crm.domain.account.dto.request.EmployeePermissionUpdateRequestDto;
 import com.uplus.crm.domain.account.dto.request.EmployeeStatusUpdateRequestDto;
@@ -43,6 +45,15 @@ public class EmployeeAdminServiceImpl implements EmployeeAdminService{
   @Override
   public EmployeeCreateResponseDto createEmployee(EmployeeCreateRequestDto request) {
 
+    // 중복 체크 (409)
+    if (employeeRepository.existsByLoginId(request.getLoginId())) {
+      throw new BusinessException(ErrorCode.DUPLICATE_LOGIN_ID);
+    }
+
+    if (employeeRepository.existsByEmail(request.getEmail())) {
+      throw new BusinessException(ErrorCode.DUPLICATE_EMAIL);
+    }
+
     // 1) 직원 기본 계정 생성
     Employee employee = Employee.builder()
         .loginId(request.getLoginId())
@@ -61,11 +72,13 @@ public class EmployeeAdminServiceImpl implements EmployeeAdminService{
 
     // 2) 직원 상세 정보 생성 (1:1 매핑, @MapsId 구조)
 
+    // 부서 조회 (404)
     Department department = departmentRepository.findById(request.getDeptId())
-        .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 부서입니다."));
+        .orElseThrow(() -> new BusinessException(ErrorCode.DEPARTMENT_NOT_FOUND));
 
+  // 직무 조회 (404)
     JobRole jobRole = jobRoleRepository.findById(request.getJobRoleId())
-        .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 직무입니다."));
+        .orElseThrow(() -> new BusinessException(ErrorCode.JOB_ROLE_NOT_FOUND));
 
     EmployeeDetail detail = EmployeeDetail.builder()
         .employee(savedEmployee)
@@ -85,7 +98,7 @@ public class EmployeeAdminServiceImpl implements EmployeeAdminService{
           permissionRepository.findAllById(request.getPermissionIds());
 
       if (permissions.size() != request.getPermissionIds().size()) {
-        throw new IllegalArgumentException("유효하지 않은 permissionId가 포함되어 있습니다.");
+        throw new BusinessException(ErrorCode.INVALID_PERMISSION_IDS);
       }
 
       List<EmpPermission> empPermissions = permissions.stream()
@@ -120,7 +133,7 @@ public class EmployeeAdminServiceImpl implements EmployeeAdminService{
       EmployeePermissionUpdateRequestDto request) {
 
     Employee employee = employeeRepository.findById(empId)
-        .orElseThrow(() -> new IllegalArgumentException("해당 직원이 존재하지 않습니다."));
+        .orElseThrow(() -> new BusinessException(ErrorCode.EMPLOYEE_NOT_FOUND));
 
     if (request.getPermissionIds() == null || request.getPermissionIds().isEmpty()) {
 
@@ -144,7 +157,7 @@ public class EmployeeAdminServiceImpl implements EmployeeAdminService{
 
     // 유효성 검증
     if (permissions.size() != request.getPermissionIds().size()) {
-      throw new IllegalArgumentException("유효하지 않은 권한 ID가 포함되어 있습니다.");
+      throw new BusinessException(ErrorCode.INVALID_PERMISSION_IDS);
     }
 
     // EmpPermission 엔티티 생성
@@ -182,7 +195,7 @@ public class EmployeeAdminServiceImpl implements EmployeeAdminService{
   public EmployeeStatusUpdateResponseDto updateEmployeeStatus(Integer empId,
       EmployeeStatusUpdateRequestDto request) {
     Employee employee = employeeRepository.findById(empId)
-        .orElseThrow(() -> new IllegalArgumentException("해당 직원이 존재하지 않습니다."));
+        .orElseThrow(() -> new BusinessException(ErrorCode.EMPLOYEE_NOT_FOUND));
 
     employee.changeActiveStatus(request.getIsActive());
 
