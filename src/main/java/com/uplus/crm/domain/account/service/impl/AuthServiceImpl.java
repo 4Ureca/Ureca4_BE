@@ -43,7 +43,7 @@ public class AuthServiceImpl implements AuthService {
     private final GoogleOAuthUtil googleOAuthUtil;
     private final JwtUtil jwtUtil;
     private final CookieUtil cookieUtil;
-/*
+
     @Override
     @Transactional
     public GoogleAuthResponseDto googleLogin(GoogleAuthRequestDto request, HttpServletResponse response) {
@@ -57,7 +57,7 @@ public class AuthServiceImpl implements AuthService {
 
         return issueTokensAndRespond(employee, response, true);
     }
-*/
+
     
     @Override
     @Transactional
@@ -227,10 +227,4 @@ public class AuthServiceImpl implements AuthService {
     private boolean isBlank(String s) {
         return s == null || s.isBlank();
     }
-
-	@Override
-	public GoogleAuthResponseDto googleLogin(GoogleAuthRequestDto request, HttpServletResponse response) {
-		// TODO Auto-generated method stub
-		return null;
-	}
 }
