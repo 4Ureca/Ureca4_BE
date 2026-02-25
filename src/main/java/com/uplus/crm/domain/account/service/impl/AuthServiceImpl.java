@@ -8,16 +8,16 @@ import com.uplus.crm.common.util.JwtUtil;
 import com.uplus.crm.domain.account.dto.request.GoogleAuthRequestDto;
 import com.uplus.crm.domain.account.dto.request.LoginRequestDto;
 import com.uplus.crm.domain.account.dto.request.PasswordChangeRequestDto;
-import com.uplus.crm.domain.account.dto.response.GoogleAuthResponseDto;
-import com.uplus.crm.domain.account.dto.response.LoginResponseDto;
-import com.uplus.crm.domain.account.dto.response.LogoutResponseDto;
-import com.uplus.crm.domain.account.dto.response.PasswordChangeResponseDto;
-import com.uplus.crm.domain.account.dto.response.TokenRefreshResponseDto;
+import com.uplus.crm.domain.account.dto.response.*;
 import com.uplus.crm.domain.account.entity.Employee;
+import com.uplus.crm.domain.account.entity.EmployeeDetail;
 import com.uplus.crm.domain.account.entity.RefreshToken;
+import com.uplus.crm.domain.account.repository.mysql.DeptPermissionRepository;
+import com.uplus.crm.domain.account.repository.mysql.EmpPermissionRepository;
 import com.uplus.crm.domain.account.repository.mysql.EmployeeRepository;
 import com.uplus.crm.domain.account.repository.mysql.RefreshTokenRepository;
 import com.uplus.crm.domain.account.service.AuthService;
+import jakarta.persistence.EntityNotFoundException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
@@ -26,6 +26,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.Set;
 
 @Service
 @RequiredArgsConstructor
@@ -34,10 +37,42 @@ public class AuthServiceImpl implements AuthService {
 
     private final EmployeeRepository employeeRepository;
     private final RefreshTokenRepository refreshTokenRepository;
+    private final DeptPermissionRepository deptPermissionRepository; // 승혁님 추가
+    private final EmpPermissionRepository empPermissionRepository;   // 승혁님 추가
     private final PasswordEncoder passwordEncoder;
     private final GoogleOAuthUtil googleOAuthUtil;
     private final JwtUtil jwtUtil;
     private final CookieUtil cookieUtil;
+
+    // --- 1. 구글 이메일 중복 확인 ---
+    @Override
+    public EmailCheckResponseDto checkEmailAvailability(String email) {
+        boolean isDuplicate = employeeRepository.existsByEmail(email);
+        return EmailCheckResponseDto.builder()
+                .available(!isDuplicate)
+                .email(email)
+                .build();
+    }
+
+    // --- 2. 로그인한 계정 정보 조회 ---
+    @Override
+    public MyInfoResponseDto getMyInfo(Integer empId) {
+        // Fetch Join이 적용된 findByIdWithDetails 사용
+        Employee employee = employeeRepository.findByIdWithDetails(empId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.EMPLOYEE_NOT_FOUND));
+
+        EmployeeDetail detail = employee.getEmployeeDetail();
+        Set<String> allPermissions = new HashSet<>();
+        
+        // 부서 및 개별 권한 합산
+        if (detail != null && detail.getDepartment() != null) {
+            allPermissions.addAll(deptPermissionRepository.findPermCodesByDeptId(detail.getDepartment().getDeptId()));
+        }
+        allPermissions.addAll(empPermissionRepository.findPermCodesByEmpId(empId));
+
+        return convertToMyInfoDto(employee, allPermissions);
+    }
+
 
     @Override
     @Transactional
@@ -69,6 +104,7 @@ public class AuthServiceImpl implements AuthService {
                 .accessToken(tokenResponse.getAccessToken())
                 .expiredAt(tokenResponse.getExpiredAt())
                 .build();
+        
     }
 
     @Override
@@ -131,6 +167,28 @@ public class AuthServiceImpl implements AuthService {
     // ─────────────────────────────────────────────
     // Private 헬퍼 메서드
     // ─────────────────────────────────────────────
+
+    private MyInfoResponseDto convertToMyInfoDto(Employee e, Set<String> perms) {
+        EmployeeDetail d = e.getEmployeeDetail();
+        
+        return MyInfoResponseDto.builder()
+                .empId(e.getEmpId())
+                .loginId(e.getLoginId())
+                .name(e.getName())
+                .email(e.getEmail())
+                .phone(e.getPhone())
+                .birth(e.getBirth() != null ? e.getBirth().toString() : null)
+                .gender(e.getGender())
+                .isActive(e.getIsActive())
+                .createdAt(e.getCreatedAt())
+                .deptId(d != null ? d.getDepartment().getDeptId() : null)
+                .deptName(d != null ? d.getDepartment().getDeptName() : null)
+                .jobRoleId(d != null ? d.getJobRole().getJobRoleId() : null)
+                .roleName(d != null ? d.getJobRole().getRoleName() : null)
+                .joinedAt(d != null && d.getJoinedAt() != null ? d.getJoinedAt().toString() : null)
+                .permissions(new ArrayList<>(perms))
+                .build();
+    }
 
     private GoogleAuthResponseDto issueTokensAndRespond(Employee employee,
                                                         HttpServletResponse response,

@@ -50,7 +50,13 @@ public class Employee {
         this.password = encodedPassword;
     }
 
+
     public void changeActiveStatus(Boolean isActive) {
         this.isActive = isActive;
     }
+
+    
+    @OneToOne(mappedBy = "employee", fetch = FetchType.LAZY)
+    private EmployeeDetail employeeDetail;
+
 }
