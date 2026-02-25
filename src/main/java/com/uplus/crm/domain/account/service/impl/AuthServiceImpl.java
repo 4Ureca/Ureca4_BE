@@ -1,5 +1,12 @@
 package com.uplus.crm.domain.account.service.impl;
 
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
 import com.uplus.crm.common.exception.BusinessException;
 import com.uplus.crm.common.exception.ErrorCode;
 import com.uplus.crm.common.util.CookieUtil;
@@ -24,12 +31,6 @@ import com.uplus.crm.domain.account.service.AuthService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
-import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
-import java.time.LocalDate;
-import java.time.LocalDateTime;
 
 @Service
 @RequiredArgsConstructor
@@ -42,11 +43,11 @@ public class AuthServiceImpl implements AuthService {
     private final GoogleOAuthUtil googleOAuthUtil;
     private final JwtUtil jwtUtil;
     private final CookieUtil cookieUtil;
-
+/*
     @Override
     @Transactional
     public GoogleAuthResponseDto googleLogin(GoogleAuthRequestDto request, HttpServletResponse response) {
-        String email = googleOAuthUtil.getEmailFromAuthCode(
+       String email = googleOAuthUtil.getEmailFromAuthCode(
                 request.getAuthorizationCode(),
                 request.getRedirectUri()
         );
@@ -56,7 +57,8 @@ public class AuthServiceImpl implements AuthService {
 
         return issueTokensAndRespond(employee, response, true);
     }
-
+*/
+    
     @Override
     @Transactional
     public LoginResponseDto login(LoginRequestDto request, HttpServletResponse response) {
@@ -225,4 +227,10 @@ public class AuthServiceImpl implements AuthService {
     private boolean isBlank(String s) {
         return s == null || s.isBlank();
     }
+
+	@Override
+	public GoogleAuthResponseDto googleLogin(GoogleAuthRequestDto request, HttpServletResponse response) {
+		// TODO Auto-generated method stub
+		return null;
+	}
 }

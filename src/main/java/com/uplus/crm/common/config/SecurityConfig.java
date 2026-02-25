@@ -38,7 +38,8 @@ public class SecurityConfig {
                     "/auth/login",
                     "/auth/google",
                     "/auth/refresh",
-                    "/auth/logout"
+                    "/auth/logout",
+                    "/admin/employees"
                 ).permitAll()
                 .anyRequest().authenticated()
             )

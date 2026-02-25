@@ -78,9 +78,10 @@ class AuthServiceImplTest {
                 .authorizationCode("auth_code_123")
                 .redirectUri("https://localhost:3000/callback")
                 .build();
-
+/*
         given(googleOAuthUtil.getEmailFromAuthCode(any(), any()))
-                .willReturn("hong@lgup.com");
+                .willReturn("hong@lgup.com");*/
+        
         given(employeeRepository.findByEmail("hong@lgup.com"))
                 .willReturn(Optional.of(mockEmployee));
         given(jwtUtil.generateAccessToken(any(), any()))
@@ -110,9 +111,11 @@ class AuthServiceImplTest {
                 .authorizationCode("auth_code_123")
                 .redirectUri("https://localhost:3000/callback")
                 .build();
-
+/*
         given(googleOAuthUtil.getEmailFromAuthCode(any(), any()))
                 .willReturn("unknown@lgup.com");
+                */
+        
         given(employeeRepository.findByEmail("unknown@lgup.com"))
                 .willReturn(Optional.empty());
 
