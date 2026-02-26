@@ -5,6 +5,7 @@ import com.uplus.crm.domain.account.dto.request.EmployeeStatusUpdateRequestDto;
 import com.uplus.crm.domain.account.dto.response.EmployeeCreateResponseDto;
 import com.uplus.crm.domain.account.dto.response.EmployeeStatusUpdateResponseDto;
 import com.uplus.crm.domain.account.service.EmployeeAdminService;
+import com.uplus.crm.domain.account.service.EmployeeService;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import org.junit.jupiter.api.DisplayName;
@@ -22,7 +23,7 @@ import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-@WebMvcTest(EmployeeAdminController.class)
+@WebMvcTest(EmployeeController.class)
 @AutoConfigureMockMvc(addFilters = false)
 class EmployeeAdminControllerTest {
 
@@ -31,6 +32,8 @@ class EmployeeAdminControllerTest {
 
   @MockitoBean
   private EmployeeAdminService employeeAdminService;
+  @MockitoBean
+  private EmployeeService employeeService;
 
   @Autowired
   private ObjectMapper objectMapper;
