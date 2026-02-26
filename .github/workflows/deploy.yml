@@ -23,6 +23,7 @@ jobs:
         run: |
           echo "GOOGLE_CLIENT_ID=dummy.apps.googleusercontent.com" >> .env
           echo "GOOGLE_CLIENT_SECRET=GOCSPX-dummyvalue" >> .env
+          echo "JWT_SECRET=dummyjwtsecretkeydummyjwtsecretkeydummyjwtsecretkey" >> .env
 
       - name: Build with Gradle
         run: ./gradlew clean build
@@ -32,7 +33,6 @@ jobs:
           SPRING_DATASOURCE_DRIVER_CLASS_NAME: org.h2.Driver
           SPRING_DATASOURCE_USERNAME: sa
           SPRING_FLYWAY_ENABLED: false
-          JWT_SECRET: dummyjwtsecretkeydummyjwtsecretkey
 
       - name: Login to Docker Hub
         run: echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
@@ -56,4 +56,5 @@ jobs:
               --name crm-app \
               -p 8080:8080 \
               --env-file .env \
+              -e SPRING_PROFILES_ACTIVE=prod \
               ${{ secrets.DOCKER_USERNAME }}/crm:latest
