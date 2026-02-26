@@ -1,8 +1,9 @@
 package com.uplus.crm.common.exception;
 
+import org.springframework.http.HttpStatus;
+
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
 
 @Getter
 @RequiredArgsConstructor
@@ -11,6 +12,7 @@ public enum ErrorCode {
     // 400 Bad Request
     INVALID_INPUT(HttpStatus.BAD_REQUEST, "입력값이 올바르지 않습니다."),
     PASSWORD_MISMATCH(HttpStatus.BAD_REQUEST, "새 비밀번호와 확인 비밀번호가 일치하지 않습니다."),
+    INVALID_PERMISSION_IDS(HttpStatus.BAD_REQUEST, "유효하지 않은 권한 ID가 포함되어 있습니다."),
 
     // 401 Unauthorized
     INVALID_CREDENTIALS(HttpStatus.UNAUTHORIZED, "아이디 또는 비밀번호가 올바르지 않습니다."),
@@ -28,8 +30,13 @@ public enum ErrorCode {
     FILTER_GROUP_NOT_FOUND(HttpStatus.NOT_FOUND, "필터 그룹을 찾을 수 없습니다."),
     FILTER_NOT_FOUND(HttpStatus.NOT_FOUND, "유효하지 않은 필터입니다."),
 
+    DEPARTMENT_NOT_FOUND(HttpStatus.NOT_FOUND, "존재하지 않는 부서입니다."),
+    JOB_ROLE_NOT_FOUND(HttpStatus.NOT_FOUND, "존재하지 않는 직무입니다."),
+
     // 409 Conflict
-    EMAIL_DUPLICATE(HttpStatus.CONFLICT, "이미 사용 중인 이메일입니다."),
+    DUPLICATE_LOGIN_ID(HttpStatus.CONFLICT, "이미 사용 중인 로그인 아이디입니다."),
+    DUPLICATE_EMAIL(HttpStatus.CONFLICT, "이미 사용 중인 이메일입니다."),
+
 
     // 500 Internal Server Error
     GOOGLE_AUTH_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "Google OAuth 인증에 실패했습니다.");

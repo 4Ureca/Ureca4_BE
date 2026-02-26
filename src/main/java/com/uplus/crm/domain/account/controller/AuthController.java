@@ -2,13 +2,26 @@ package com.uplus.crm.domain.account.controller;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 
 import com.uplus.crm.domain.account.dto.request.GoogleAuthRequestDto;
 import com.uplus.crm.domain.account.dto.request.LoginRequestDto;
 import com.uplus.crm.domain.account.dto.request.MyInfoUpdateRequestDto;
 import com.uplus.crm.domain.account.dto.request.PasswordChangeRequestDto;
-import com.uplus.crm.domain.account.dto.response.*;
+import com.uplus.crm.domain.account.dto.response.EmailCheckResponseDto;
+import com.uplus.crm.domain.account.dto.response.GoogleAuthResponseDto;
+import com.uplus.crm.domain.account.dto.response.LoginResponseDto;
+import com.uplus.crm.domain.account.dto.response.LogoutResponseDto;
+import com.uplus.crm.domain.account.dto.response.MyInfoResponseDto;
+import com.uplus.crm.domain.account.dto.response.MyInfoUpdateResponseDto;
+import com.uplus.crm.domain.account.dto.response.PasswordChangeResponseDto;
+import com.uplus.crm.domain.account.dto.response.TokenRefreshResponseDto;
 import com.uplus.crm.domain.account.service.AuthService;
 
 import io.swagger.v3.oas.annotations.Operation;
@@ -109,6 +122,7 @@ public class AuthController {
             @RequestBody MyInfoUpdateRequestDto req) {
         return ResponseEntity.ok(authService.updateMyInfo(empId, req));
     }
+
 
     @Operation(summary = "비밀번호 변경", description = "현재 비밀번호 확인 후 새 비밀번호로 변경")
     @ApiResponses({

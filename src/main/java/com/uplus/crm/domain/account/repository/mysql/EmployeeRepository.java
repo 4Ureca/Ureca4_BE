@@ -11,6 +11,7 @@ import java.util.Optional;
 
 public interface EmployeeRepository extends JpaRepository<Employee, Integer> {
 
+    // --- 1. 인증 및 중복 체크 ---
     Optional<Employee> findByLoginId(String loginId);
 
     Optional<Employee> findByEmail(String email);
@@ -19,6 +20,9 @@ public interface EmployeeRepository extends JpaRepository<Employee, Integer> {
 
     boolean existsByEmailAndEmpIdNot(String email, Integer empId);
 
+    boolean existsByLoginId(String loginId);
+
+    // --- 2. 어드민 계정 관리: 검색 및 페이징 ---
     @Query(value = "SELECT e FROM Employee e " +
            "JOIN FETCH e.employeeDetail ed " +
            "JOIN FETCH ed.department d " +
@@ -40,6 +44,7 @@ public interface EmployeeRepository extends JpaRepository<Employee, Integer> {
             @Param("keyword") String keyword,
             Pageable pageable);
 
+    // --- 3. 상세 정보 조회 ---
     @Query("SELECT e FROM Employee e " +
            "JOIN FETCH e.employeeDetail ed " +
            "JOIN FETCH ed.department d " +

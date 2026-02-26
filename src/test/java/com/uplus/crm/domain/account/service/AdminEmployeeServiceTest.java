@@ -102,7 +102,7 @@ class AdminEmployeeServiceTest {
             given(employeeRepository.existsByEmailAndEmpIdNot("kim@lgup.com", 1)).willReturn(false);
             given(departmentRepository.findById(10)).willReturn(Optional.of(mockDept));
             given(jobRoleRepository.findById(20)).willReturn(Optional.of(mockRole));
-            given(employeeDetailRepository.findById(1)).willReturn(Optional.of(mockDetail));
+            given(employeeDetailRepository.findById(1L)).willReturn(Optional.of(mockDetail));
             given(employeeDetailRepository.save(any())).willAnswer(inv -> {
                 EmployeeDetail d = inv.getArgument(0);
                 return d;
@@ -134,7 +134,7 @@ class AdminEmployeeServiceTest {
             given(employeeRepository.existsByEmailAndEmpIdNot("park@lgup.com", 1)).willReturn(false);
             given(departmentRepository.findById(10)).willReturn(Optional.of(mockDept));
             given(jobRoleRepository.findById(20)).willReturn(Optional.of(mockRole));
-            given(employeeDetailRepository.findById(1)).willReturn(Optional.empty());
+            given(employeeDetailRepository.findById(1L)).willReturn(Optional.empty());
             given(employeeDetailRepository.save(any())).willReturn(mockDetail);
 
             // when
@@ -160,7 +160,7 @@ class AdminEmployeeServiceTest {
             given(employeeRepository.existsByEmailAndEmpIdNot("hong@lgup.com", 1)).willReturn(false);
             given(departmentRepository.findById(10)).willReturn(Optional.of(mockDept));
             given(jobRoleRepository.findById(20)).willReturn(Optional.of(mockRole));
-            given(employeeDetailRepository.findById(1)).willReturn(Optional.of(mockDetail));
+            given(employeeDetailRepository.findById(1L)).willReturn(Optional.of(mockDetail));
             given(employeeDetailRepository.save(any())).willReturn(mockDetail);
 
             // when & then
@@ -242,7 +242,7 @@ class AdminEmployeeServiceTest {
             assertThatThrownBy(() -> adminEmployeeService.updateEmployee(1, req))
                     .isInstanceOf(BusinessException.class)
                     .satisfies(e -> assertThat(((BusinessException) e).getErrorCode())
-                            .isEqualTo(ErrorCode.EMAIL_DUPLICATE));
+                            .isEqualTo(ErrorCode.DUPLICATE_EMAIL));
         }
 
         @Test

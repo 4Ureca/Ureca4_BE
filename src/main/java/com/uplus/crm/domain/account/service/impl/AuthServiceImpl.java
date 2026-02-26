@@ -3,8 +3,7 @@ package com.uplus.crm.domain.account.service.impl;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.List;
 
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -19,12 +18,17 @@ import com.uplus.crm.domain.account.dto.request.GoogleAuthRequestDto;
 import com.uplus.crm.domain.account.dto.request.LoginRequestDto;
 import com.uplus.crm.domain.account.dto.request.MyInfoUpdateRequestDto;
 import com.uplus.crm.domain.account.dto.request.PasswordChangeRequestDto;
-import com.uplus.crm.domain.account.dto.response.*;
+import com.uplus.crm.domain.account.dto.response.EmailCheckResponseDto;
+import com.uplus.crm.domain.account.dto.response.GoogleAuthResponseDto;
+import com.uplus.crm.domain.account.dto.response.LoginResponseDto;
+import com.uplus.crm.domain.account.dto.response.LogoutResponseDto;
+import com.uplus.crm.domain.account.dto.response.MyInfoResponseDto;
+import com.uplus.crm.domain.account.dto.response.MyInfoUpdateResponseDto;
+import com.uplus.crm.domain.account.dto.response.PasswordChangeResponseDto;
+import com.uplus.crm.domain.account.dto.response.TokenRefreshResponseDto;
 import com.uplus.crm.domain.account.entity.Employee;
 import com.uplus.crm.domain.account.entity.EmployeeDetail;
 import com.uplus.crm.domain.account.entity.RefreshToken;
-import com.uplus.crm.domain.account.repository.mysql.DeptPermissionRepository;
-import com.uplus.crm.domain.account.repository.mysql.EmpPermissionRepository;
 import com.uplus.crm.domain.account.repository.mysql.EmployeeRepository;
 import com.uplus.crm.domain.account.repository.mysql.RefreshTokenRepository;
 import com.uplus.crm.domain.account.service.AuthService;
@@ -40,14 +44,14 @@ public class AuthServiceImpl implements AuthService {
 
     private final EmployeeRepository employeeRepository;
     private final RefreshTokenRepository refreshTokenRepository;
-    private final DeptPermissionRepository deptPermissionRepository;
-    private final EmpPermissionRepository empPermissionRepository;
     private final PasswordEncoder passwordEncoder;
     private final GoogleOAuthUtil googleOAuthUtil;
     private final JwtUtil jwtUtil;
     private final CookieUtil cookieUtil;
 
-    // --- 구글 이메일 중복 확인 ---
+
+    // --- 1. 구글 이메일 중복 확인 ---
+
     @Override
     public EmailCheckResponseDto checkEmailAvailability(String email) {
         boolean isDuplicate = employeeRepository.existsByEmail(email);
@@ -57,21 +61,21 @@ public class AuthServiceImpl implements AuthService {
                 .build();
     }
 
-    // --- 로그인한 계정 정보 조회 ---
+
+    // --- 2. 로그인한 계정 정보 조회 (메뉴 리스트 포함) ---
     @Override
     public MyInfoResponseDto getMyInfo(Integer empId) {
         Employee employee = employeeRepository.findByIdWithDetails(empId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.EMPLOYEE_NOT_FOUND));
 
         EmployeeDetail detail = employee.getEmployeeDetail();
-        Set<String> allPermissions = new HashSet<>();
+        List<String> menuCodes = new ArrayList<>();
 
-        if (detail != null && detail.getDepartment() != null) {
-            allPermissions.addAll(deptPermissionRepository.findPermCodesByDeptId(detail.getDepartment().getDeptId()));
+        if (detail != null && detail.getJobRole() != null) {
+            menuCodes = menuRepository.findMenuCodesByJobRoleId(detail.getJobRole().getJobRoleId());
         }
-        allPermissions.addAll(empPermissionRepository.findPermCodesByEmpId(empId));
-
-        return convertToMyInfoDto(employee, allPermissions);
+        
+        return convertToMyInfoDto(employee, menuCodes);
     }
 
     // --- 내 정보 수정 ---
@@ -86,7 +90,7 @@ public class AuthServiceImpl implements AuthService {
                 .orElseThrow(() -> new BusinessException(ErrorCode.EMPLOYEE_NOT_FOUND));
 
         if (employeeRepository.existsByEmailAndEmpIdNot(req.getEmail(), empId)) {
-            throw new BusinessException(ErrorCode.EMAIL_DUPLICATE);
+            throw new BusinessException(ErrorCode.DUPLICATE_EMAIL);
         }
 
         LocalDate birth = parseLocalDateOrNull(req.getBirth());
@@ -112,14 +116,9 @@ public class AuthServiceImpl implements AuthService {
     @Override
     @Transactional
     public GoogleAuthResponseDto googleLogin(GoogleAuthRequestDto request, HttpServletResponse response) {
-        String email = googleOAuthUtil.getEmailFromAuthCode(
-                request.getAuthorizationCode(),
-                request.getRedirectUri()
-        );
-
+        String email = googleOAuthUtil.getEmailFromAuthCode(request.getAuthorizationCode(), request.getRedirectUri());
         Employee employee = employeeRepository.findByEmail(email)
                 .orElseThrow(() -> new BusinessException(ErrorCode.ACCOUNT_NOT_LINKED));
-
         return issueTokensAndRespond(employee, response, true);
     }
 
@@ -134,7 +133,6 @@ public class AuthServiceImpl implements AuthService {
         }
 
         GoogleAuthResponseDto tokenResponse = issueTokensAndRespond(employee, response, true);
-
         return LoginResponseDto.builder()
                 .accessToken(tokenResponse.getAccessToken())
                 .expiredAt(tokenResponse.getExpiredAt())
@@ -145,20 +143,15 @@ public class AuthServiceImpl implements AuthService {
     @Transactional
     public LogoutResponseDto logout(HttpServletRequest request, HttpServletResponse response) {
         String refreshToken = extractRefreshTokenOrThrow(request);
-
         refreshTokenRepository.deleteByRefreshToken(refreshToken);
         cookieUtil.clearRefreshTokenCookie(response);
-
-        return LogoutResponseDto.builder()
-                .message("로그아웃 되었습니다.")
-                .build();
+        return LogoutResponseDto.builder().message("로그아웃 되었습니다.").build();
     }
 
     @Override
     @Transactional
     public TokenRefreshResponseDto refresh(HttpServletRequest request, HttpServletResponse response) {
         String oldRefreshToken = extractRefreshTokenOrThrow(request);
-
         RefreshToken tokenEntity = refreshTokenRepository.findByRefreshToken(oldRefreshToken)
                 .orElseThrow(() -> new BusinessException(ErrorCode.INVALID_TOKEN));
 
@@ -168,7 +161,6 @@ public class AuthServiceImpl implements AuthService {
 
         Employee employee = tokenEntity.getEmployee();
         refreshTokenRepository.delete(tokenEntity);
-
         GoogleAuthResponseDto tokenResponse = issueTokensAndRespond(employee, response, false);
 
         return TokenRefreshResponseDto.builder()
@@ -192,17 +184,14 @@ public class AuthServiceImpl implements AuthService {
         }
 
         employee.updatePassword(passwordEncoder.encode(request.getNewPassword()));
-
-        return PasswordChangeResponseDto.builder()
-                .message("비밀번호가 변경되었습니다.")
-                .build();
+        return PasswordChangeResponseDto.builder().message("비밀번호가 변경되었습니다.").build();
     }
 
     // ─────────────────────────────────────────────
     // Private 헬퍼 메서드
     // ─────────────────────────────────────────────
 
-    private MyInfoResponseDto convertToMyInfoDto(Employee e, Set<String> perms) {
+    private MyInfoResponseDto convertToMyInfoDto(Employee e) {
         EmployeeDetail d = e.getEmployeeDetail();
 
         return MyInfoResponseDto.builder()
@@ -215,31 +204,29 @@ public class AuthServiceImpl implements AuthService {
                 .gender(e.getGender())
                 .isActive(e.getIsActive())
                 .createdAt(e.getCreatedAt())
+
                 .deptId(d != null ? d.getDepartment().getDeptId() : null)
                 .deptName(d != null ? d.getDepartment().getDeptName() : null)
                 .jobRoleId(d != null ? d.getJobRole().getJobRoleId() : null)
                 .roleName(d != null ? d.getJobRole().getRoleName() : null)
                 .joinedAt(d != null && d.getJoinedAt() != null ? d.getJoinedAt().toString() : null)
-                .permissions(new ArrayList<>(perms))
                 .build();
     }
 
-    private GoogleAuthResponseDto issueTokensAndRespond(Employee employee,
-                                                        HttpServletResponse response,
-                                                        boolean deleteExisting) {
+
+
+    private GoogleAuthResponseDto issueTokensAndRespond(Employee employee, HttpServletResponse response, boolean deleteExisting) {
         if (deleteExisting) {
             refreshTokenRepository.deleteByEmployee_EmpId(employee.getEmpId());
         }
 
         String accessToken = jwtUtil.generateAccessToken(employee.getEmpId(), employee.getLoginId());
         String refreshToken = jwtUtil.generateRefreshToken(employee.getEmpId());
-        LocalDateTime accessExpiredAt = jwtUtil.getAccessTokenExpiredAt();
-        LocalDateTime refreshExpiredAt = jwtUtil.getRefreshTokenExpiredAt();
-
+        
         refreshTokenRepository.save(RefreshToken.builder()
                 .employee(employee)
                 .refreshToken(refreshToken)
-                .expiredAt(refreshExpiredAt)
+                .expiredAt(jwtUtil.getRefreshTokenExpiredAt())
                 .createdAt(LocalDateTime.now())
                 .build());
 
@@ -247,7 +234,7 @@ public class AuthServiceImpl implements AuthService {
 
         return GoogleAuthResponseDto.builder()
                 .accessToken(accessToken)
-                .expiredAt(accessExpiredAt)
+                .expiredAt(jwtUtil.getAccessTokenExpiredAt())
                 .isNewUser(false)
                 .build();
     }
@@ -256,6 +243,7 @@ public class AuthServiceImpl implements AuthService {
         return cookieUtil.extractRefreshToken(request)
                 .orElseThrow(() -> new BusinessException(ErrorCode.MISSING_TOKEN));
     }
+
 
     private LocalDate parseLocalDateOrNull(String value) {
         if (value == null || value.isBlank()) return null;

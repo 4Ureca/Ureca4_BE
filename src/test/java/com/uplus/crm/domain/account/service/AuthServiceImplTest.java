@@ -1,5 +1,25 @@
 package com.uplus.crm.domain.account.service;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.BDDMockito.given;
+import static org.mockito.BDDMockito.then;
+
+import java.time.LocalDateTime;
+import java.util.Optional;
+
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Nested;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.security.crypto.password.PasswordEncoder;
+
 import com.uplus.crm.common.exception.BusinessException;
 import com.uplus.crm.common.exception.ErrorCode;
 import com.uplus.crm.common.util.CookieUtil;
@@ -17,31 +37,12 @@ import com.uplus.crm.domain.account.dto.response.PasswordChangeResponseDto;
 import com.uplus.crm.domain.account.dto.response.TokenRefreshResponseDto;
 import com.uplus.crm.domain.account.entity.Employee;
 import com.uplus.crm.domain.account.entity.RefreshToken;
-import com.uplus.crm.domain.account.repository.mysql.DeptPermissionRepository;
-import com.uplus.crm.domain.account.repository.mysql.EmpPermissionRepository;
 import com.uplus.crm.domain.account.repository.mysql.EmployeeRepository;
 import com.uplus.crm.domain.account.repository.mysql.RefreshTokenRepository;
 import com.uplus.crm.domain.account.service.impl.AuthServiceImpl;
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Nested;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.security.crypto.password.PasswordEncoder;
-
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.util.Optional;
-
-import static org.assertj.core.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.*;
-import static org.mockito.BDDMockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class AuthServiceImplTest {
@@ -51,8 +52,6 @@ class AuthServiceImplTest {
 
     @Mock private EmployeeRepository employeeRepository;
     @Mock private RefreshTokenRepository refreshTokenRepository;
-    @Mock private DeptPermissionRepository deptPermissionRepository;
-    @Mock private EmpPermissionRepository empPermissionRepository;
     @Mock private PasswordEncoder passwordEncoder;
     @Mock private GoogleOAuthUtil googleOAuthUtil;
     @Mock private JwtUtil jwtUtil;
@@ -554,13 +553,13 @@ class AuthServiceImplTest {
             assertThatThrownBy(() -> authService.updateMyInfo(1, req))
                     .isInstanceOf(BusinessException.class)
                     .satisfies(e -> assertThat(((BusinessException) e).getErrorCode())
-                            .isEqualTo(ErrorCode.EMAIL_DUPLICATE));
+                            .isEqualTo(ErrorCode.DUPLICATE_EMAIL));
         }
 
         @Test
         @DisplayName("실패 - 생년월일 형식 오류")
         void fail_invalidBirthFormat() {
-            MyInfoUpdateRequestDto req = MyInfoUpdateRequestDto.builder()
+        	MyInfoUpdateRequestDto req = MyInfoUpdateRequestDto.builder()
                     .name("홍길동")
                     .email("hong@lgup.com")
                     .birth("1990/05/15")

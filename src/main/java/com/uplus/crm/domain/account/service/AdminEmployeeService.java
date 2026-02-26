@@ -47,7 +47,7 @@ public class AdminEmployeeService {
 
         // 2) 이메일 중복 체크 (409)
         if (employeeRepository.existsByEmailAndEmpIdNot(req.getEmail(), empId)) {
-            throw new BusinessException(ErrorCode.EMAIL_DUPLICATE);
+            throw new BusinessException(ErrorCode.DUPLICATE_EMAIL);
         }
 
         // 3) 부서/역할 존재 확인 (400)
@@ -71,7 +71,7 @@ public class AdminEmployeeService {
         );
 
         // 6) EmployeeDetail 조회/없으면 생성 후 업데이트
-        EmployeeDetail detail = employeeDetailRepository.findById(empId)
+        EmployeeDetail detail = employeeDetailRepository.findById(empId.longValue())
                 .orElseGet(() -> EmployeeDetail.builder()
                         .empId(empId)
                         .employee(employee)

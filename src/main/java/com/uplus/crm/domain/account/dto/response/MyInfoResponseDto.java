@@ -29,5 +29,4 @@ public class MyInfoResponseDto {
     private Integer jobRoleId;
     private String roleName;
     private String joinedAt;          // nullable
-    private List<String> permissions; // 부서+개별 권한 코드 합산 목록
 }
