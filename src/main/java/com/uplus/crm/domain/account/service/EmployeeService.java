@@ -1,6 +1,5 @@
 package com.uplus.crm.domain.account.service;
 
-import java.util.List;
 import java.util.stream.Collectors;
 
 import org.springframework.data.domain.Page;
@@ -10,13 +9,11 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.uplus.crm.domain.account.dto.request.EmployeeSearchRequestDto;
 import com.uplus.crm.domain.account.dto.response.EmployeeDetailResponseDto;
-import com.uplus.crm.domain.account.dto.response.EmployeeDetailResponseDto.PermissionDto;
 import com.uplus.crm.domain.account.dto.response.EmployeeListResponseDto;
 import com.uplus.crm.domain.account.dto.response.EmployeeListResponseDto.EmployeeDto;
 import com.uplus.crm.domain.account.entity.Employee;
 import com.uplus.crm.domain.account.entity.EmployeeDetail;
 import com.uplus.crm.domain.account.repository.mysql.EmployeeRepository;
-import com.uplus.crm.domain.account.repository.mysql.JobRolePermissionRepository;
 
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
@@ -27,7 +24,6 @@ import lombok.RequiredArgsConstructor;
 public class EmployeeService {
 
     private final EmployeeRepository employeeRepository;
-    private final JobRolePermissionRepository jobRolePermissionRepository;
 
     /**
      * 1. 직원 목록 조회
@@ -55,28 +51,13 @@ public class EmployeeService {
     }
 
     /**
-     * 2. 직원 상세 조회 (직무 기반 권한으로 통합)
+     * 2. 직원 상세 조회 
      */
     public EmployeeDetailResponseDto getEmployeeDetail(Integer empId) {
         Employee employee = employeeRepository.findByIdWithDetails(empId)
                 .orElseThrow(() -> new EntityNotFoundException("해당 직원을 찾을 수 없습니다. ID: " + empId));
 
-        EmployeeDetail detail = employee.getEmployeeDetail();
-        
-        // 💡 직무(JobRole) 기반으로 권한 조회
-        List<PermissionDto> rolePerms = List.of();
-        if (detail != null && detail.getJobRole() != null) {
-            rolePerms = jobRolePermissionRepository.findByJobRoleIdWithPermission(detail.getJobRole().getJobRoleId())
-                .stream()
-                .map(jrp -> PermissionDto.builder()
-                        .permId(jrp.getPermission().getPermId())
-                        .permCode(jrp.getPermission().getPermCode())
-                        .permDesc(jrp.getPermission().getPermDesc())
-                        .build())
-                .collect(Collectors.toList());
-        }
-
-        return convertToDetailDto(employee, rolePerms); 
+        return convertToDetailDto(employee); 
     }
 
     // --- private Helper Methods ---
@@ -97,7 +78,7 @@ public class EmployeeService {
                 .build();
     }
 
-    private EmployeeDetailResponseDto convertToDetailDto(Employee e, List<PermissionDto> rolePerms) {
+    private EmployeeDetailResponseDto convertToDetailDto(Employee e) {
         EmployeeDetail detail = e.getEmployeeDetail();
         return EmployeeDetailResponseDto.builder()
                 .empId(e.getEmpId())
@@ -114,8 +95,6 @@ public class EmployeeService {
                 .jobRoleId(detail != null && detail.getJobRole() != null ? detail.getJobRole().getJobRoleId() : null)
                 .roleName(detail != null && detail.getJobRole() != null ? detail.getJobRole().getRoleName() : null)
                 .joinedAt(detail != null && detail.getJoinedAt() != null ? detail.getJoinedAt().toString() : null)
-                // 💡 기존의 dept/emp 권한 대신 통합된 rolePermissions 사용
-                .rolePermissions(rolePerms) 
                 .build();
     }
 

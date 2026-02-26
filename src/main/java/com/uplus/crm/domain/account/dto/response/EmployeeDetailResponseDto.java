@@ -26,15 +26,4 @@ public class EmployeeDetailResponseDto {
     private Integer jobRoleId;
     private String roleName;
     private String joinedAt;
-    private List<PermissionDto> rolePermissions; 
-
-    @Getter
-    @Builder
-    @NoArgsConstructor
-    @AllArgsConstructor
-    public static class PermissionDto {
-        private Integer permId;
-        private String permCode;
-        private String permDesc;
-    }
 }

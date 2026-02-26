@@ -13,7 +13,6 @@ import com.uplus.crm.domain.account.entity.Employee;
 import com.uplus.crm.domain.account.entity.EmployeeDetail;
 import com.uplus.crm.domain.account.entity.RefreshToken;
 import com.uplus.crm.domain.account.repository.mysql.EmployeeRepository;
-import com.uplus.crm.domain.account.repository.mysql.JobRolePermissionRepository; // 💡 새 레포지토리
 import com.uplus.crm.domain.account.repository.mysql.RefreshTokenRepository;
 import com.uplus.crm.domain.account.service.AuthService;
 import jakarta.servlet.http.HttpServletRequest;
@@ -34,7 +33,6 @@ public class AuthServiceImpl implements AuthService {
 
     private final EmployeeRepository employeeRepository;
     private final RefreshTokenRepository refreshTokenRepository;
-    private final JobRolePermissionRepository jobRolePermissionRepository; // 💡 교체 완료
     private final PasswordEncoder passwordEncoder;
     private final GoogleOAuthUtil googleOAuthUtil;
     private final JwtUtil jwtUtil;
@@ -50,24 +48,17 @@ public class AuthServiceImpl implements AuthService {
                 .build();
     }
 
-    // --- 2. 로그인한 계정 정보 조회 (Refactored) ---
+    // --- 2. 로그인한 계정 정보 조회 (직무 기반 단순화) ---
     @Override
     public MyInfoResponseDto getMyInfo(Integer empId) {
+        // Fetch Join이 적용된 findByIdWithDetails 사용
         Employee employee = employeeRepository.findByIdWithDetails(empId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.EMPLOYEE_NOT_FOUND));
 
         EmployeeDetail detail = employee.getEmployeeDetail();
         
-        // 💡 직무 기반 권한 코드 리스트 바로 가져오기
-        List<String> permissions = new ArrayList<>();
-        if (detail != null && detail.getJobRole() != null) {
-            permissions = jobRolePermissionRepository.findPermCodesByJobRoleId(detail.getJobRole().getJobRoleId());
-        }
-
-        return convertToMyInfoDto(employee, permissions);
+        return convertToMyInfoDto(employee);
     }
-
-    // --- 나머지 로그인/로그아웃/토큰 로직은 동일 (의존성만 위에서 교체됨) ---
 
     @Override
     @Transactional
@@ -147,7 +138,7 @@ public class AuthServiceImpl implements AuthService {
     // Private 헬퍼 메서드
     // ─────────────────────────────────────────────
 
-    private MyInfoResponseDto convertToMyInfoDto(Employee e, List<String> perms) {
+    private MyInfoResponseDto convertToMyInfoDto(Employee e) {
         EmployeeDetail d = e.getEmployeeDetail();
         return MyInfoResponseDto.builder()
                 .empId(e.getEmpId())
@@ -164,7 +155,6 @@ public class AuthServiceImpl implements AuthService {
                 .jobRoleId(d != null && d.getJobRole() != null ? d.getJobRole().getJobRoleId() : null)
                 .roleName(d != null && d.getJobRole() != null ? d.getJobRole().getRoleName() : null)
                 .joinedAt(d != null && d.getJoinedAt() != null ? d.getJoinedAt().toString() : null)
-                .permissions(perms)
                 .build();
     }
 
