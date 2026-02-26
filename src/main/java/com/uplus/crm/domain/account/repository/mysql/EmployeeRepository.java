@@ -56,16 +56,6 @@ public interface EmployeeRepository extends JpaRepository<Employee, Integer> {
            "WHERE e.empId = :empId")
     Optional<Employee> findByIdWithDetails(@Param("empId") Integer empId);
 
-
-
-
-    @Modifying
-    @Query("""
-    UPDATE EmpPermission ep
-       SET ep.isDeleted = true
-     WHERE ep.employee.empId = :empId
-       AND ep.isDeleted = false
-""")
-    void softDeleteByEmployeeId(@Param("empId") Integer empId);
+    
 }
 

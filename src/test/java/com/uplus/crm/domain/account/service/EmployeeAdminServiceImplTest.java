@@ -31,10 +31,8 @@ class EmployeeAdminServiceImplTest {
 
   @Mock private EmployeeRepository employeeRepository;
   @Mock private EmployeeDetailRepository employeeDetailRepository;
-  @Mock private EmpPermissionRepository empPermissionRepository;
   @Mock private DepartmentRepository departmentRepository;
   @Mock private JobRoleRepository jobRoleRepository;
-  @Mock private PermissionRepository permissionRepository;
   @Mock private PasswordEncoder passwordEncoder;
 
   private Employee employee;
