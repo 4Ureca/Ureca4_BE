@@ -1,5 +1,7 @@
 package com.uplus.crm.domain.account.service;
 
+import com.uplus.crm.common.exception.BusinessException;
+import com.uplus.crm.common.exception.ErrorCode;
 import java.util.stream.Collectors;
 
 import org.springframework.data.domain.Page;
@@ -55,7 +57,10 @@ public class EmployeeService {
      */
     public EmployeeDetailResponseDto getEmployeeDetail(Integer empId) {
         Employee employee = employeeRepository.findByIdWithDetails(empId)
-                .orElseThrow(() -> new EntityNotFoundException("해당 직원을 찾을 수 없습니다. ID: " + empId));
+                .orElseThrow(() -> new BusinessException(
+                    ErrorCode.EMPLOYEE_NOT_FOUND,
+                    "직원 정보를 찾을 수 없습니다. ID: " + empId
+                ));
 
         return convertToDetailDto(employee); 
     }

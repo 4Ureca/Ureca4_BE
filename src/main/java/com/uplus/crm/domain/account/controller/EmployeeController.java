@@ -1,13 +1,19 @@
 package com.uplus.crm.domain.account.controller;
 
+import com.uplus.crm.domain.account.dto.request.EmployeeCreateRequestDto;
 import com.uplus.crm.domain.account.dto.request.EmployeeSearchRequestDto;
+import com.uplus.crm.domain.account.dto.request.EmployeeStatusUpdateRequestDto;
+import com.uplus.crm.domain.account.dto.response.EmployeeCreateResponseDto;
 import com.uplus.crm.domain.account.dto.response.EmployeeListResponseDto;
 import com.uplus.crm.domain.account.dto.response.EmployeeDetailResponseDto;
+import com.uplus.crm.domain.account.dto.response.EmployeeStatusUpdateResponseDto;
+import com.uplus.crm.domain.account.service.EmployeeAdminService;
 import com.uplus.crm.domain.account.service.EmployeeService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springdoc.core.annotations.ParameterObject;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -18,6 +24,25 @@ import org.springframework.web.bind.annotation.*;
 public class EmployeeController {
 
     private final EmployeeService employeeService;
+    private final EmployeeAdminService employeeAdminService;
+
+    /** 직원 계정 생성 */
+    @PostMapping
+    @ResponseStatus(HttpStatus.CREATED)
+    public EmployeeCreateResponseDto createEmployee(
+        @RequestBody EmployeeCreateRequestDto request
+    ) {
+        return employeeAdminService.createEmployee(request);
+    }
+
+    /** 직원 계정 활성화 / 비활성화 */
+    @PatchMapping("/{empId}/status")
+    public EmployeeStatusUpdateResponseDto updateEmployeeStatus(
+        @PathVariable Integer empId,
+        @RequestBody EmployeeStatusUpdateRequestDto request
+    ) {
+        return employeeAdminService.updateEmployeeStatus(empId, request);
+    }
 
     @Operation(summary = "직원 계정 정보 목록 조회", description = "필터링 및 키워드 검색을 포함한 직원 목록을 페이징하여 조회합니다.")
     @GetMapping
