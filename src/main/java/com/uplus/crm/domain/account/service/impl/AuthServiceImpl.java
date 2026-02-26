@@ -13,6 +13,7 @@ import com.uplus.crm.domain.account.entity.Employee;
 import com.uplus.crm.domain.account.entity.EmployeeDetail;
 import com.uplus.crm.domain.account.entity.RefreshToken;
 import com.uplus.crm.domain.account.repository.mysql.EmployeeRepository;
+import com.uplus.crm.domain.account.repository.mysql.MenuRepository; // 추가
 import com.uplus.crm.domain.account.repository.mysql.RefreshTokenRepository;
 import com.uplus.crm.domain.account.service.AuthService;
 import jakarta.servlet.http.HttpServletRequest;
@@ -33,31 +34,32 @@ public class AuthServiceImpl implements AuthService {
 
     private final EmployeeRepository employeeRepository;
     private final RefreshTokenRepository refreshTokenRepository;
+    private final MenuRepository menuRepository; // 💡 주입 추가
     private final PasswordEncoder passwordEncoder;
     private final GoogleOAuthUtil googleOAuthUtil;
     private final JwtUtil jwtUtil;
     private final CookieUtil cookieUtil;
 
-    // --- 1. 구글 이메일 중복 확인 ---
     @Override
     public EmailCheckResponseDto checkEmailAvailability(String email) {
         boolean isDuplicate = employeeRepository.existsByEmail(email);
-        return EmailCheckResponseDto.builder()
-                .available(!isDuplicate)
-                .email(email)
-                .build();
+        return EmailCheckResponseDto.builder().available(!isDuplicate).email(email).build();
     }
 
-    // --- 2. 로그인한 계정 정보 조회 (직무 기반 단순화) ---
+    // --- 2. 로그인한 계정 정보 조회 (메뉴 리스트 포함) ---
     @Override
     public MyInfoResponseDto getMyInfo(Integer empId) {
-        // Fetch Join이 적용된 findByIdWithDetails 사용
         Employee employee = employeeRepository.findByIdWithDetails(empId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.EMPLOYEE_NOT_FOUND));
 
         EmployeeDetail detail = employee.getEmployeeDetail();
+        List<String> menuCodes = new ArrayList<>();
+
+        if (detail != null && detail.getJobRole() != null) {
+            menuCodes = menuRepository.findMenuCodesByJobRoleId(detail.getJobRole().getJobRoleId());
+        }
         
-        return convertToMyInfoDto(employee);
+        return convertToMyInfoDto(employee, menuCodes);
     }
 
     @Override
@@ -138,7 +140,7 @@ public class AuthServiceImpl implements AuthService {
     // Private 헬퍼 메서드
     // ─────────────────────────────────────────────
 
-    private MyInfoResponseDto convertToMyInfoDto(Employee e) {
+    private MyInfoResponseDto convertToMyInfoDto(Employee e, List<String> menuCodes) {
         EmployeeDetail d = e.getEmployeeDetail();
         return MyInfoResponseDto.builder()
                 .empId(e.getEmpId())
@@ -155,6 +157,7 @@ public class AuthServiceImpl implements AuthService {
                 .jobRoleId(d != null && d.getJobRole() != null ? d.getJobRole().getJobRoleId() : null)
                 .roleName(d != null && d.getJobRole() != null ? d.getJobRole().getRoleName() : null)
                 .joinedAt(d != null && d.getJoinedAt() != null ? d.getJoinedAt().toString() : null)
+                .menuCodes(menuCodes) // 💡 리스트 설정
                 .build();
     }
 

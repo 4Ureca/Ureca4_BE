@@ -29,4 +29,5 @@ public class MyInfoResponseDto {
     private Integer jobRoleId;
     private String roleName;
     private String joinedAt;          // nullable
+    private List<String> menuCodes;
 }
