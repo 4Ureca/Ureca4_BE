@@ -9,7 +9,6 @@ import org.springframework.transaction.annotation.Transactional;
 import com.uplus.crm.domain.account.dto.request.EmpPermissionRequestDto;
 import com.uplus.crm.domain.account.dto.response.EmpPermissionListResponseDto;
 import com.uplus.crm.domain.account.dto.response.EmpPermissionListResponseDto.EmpPermissionDto;
-import com.uplus.crm.domain.account.entity.EmpPermission;
 import com.uplus.crm.domain.account.repository.mysql.EmpPermissionRepository;
 
 import lombok.RequiredArgsConstructor;

@@ -3,16 +3,13 @@ package com.uplus.crm.domain.account.service;
 import com.uplus.crm.common.exception.BusinessException;
 import com.uplus.crm.common.exception.ErrorCode;
 import com.uplus.crm.domain.account.dto.request.EmployeeCreateRequestDto;
-import com.uplus.crm.domain.account.dto.request.EmployeePermissionUpdateRequestDto;
 import com.uplus.crm.domain.account.dto.request.EmployeeStatusUpdateRequestDto;
 import com.uplus.crm.domain.account.entity.Department;
 import com.uplus.crm.domain.account.entity.Employee;
 import com.uplus.crm.domain.account.entity.EmployeeDetail;
 import com.uplus.crm.domain.account.entity.JobRole;
-import com.uplus.crm.domain.account.entity.Permission;
 import com.uplus.crm.domain.account.repository.mysql.*;
 import java.time.LocalDate;
-import java.util.List;
 import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -43,8 +40,6 @@ class EmployeeAdminServiceImplTest {
   private Employee employee;
   private Department department;
   private JobRole jobRole;
-  private Permission permission1;
-  private Permission permission2;
 
   @BeforeEach
   void setUp() {
@@ -64,19 +59,6 @@ class EmployeeAdminServiceImplTest {
         .jobRoleId(1)
         .roleName("매니저")
         .build();
-
-    permission1 = Permission.builder()
-        .permId(1)
-        .permCode("P1")
-        .permDesc("권한1")
-        .build();
-
-    permission2 = Permission.builder()
-        .permId(2)
-        .permCode("P2")
-        .permDesc("권한2")
-        .build();
-
   }
 
   @Test
@@ -95,15 +77,12 @@ class EmployeeAdminServiceImplTest {
         .deptId(1)
         .jobRoleId(1)
         .joinedAt(LocalDate.now())
-        .permissionIds(List.of(1, 2))
         .build();
 
     when(passwordEncoder.encode("1234")).thenReturn("encodedPw");
     when(employeeRepository.save(any(Employee.class))).thenReturn(employee);
     when(departmentRepository.findById(1)).thenReturn(Optional.of(department));
     when(jobRoleRepository.findById(1)).thenReturn(Optional.of(jobRole));
-    when(permissionRepository.findAllById(List.of(1, 2)))
-        .thenReturn(List.of(permission1, permission2));
 
     // when
     var response = employeeAdminService.createEmployee(request);
@@ -119,7 +98,6 @@ class EmployeeAdminServiceImplTest {
     verify(passwordEncoder).encode("1234");
     verify(employeeRepository).save(any(Employee.class));
     verify(employeeDetailRepository).save(any(EmployeeDetail.class));
-    verify(empPermissionRepository).saveAll(anyList());
   }
 
   @Test
@@ -145,38 +123,6 @@ class EmployeeAdminServiceImplTest {
         employeeAdminService.createEmployee(request))
         .isInstanceOf(BusinessException.class)
         .hasMessage(ErrorCode.DEPARTMENT_NOT_FOUND.getMessage());
-  }
-
-  @Test
-  @DisplayName("직원 생성 - 유효하지 않은 permissionId 예외")
-  void createEmployee_invalidPermission() {
-
-    EmployeeCreateRequestDto request = new EmployeeCreateRequestDto();
-    request.setLoginId("login1");
-    request.setPassword("1234");
-    request.setName("홍길동");
-    request.setEmail("test@test.com");
-    request.setPhone("010");
-    request.setBirth(LocalDate.of(1990,1,1));
-    request.setGender("M");
-    request.setDeptId(1);
-    request.setJobRoleId(1);
-    request.setJoinedAt(LocalDate.now());
-    request.setPermissionIds(List.of(1,2));
-
-    when(passwordEncoder.encode(any())).thenReturn("encoded");
-    when(employeeRepository.save(any())).thenReturn(employee);
-    when(departmentRepository.findById(1)).thenReturn(Optional.of(department));
-    when(jobRoleRepository.findById(1)).thenReturn(Optional.of(jobRole));
-
-    // 하나만 반환 → invalid 상황
-    when(permissionRepository.findAllById(List.of(1,2)))
-        .thenReturn(List.of(permission1));
-
-    assertThatThrownBy(() ->
-        employeeAdminService.createEmployee(request))
-        .isInstanceOf(BusinessException.class)
-        .hasMessage(ErrorCode.INVALID_PERMISSION_IDS.getMessage());
   }
 
   @Test
@@ -209,43 +155,5 @@ class EmployeeAdminServiceImplTest {
         .isInstanceOf(BusinessException.class)
         .hasMessage(ErrorCode.EMPLOYEE_NOT_FOUND.getMessage());
   }
-
-
-  @Test
-  @DisplayName("권한 수정 - permissionIds null이면 기존 권한 soft delete")
-  void updateEmployeePermissions_nullPermissions() {
-
-    when(employeeRepository.findById(1)).thenReturn(Optional.of(employee));
-
-    EmployeePermissionUpdateRequestDto request =
-        new EmployeePermissionUpdateRequestDto();
-    request.setPermissionIds(null);
-
-    var response =
-        employeeAdminService.updateEmployeePermissions(1, request);
-
-    assertThat(response.getPermissions()).isEmpty();
-    verify(empPermissionRepository).softDeleteByEmployeeId(1);
-    verify(empPermissionRepository, never()).saveAll(any());
-  }
-
-  @Test
-  @DisplayName("권한 수정 - 유효하지 않은 권한 ID 예외")
-  void updateEmployeePermissions_invalidPermission() {
-
-    when(employeeRepository.findById(1)).thenReturn(Optional.of(employee));
-    when(permissionRepository.findAllById(List.of(1,2)))
-        .thenReturn(List.of(permission1)); // 하나만 반환 → invalid
-
-    EmployeePermissionUpdateRequestDto request =
-        new EmployeePermissionUpdateRequestDto();
-    request.setPermissionIds(List.of(1,2));
-
-    assertThatThrownBy(() ->
-        employeeAdminService.updateEmployeePermissions(1, request))
-        .isInstanceOf(BusinessException.class)
-        .hasMessage(ErrorCode.INVALID_PERMISSION_IDS.getMessage());
-  }
-
 
 }

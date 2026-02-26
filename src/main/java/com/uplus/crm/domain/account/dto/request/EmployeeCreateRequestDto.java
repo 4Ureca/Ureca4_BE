@@ -6,7 +6,6 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
-import java.util.List;
 import lombok.Setter;
 
 // POST /admin/employees — 직원 계정 정보 생성
@@ -26,5 +25,4 @@ public class EmployeeCreateRequestDto {
     private Integer deptId;           // 부서 ID
     private Integer jobRoleId;        // 역할 ID
     private LocalDate joinedAt;          // 입사일 (nullable, "2026-02-22")
-    private List<Integer> permissionIds; // 개별 권한 ID 목록 (nullable)
 }

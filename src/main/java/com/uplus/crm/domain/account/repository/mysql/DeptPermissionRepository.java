@@ -1,6 +1,5 @@
 package com.uplus.crm.domain.account.repository.mysql;
 
-import com.uplus.crm.domain.account.entity.DeptPermission;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;

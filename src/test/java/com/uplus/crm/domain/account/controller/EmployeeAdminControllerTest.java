@@ -1,16 +1,12 @@
 package com.uplus.crm.domain.account.controller;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.uplus.crm.common.config.SecurityConfig;
 import com.uplus.crm.domain.account.dto.request.EmployeeCreateRequestDto;
-import com.uplus.crm.domain.account.dto.request.EmployeePermissionUpdateRequestDto;
 import com.uplus.crm.domain.account.dto.request.EmployeeStatusUpdateRequestDto;
 import com.uplus.crm.domain.account.dto.response.EmployeeCreateResponseDto;
-import com.uplus.crm.domain.account.dto.response.EmployeePermissionUpdateResponseDto;
 import com.uplus.crm.domain.account.dto.response.EmployeeStatusUpdateResponseDto;
 import com.uplus.crm.domain.account.service.EmployeeAdminService;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.List;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
@@ -54,7 +50,6 @@ class EmployeeAdminControllerTest {
         .deptId(1)
         .jobRoleId(1)
         .joinedAt(LocalDate.now())
-        .permissionIds(List.of(1,2))
         .build();
 
     EmployeeCreateResponseDto response =
@@ -76,31 +71,6 @@ class EmployeeAdminControllerTest {
         .andExpect(status().isCreated())
         .andExpect(jsonPath("$.empId").value(1))
         .andExpect(jsonPath("$.loginId").value("login1"))
-        .andExpect(jsonPath("$.name").value("홍길동"));
-  }
-
-  @Test
-  @DisplayName("직원 권한 수정 성공")
-  void updateEmployeePermissions_success() throws Exception {
-
-    EmployeePermissionUpdateRequestDto request =
-        new EmployeePermissionUpdateRequestDto(List.of(1,2));
-
-    EmployeePermissionUpdateResponseDto response =
-        new EmployeePermissionUpdateResponseDto(
-            1,
-            "홍길동",
-            List.of()
-        );
-
-    when(employeeAdminService.updateEmployeePermissions(Mockito.eq(1), any()))
-        .thenReturn(response);
-
-    mockMvc.perform(put("/admin/employees/1/permissions")
-            .contentType(MediaType.APPLICATION_JSON)
-            .content(objectMapper.writeValueAsString(request)))
-        .andExpect(status().isOk())
-        .andExpect(jsonPath("$.empId").value(1))
         .andExpect(jsonPath("$.name").value("홍길동"));
   }
 
