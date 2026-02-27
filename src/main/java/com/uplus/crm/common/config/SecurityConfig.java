@@ -47,10 +47,7 @@ public class SecurityConfig {
                     "/auth/login",
                     "/auth/google/**", // 승혁님이 만든 이메일 중복 체크 포함
                     "/auth/refresh",
-                    "/auth/logout",
-                    
-                    // 3. 관리자 기능 (개발 편의를 위해 일단 전체 허용)
-                    "/admin/**"
+                    "/auth/logout"
                 ).permitAll()
                 
                 // 그 외 모든 요청(예: /auth/me)은 인증(토큰)이 있어야만 접근 가능
