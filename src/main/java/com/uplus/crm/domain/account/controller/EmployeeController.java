@@ -27,6 +27,7 @@ public class EmployeeController {
     private final EmployeeAdminService employeeAdminService;
 
     /** 직원 계정 생성 */
+    @Operation(summary = "직원 계정 생성", description = "신규 직원의 계정을 생성한다.")
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     public EmployeeCreateResponseDto createEmployee(
@@ -37,6 +38,7 @@ public class EmployeeController {
 
     /** 직원 계정 활성화 / 비활성화 */
     @PatchMapping("/{empId}/status")
+    @Operation(summary = "직원 계정 활성화/비활성화", description = "직원 계정을 활성화/비활성화한다.")
     public EmployeeStatusUpdateResponseDto updateEmployeeStatus(
         @PathVariable Integer empId,
         @RequestBody EmployeeStatusUpdateRequestDto request
