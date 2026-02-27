@@ -33,7 +33,6 @@ import org.springframework.web.bind.annotation.RestController;
 
 @Tag(name = "Search Filter", description = "검색 조건 저장/조회/수정/삭제 API")
 @RestController
-@RequestMapping("/api")
 @RequiredArgsConstructor
 public class FilterGroupController {
 
