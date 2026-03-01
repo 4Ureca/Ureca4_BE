@@ -49,8 +49,8 @@ class FilterGroupServiceTest {
     @BeforeEach
     void setUp() {
         // Filter 엔티티 (읽기 전용 — Reflection으로 ID 설정)
-        mockFilterKeyword = createFilter(30, "keyword", null, "키워드");
-        mockFilterStatus = createFilter(34, "consult_status", "CONSULT_STATUS", "처리상태");
+        mockFilterKeyword = createFilter(30, "keyword", "키워드");
+        mockFilterStatus = createFilter(34, "consult_status", "처리상태");
 
         // FilterGroup 엔티티
         mockFilterGroup = FilterGroup.builder()
