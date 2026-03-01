@@ -29,9 +29,6 @@ public class Filter {
     @Column(name = "filter_key", nullable = false, unique = true, length = 50)
     private String filterKey;
 
-    @Column(name = "alt_code", length = 50)
-    private String altCode;
-
     @Column(name = "filter_name", nullable = false, length = 50)
     private String filterName;
 }

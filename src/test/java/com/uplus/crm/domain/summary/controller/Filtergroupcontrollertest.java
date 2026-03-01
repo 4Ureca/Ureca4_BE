@@ -60,7 +60,7 @@ class FilterGroupControllerTest {
                 FilterResponse.builder()
                         .filterId(30).filterKey("keyword").filterName("키워드").build(),
                 FilterResponse.builder()
-                        .filterId(34).filterKey("consult_status").altCode("CONSULT_STATUS").filterName("처리상태").build()
+                        .filterId(34).filterKey("consult_status").filterName("처리상태").build()
         );
         given(filterGroupService.getFilterDefinitions()).willReturn(filters);
 

@@ -49,8 +49,8 @@ class FilterGroupServiceTest {
     @BeforeEach
     void setUp() {
         // Filter 엔티티 (읽기 전용 — Reflection으로 ID 설정)
-        mockFilterKeyword = createFilter(30, "keyword", null, "키워드");
-        mockFilterStatus = createFilter(34, "consult_status", "CONSULT_STATUS", "처리상태");
+        mockFilterKeyword = createFilter(30, "keyword", "키워드");
+        mockFilterStatus = createFilter(34, "consult_status", "처리상태");
 
         // FilterGroup 엔티티
         mockFilterGroup = FilterGroup.builder()
@@ -403,7 +403,7 @@ class FilterGroupServiceTest {
     // Private 헬퍼 메서드
     // ─────────────────────────────────────────────
 
-    private Filter createFilter(Integer id, String key, String altCode, String name) {
+    private Filter createFilter(Integer id, String key, String name) {
         Filter filter;
         try {
             var constructor = Filter.class.getDeclaredConstructor();
@@ -414,7 +414,6 @@ class FilterGroupServiceTest {
         }
         ReflectionTestUtils.setField(filter, "filterId", id);
         ReflectionTestUtils.setField(filter, "filterKey", key);
-        ReflectionTestUtils.setField(filter, "altCode", altCode);
         ReflectionTestUtils.setField(filter, "filterName", name);
         return filter;
     }
