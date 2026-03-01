@@ -1,11 +1,11 @@
 package com.uplus.crm.common.config;
 
 import com.uplus.crm.common.filter.JwtAuthFilter;
-import com.uplus.crm.common.util.JwtUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.env.Environment;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
@@ -18,16 +18,15 @@ import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
-import java.util.Arrays;
 import java.util.List;
 
 @Configuration
 @EnableWebSecurity
+@EnableMethodSecurity
 @RequiredArgsConstructor
 public class SecurityConfig {
 
-
-    private final JwtUtil jwtUtil;
+    private final JwtAuthFilter jwtAuthFilter;
     private final Environment environment;
 
     @Bean
@@ -54,7 +53,7 @@ public class SecurityConfig {
                 .anyRequest().authenticated()
             )
             // JWT 필터를 UsernamePasswordAuthenticationFilter 앞에 추가하여 토큰 검증
-            .addFilterBefore(new JwtAuthFilter(jwtUtil),
+            .addFilterBefore(jwtAuthFilter,
                     UsernamePasswordAuthenticationFilter.class);
 
         return http.build();

@@ -44,10 +44,10 @@ public class Notice {
     private Employee employee;
 
     @Column(name = "is_pinned", nullable = false)
-    private Boolean isPinned;
+    private boolean isPinned;
 
     @Column(name = "view_count", nullable = false)
-    private Integer viewCount;
+    private int viewCount;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "status", nullable = false, length = 20)
@@ -62,39 +62,53 @@ public class Notice {
     @Column(name = "visible_to")
     private LocalDateTime visibleTo;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "notice_type", nullable = false, length = 20)
+    @Builder.Default
+    private NoticeType noticeType = NoticeType.GENERAL;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "target_role", length = 10)
+    @Builder.Default
+    private TargetRole targetRole = TargetRole.ALL;
+
     @PrePersist
     public void prePersist() {
-        if (isPinned == null) {
-            isPinned = false;
-        }
-        if (viewCount == null) {
-            viewCount = 0;
-        }
-        if (status == null) {
-            status = NoticeStatus.DRAFT;
-        }
-        if (createdAt == null) {
-            createdAt = LocalDateTime.now();
-        }
+        if (status     == null) status     = NoticeStatus.DRAFT;
+        if (noticeType == null) noticeType = NoticeType.GENERAL;
+        if (targetRole == null) targetRole = TargetRole.ALL;
+        if (createdAt  == null) createdAt  = LocalDateTime.now();
     }
 
     public void update(
             String title,
             String content,
-            Boolean isPinned,
+            boolean isPinned,
+            NoticeType noticeType,
+            TargetRole targetRole,
             NoticeStatus status,
             LocalDateTime visibleFrom,
             LocalDateTime visibleTo
     ) {
-        this.title = title;
-        this.content = content;
-        this.isPinned = isPinned;
-        this.status = status;
+        this.title      = title;
+        this.content    = content;
+        this.isPinned   = isPinned;
+        this.noticeType = noticeType != null ? noticeType : NoticeType.GENERAL;
+        this.targetRole = targetRole != null ? targetRole : TargetRole.ALL;
+        this.status     = status;
         this.visibleFrom = visibleFrom;
-        this.visibleTo = visibleTo;
+        this.visibleTo   = visibleTo;
+    }
+
+    public void updateStatus(NoticeStatus status) {
+        this.status = status;
+    }
+
+    public void softDelete() {
+        this.status = NoticeStatus.DELETED;
     }
 
     public void increaseViewCount() {
-        this.viewCount = this.viewCount + 1;
+        this.viewCount++;
     }
 }

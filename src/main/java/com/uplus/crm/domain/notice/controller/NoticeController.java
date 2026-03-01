@@ -31,32 +31,35 @@ public class NoticeController {
 
     private final NoticeService noticeService;
 
-    @Operation(summary = "공지 생성")
+    @Operation(summary = "공지 생성 (ADMIN)",
+               description = "sendNotification=true 이면 대상 역할 직원에게 알림 발송")
     @PostMapping
     public ResponseEntity<NoticeResponse> createNotice(
             @AuthenticationPrincipal Integer empId,
             @Valid @RequestBody NoticeCreateRequest request
     ) {
-        NoticeResponse response = noticeService.createNotice(empId, request);
-        return ResponseEntity.status(HttpStatus.CREATED).body(response);
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(noticeService.createNotice(request, empId));
     }
 
-    @Operation(summary = "공지 목록 조회")
+    @Operation(summary = "공지 목록 조회",
+               description = "DELETED 제외, 고정글 우선 → 최신순 정렬")
     @GetMapping
     public ResponseEntity<NoticeListResponse> getNotices(
-            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "0")  int page,
             @RequestParam(defaultValue = "10") int size
     ) {
         return ResponseEntity.ok(noticeService.getNotices(page, size));
     }
 
-    @Operation(summary = "공지 상세 조회")
+    @Operation(summary = "공지 상세 조회", description = "조회 시 viewCount +1")
     @GetMapping("/{noticeId}")
     public ResponseEntity<NoticeResponse> getNotice(@PathVariable Integer noticeId) {
         return ResponseEntity.ok(noticeService.getNotice(noticeId));
     }
 
-    @Operation(summary = "공지 수정")
+    @Operation(summary = "공지 수정 (ADMIN)",
+               description = "visibleFrom 변경 시 status 자동 재결정. DELETED 상태는 수정 불가")
     @PutMapping("/{noticeId}")
     public ResponseEntity<NoticeResponse> updateNotice(
             @PathVariable Integer noticeId,
@@ -65,7 +68,7 @@ public class NoticeController {
         return ResponseEntity.ok(noticeService.updateNotice(noticeId, request));
     }
 
-    @Operation(summary = "공지 삭제(소프트 삭제)")
+    @Operation(summary = "공지 삭제 (ADMIN)", description = "소프트 삭제 — status → DELETED")
     @DeleteMapping("/{noticeId}")
     public ResponseEntity<Map<String, String>> deleteNotice(@PathVariable Integer noticeId) {
         noticeService.deleteNotice(noticeId);
