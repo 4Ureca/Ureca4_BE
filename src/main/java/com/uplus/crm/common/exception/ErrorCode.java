@@ -29,6 +29,7 @@ public enum ErrorCode {
     ACCOUNT_NOT_LINKED(HttpStatus.NOT_FOUND, "연동된 계정이 없습니다."),
     FILTER_GROUP_NOT_FOUND(HttpStatus.NOT_FOUND, "필터 그룹을 찾을 수 없습니다."),
     FILTER_NOT_FOUND(HttpStatus.NOT_FOUND, "유효하지 않은 필터입니다."),
+    NOTICE_NOT_FOUND(HttpStatus.NOT_FOUND, "공지사항을 찾을 수 없습니다."),
 
     DEPARTMENT_NOT_FOUND(HttpStatus.NOT_FOUND, "존재하지 않는 부서입니다."),
     JOB_ROLE_NOT_FOUND(HttpStatus.NOT_FOUND, "존재하지 않는 직무입니다."),
