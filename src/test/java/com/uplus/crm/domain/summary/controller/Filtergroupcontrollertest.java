@@ -5,11 +5,8 @@ import com.uplus.crm.common.config.SecurityConfig;
 import com.uplus.crm.common.exception.BusinessException;
 import com.uplus.crm.common.exception.ErrorCode;
 import com.uplus.crm.common.util.JwtUtil;
-import com.uplus.crm.domain.summary.dto.FilterGroupCreateRequest;
 import com.uplus.crm.domain.summary.dto.FilterGroupDetailResponse;
 import com.uplus.crm.domain.summary.dto.FilterGroupListResponse;
-import com.uplus.crm.domain.summary.dto.FilterGroupOrderRequest;
-import com.uplus.crm.domain.summary.dto.FilterGroupUpdateRequest;
 import com.uplus.crm.domain.summary.dto.FilterResponse;
 import com.uplus.crm.domain.summary.service.FilterGroupService;
 import org.junit.jupiter.api.DisplayName;
@@ -18,7 +15,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
-import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.test.web.servlet.MockMvc;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -53,7 +49,7 @@ class FilterGroupControllerTest {
     }
 
     // ─────────────────────────────────────────────
-    // GET /api/filters — 필터 정의 목록 조회
+    // GET /filters — 필터 정의 목록 조회
     // ─────────────────────────────────────────────
 
     @Test
@@ -70,7 +66,7 @@ class FilterGroupControllerTest {
 
         // when & then (인증 불필요 — permitAll이 아닌 경우 mockJwtAuth 필요)
         mockJwtAuth();
-        mockMvc.perform(get("/api/filters")
+        mockMvc.perform(get("/filters")
                         .header("Authorization", "Bearer mock-token"))
                 .andDo(print())
                 .andExpect(status().isOk())
@@ -80,7 +76,7 @@ class FilterGroupControllerTest {
     }
 
     // ─────────────────────────────────────────────
-    // POST /api/search-filters — 검색 조건 저장
+    // POST /search-filters — 검색 조건 저장
     // ─────────────────────────────────────────────
 
     @Test
@@ -115,7 +111,7 @@ class FilterGroupControllerTest {
                 """;
 
         // when & then
-        mockMvc.perform(post("/api/search-filters")
+        mockMvc.perform(post("/search-filters")
                         .header("Authorization", "Bearer mock-token")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(requestBody))
@@ -141,7 +137,7 @@ class FilterGroupControllerTest {
                 """;
 
         // when & then
-        mockMvc.perform(post("/api/search-filters")
+        mockMvc.perform(post("/search-filters")
                         .header("Authorization", "Bearer mock-token")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(requestBody))
@@ -164,7 +160,7 @@ class FilterGroupControllerTest {
                 """;
 
         // when & then
-        mockMvc.perform(post("/api/search-filters")
+        mockMvc.perform(post("/search-filters")
                         .header("Authorization", "Bearer mock-token")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(requestBody))
@@ -188,7 +184,7 @@ class FilterGroupControllerTest {
                 """;
 
         // when & then
-        mockMvc.perform(post("/api/search-filters")
+        mockMvc.perform(post("/search-filters")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(requestBody))
                 .andDo(print())
@@ -196,7 +192,7 @@ class FilterGroupControllerTest {
     }
 
     // ─────────────────────────────────────────────
-    // GET /api/search-filters — 내 필터 그룹 목록 조회
+    // GET /search-filters — 내 필터 그룹 목록 조회
     // ─────────────────────────────────────────────
 
     @Test
@@ -213,7 +209,7 @@ class FilterGroupControllerTest {
         given(filterGroupService.getMyFilterGroups(1)).willReturn(groups);
 
         // when & then
-        mockMvc.perform(get("/api/search-filters")
+        mockMvc.perform(get("/search-filters")
                         .header("Authorization", "Bearer mock-token"))
                 .andDo(print())
                 .andExpect(status().isOk())
@@ -223,7 +219,7 @@ class FilterGroupControllerTest {
     }
 
     // ─────────────────────────────────────────────
-    // GET /api/search-filters/{id} — 필터 그룹 상세 조회
+    // GET /search-filters/{id} — 필터 그룹 상세 조회
     // ─────────────────────────────────────────────
 
     @Test
@@ -248,7 +244,7 @@ class FilterGroupControllerTest {
         given(filterGroupService.getFilterGroupDetail(1, 1)).willReturn(response);
 
         // when & then
-        mockMvc.perform(get("/api/search-filters/1")
+        mockMvc.perform(get("/search-filters/1")
                         .header("Authorization", "Bearer mock-token"))
                 .andDo(print())
                 .andExpect(status().isOk())
@@ -265,7 +261,7 @@ class FilterGroupControllerTest {
                 .willThrow(new BusinessException(ErrorCode.FILTER_GROUP_NOT_FOUND));
 
         // when & then
-        mockMvc.perform(get("/api/search-filters/9999")
+        mockMvc.perform(get("/search-filters/9999")
                         .header("Authorization", "Bearer mock-token"))
                 .andDo(print())
                 .andExpect(status().isNotFound())
@@ -281,7 +277,7 @@ class FilterGroupControllerTest {
                 .willThrow(new BusinessException(ErrorCode.FORBIDDEN_ACCESS));
 
         // when & then
-        mockMvc.perform(get("/api/search-filters/1")
+        mockMvc.perform(get("/search-filters/1")
                         .header("Authorization", "Bearer mock-token"))
                 .andDo(print())
                 .andExpect(status().isForbidden())
@@ -289,7 +285,7 @@ class FilterGroupControllerTest {
     }
 
     // ─────────────────────────────────────────────
-    // PUT /api/search-filters/{id} — 필터 그룹 수정
+    // PUT /search-filters/{id} — 필터 그룹 수정
     // ─────────────────────────────────────────────
 
     @Test
@@ -324,7 +320,7 @@ class FilterGroupControllerTest {
                 """;
 
         // when & then
-        mockMvc.perform(put("/api/search-filters/1")
+        mockMvc.perform(put("/search-filters/1")
                         .header("Authorization", "Bearer mock-token")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(requestBody))
@@ -336,7 +332,7 @@ class FilterGroupControllerTest {
     }
 
     // ─────────────────────────────────────────────
-    // DELETE /api/search-filters/{id} — 필터 그룹 삭제
+    // DELETE /search-filters/{id} — 필터 그룹 삭제
     // ─────────────────────────────────────────────
 
     @Test
@@ -347,7 +343,7 @@ class FilterGroupControllerTest {
         willDoNothing().given(filterGroupService).deleteFilterGroup(1, 1);
 
         // when & then
-        mockMvc.perform(delete("/api/search-filters/1")
+        mockMvc.perform(delete("/search-filters/1")
                         .header("Authorization", "Bearer mock-token"))
                 .andDo(print())
                 .andExpect(status().isOk())
@@ -363,7 +359,7 @@ class FilterGroupControllerTest {
                 .given(filterGroupService).deleteFilterGroup(9999, 1);
 
         // when & then
-        mockMvc.perform(delete("/api/search-filters/9999")
+        mockMvc.perform(delete("/search-filters/9999")
                         .header("Authorization", "Bearer mock-token"))
                 .andDo(print())
                 .andExpect(status().isNotFound())
@@ -371,7 +367,7 @@ class FilterGroupControllerTest {
     }
 
     // ─────────────────────────────────────────────
-    // PUT /api/search-filters/order — 정렬 순서 변경
+    // PUT /search-filters/order — 정렬 순서 변경
     // ─────────────────────────────────────────────
 
     @Test
@@ -391,7 +387,7 @@ class FilterGroupControllerTest {
                 """;
 
         // when & then
-        mockMvc.perform(put("/api/search-filters/order")
+        mockMvc.perform(put("/search-filters/order")
                         .header("Authorization", "Bearer mock-token")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(requestBody))
@@ -413,7 +409,7 @@ class FilterGroupControllerTest {
                 """;
 
         // when & then
-        mockMvc.perform(put("/api/search-filters/order")
+        mockMvc.perform(put("/search-filters/order")
                         .header("Authorization", "Bearer mock-token")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(requestBody))
