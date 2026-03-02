@@ -74,7 +74,7 @@ public class NoticeController {
             @PathVariable int noticeId,
             @AuthenticationPrincipal CustomUserDetails userDetails
     ) {
-        return ApiResponse.ok(noticeService.getNoticeDetail(noticeId, userDetails.getEmpId()));
+        return ApiResponse.ok(noticeService.getNoticeDetail(noticeId, userDetails.getEmpId(), userDetails.getRoleName()));
     }
 
     // ── PUT /v1/notices/{noticeId} ────────────────────────────────────────────

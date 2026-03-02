@@ -95,8 +95,13 @@ public class NoticeService {
     // ── READ: 상세 + 조회수 증가 + 읽음 처리 ───────────────────────────────────
 
     @Transactional
-    public NoticeResponse getNoticeDetail(int noticeId, int empId) {
+    public NoticeResponse getNoticeDetail(int noticeId, int empId, String roleName) {
         Notice notice = getNoticeOrThrow(noticeId);
+
+        // 0. 상담사가 ADMIN 전용 공지에 접근하는 경우 차단
+        if (!"관리자".equals(roleName) && notice.getTargetRole() == TargetRole.ADMIN) {
+            throw new BusinessException(ErrorCode.FORBIDDEN_ACCESS);
+        }
 
         // 1. 조회수 증가
         notice.increaseViewCount();
