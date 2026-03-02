@@ -53,7 +53,7 @@ public class AuthController {
     @PostMapping("/google")
     public ResponseEntity<GoogleAuthResponseDto> googleLogin(
             @Valid @RequestBody GoogleAuthRequestDto request,
-            @Valid HttpServletResponse response) {
+            HttpServletResponse response) {
         return ResponseEntity.ok(authService.googleLogin(request, response));
     }
 
@@ -74,7 +74,7 @@ public class AuthController {
     @PostMapping("/login")
     public ResponseEntity<LoginResponseDto> login(
             @Valid @RequestBody LoginRequestDto request,
-            @Valid HttpServletResponse response) {
+            HttpServletResponse response) {
         return ResponseEntity.ok(authService.login(request, response));
     }
 

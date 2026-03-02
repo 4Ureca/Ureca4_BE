@@ -121,6 +121,11 @@ public class AuthServiceImpl implements AuthService {
         String email = googleOAuthUtil.getEmailFromAuthCode(request.getAuthorizationCode(), request.getRedirectUri());
         Employee employee = employeeRepository.findByEmail(email)
                 .orElseThrow(() -> new BusinessException(ErrorCode.ACCOUNT_NOT_LINKED));
+
+        if (!employee.getIsActive()) {
+            throw new BusinessException(ErrorCode.ACCOUNT_INACTIVE);
+        }
+
         return issueTokensAndRespond(employee, response, true);
     }
 
@@ -132,6 +137,10 @@ public class AuthServiceImpl implements AuthService {
 
         if (!passwordEncoder.matches(request.getPassword(), employee.getPassword())) {
             throw new BusinessException(ErrorCode.INVALID_CREDENTIALS);
+        }
+
+        if (!employee.getIsActive()) {
+            throw new BusinessException(ErrorCode.ACCOUNT_INACTIVE);
         }
 
         GoogleAuthResponseDto tokenResponse = issueTokensAndRespond(employee, response, true);

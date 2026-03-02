@@ -15,12 +15,14 @@ import lombok.RequiredArgsConstructor;
 import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 @Tag(name = "Admin - Employee Management", description = "관리자용 직원 계정 관리 API")
 @RestController
 @RequestMapping("/admin/employees")
 @RequiredArgsConstructor
+@PreAuthorize("hasRole('ADMIN')")
 public class EmployeeController {
 
     private final EmployeeService employeeService;
@@ -29,21 +31,20 @@ public class EmployeeController {
     /** 직원 계정 생성 */
     @Operation(summary = "직원 계정 생성", description = "신규 직원의 계정을 생성한다.")
     @PostMapping
-    @ResponseStatus(HttpStatus.CREATED)
-    public EmployeeCreateResponseDto createEmployee(
+    public ResponseEntity<EmployeeCreateResponseDto> createEmployee(
         @RequestBody EmployeeCreateRequestDto request
     ) {
-        return employeeAdminService.createEmployee(request);
+        return ResponseEntity.status(HttpStatus.CREATED).body(employeeAdminService.createEmployee(request));
     }
 
     /** 직원 계정 활성화 / 비활성화 */
     @PatchMapping("/{empId}/status")
     @Operation(summary = "직원 계정 활성화/비활성화", description = "직원 계정을 활성화/비활성화한다.")
-    public EmployeeStatusUpdateResponseDto updateEmployeeStatus(
+    public ResponseEntity<EmployeeStatusUpdateResponseDto> updateEmployeeStatus(
         @PathVariable Integer empId,
         @RequestBody EmployeeStatusUpdateRequestDto request
     ) {
-        return employeeAdminService.updateEmployeeStatus(empId, request);
+        return ResponseEntity.ok(employeeAdminService.updateEmployeeStatus(empId, request));
     }
 
     @Operation(summary = "직원 계정 정보 목록 조회", description = "필터링 및 키워드 검색을 포함한 직원 목록을 페이징하여 조회합니다.")
