@@ -5,6 +5,7 @@ import com.uplus.crm.common.config.SecurityConfig;
 import com.uplus.crm.common.exception.BusinessException;
 import com.uplus.crm.common.exception.ErrorCode;
 import com.uplus.crm.common.util.JwtUtil;
+import com.uplus.crm.domain.account.repository.mysql.EmployeeRepository;
 import com.uplus.crm.domain.account.dto.request.GoogleAuthRequestDto;
 import com.uplus.crm.domain.account.dto.response.GoogleAuthResponseDto;
 import com.uplus.crm.domain.account.service.AuthService;
@@ -33,7 +34,8 @@ class AuthControllerTest {
     @Autowired ObjectMapper objectMapper;
 
     @MockitoBean AuthService authService;
-    @MockitoBean JwtUtil jwtUtil;  // SecurityConfig 내 JwtAuthFilter 의존성
+    @MockitoBean JwtUtil jwtUtil;
+    @MockitoBean EmployeeRepository employeeRepository; // JwtAuthFilter 의존성
 
     // ─────────────────────────────────────────────
     // POST /auth/google

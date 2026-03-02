@@ -4,6 +4,8 @@ import com.uplus.crm.domain.account.dto.request.EmployeeCreateRequestDto;
 import com.uplus.crm.domain.account.dto.request.EmployeeStatusUpdateRequestDto;
 import com.uplus.crm.domain.account.dto.response.EmployeeCreateResponseDto;
 import com.uplus.crm.domain.account.dto.response.EmployeeStatusUpdateResponseDto;
+import com.uplus.crm.common.util.JwtUtil;
+import com.uplus.crm.domain.account.repository.mysql.EmployeeRepository;
 import com.uplus.crm.domain.account.service.EmployeeAdminService;
 import com.uplus.crm.domain.account.service.EmployeeService;
 import java.time.LocalDate;
@@ -34,6 +36,10 @@ class EmployeeAdminControllerTest {
   private EmployeeAdminService employeeAdminService;
   @MockitoBean
   private EmployeeService employeeService;
+  @MockitoBean
+  private JwtUtil jwtUtil;                         // JwtAuthFilter 의존성
+  @MockitoBean
+  private EmployeeRepository employeeRepository;   // JwtAuthFilter 의존성
 
   @Autowired
   private ObjectMapper objectMapper;
