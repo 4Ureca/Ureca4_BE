@@ -5,6 +5,7 @@ import com.uplus.crm.common.config.SecurityConfig;
 import com.uplus.crm.common.exception.BusinessException;
 import com.uplus.crm.common.exception.ErrorCode;
 import com.uplus.crm.common.util.JwtUtil;
+import com.uplus.crm.domain.account.repository.mysql.EmployeeRepository;
 import com.uplus.crm.domain.summary.dto.FilterGroupDetailResponse;
 import com.uplus.crm.domain.summary.dto.FilterGroupListResponse;
 import com.uplus.crm.domain.summary.dto.FilterResponse;
@@ -41,6 +42,9 @@ class FilterGroupControllerTest {
 
     @MockitoBean
     JwtUtil jwtUtil;
+
+    @MockitoBean
+    EmployeeRepository employeeRepository; // JwtAuthFilter 의존성
 
     // JWT 인증 우회용 헬퍼
     private void mockJwtAuth() {

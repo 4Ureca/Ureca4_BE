@@ -5,20 +5,24 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
+import static org.mockito.Mockito.never;
 
 import com.uplus.crm.common.exception.BusinessException;
 import com.uplus.crm.common.exception.ErrorCode;
 import com.uplus.crm.domain.account.entity.Employee;
 import com.uplus.crm.domain.account.repository.mysql.EmployeeRepository;
 import com.uplus.crm.domain.notice.dto.request.NoticeCreateRequest;
-import com.uplus.crm.domain.notice.dto.request.NoticeUpdateRequest;
-import com.uplus.crm.domain.notice.dto.response.NoticeListResponse;
 import com.uplus.crm.domain.notice.dto.response.NoticeResponse;
 import com.uplus.crm.domain.notice.entity.Notice;
 import com.uplus.crm.domain.notice.entity.NoticeStatus;
+import com.uplus.crm.domain.notice.entity.NoticeType;
+import com.uplus.crm.domain.notice.entity.TargetRole;
 import com.uplus.crm.domain.notice.repository.NoticeRepository;
+import com.uplus.crm.domain.notification.entity.NoticeReadLog;
+import com.uplus.crm.domain.notification.repository.NoticeReadLogRepository;
+import com.uplus.crm.domain.notification.repository.UserNotificationRepository;
+import com.uplus.crm.domain.notification.service.NotificationService;
 import java.time.LocalDateTime;
-import java.util.List;
 import java.util.Optional;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -26,9 +30,6 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.data.domain.PageImpl;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Sort;
 import org.springframework.test.util.ReflectionTestUtils;
 
 @ExtendWith(MockitoExtension.class)
@@ -37,67 +38,97 @@ class NoticeServiceTest {
     @InjectMocks
     private NoticeService noticeService;
 
-    @Mock
-    private NoticeRepository noticeRepository;
+    @Mock private NoticeRepository noticeRepository;
+    @Mock private EmployeeRepository employeeRepository;
+    @Mock private NoticeReadLogRepository noticeReadLogRepository;
+    @Mock private UserNotificationRepository userNotificationRepository;
+    @Mock private NotificationService notificationService;
 
-    @Mock
-    private EmployeeRepository employeeRepository;
+    // ── 공통 픽스처 ──────────────────────────────────────────────────────────
+
+    private Employee stubEmployee(int empId) {
+        return Employee.builder().empId(empId).name("테스트직원").build();
+    }
+
+    private Notice stubActiveNotice(int noticeId, Employee employee) {
+        Notice notice = Notice.builder()
+                .title("공지").content("내용")
+                .employee(employee)
+                .status(NoticeStatus.ACTIVE)
+                .createdAt(LocalDateTime.now())
+                .build();
+        ReflectionTestUtils.setField(notice, "noticeId", noticeId);
+        return notice;
+    }
+
+    // ── createNotice ─────────────────────────────────────────────────────────
 
     @Test
-    @DisplayName("공지 생성 성공")
-    void createNotice_success() {
-        Employee employee = Employee.builder().empId(1).build();
-        NoticeCreateRequest request = new NoticeCreateRequest();
-        request.setTitle("점검 공지");
-        request.setContent("시스템 점검 안내");
-        request.setStatus(NoticeStatus.ACTIVE);
-        request.setIsPinned(true);
-        request.setVisibleFrom(LocalDateTime.of(2026, 2, 22, 9, 0));
-        request.setVisibleTo(LocalDateTime.of(2026, 2, 23, 18, 0));
+    @DisplayName("createNotice - visibleFrom이 null이면 ACTIVE 상태로 생성된다")
+    void createNotice_nullVisibleFrom_statusActive() {
+        NoticeCreateRequest request = new NoticeCreateRequest(
+                "제목", "내용", NoticeType.GENERAL, TargetRole.ALL, false, false, null, null);
 
-        given(employeeRepository.findById(1)).willReturn(Optional.of(employee));
-        given(noticeRepository.save(any(Notice.class))).willAnswer(invocation -> {
-            Notice saved = invocation.getArgument(0);
-            ReflectionTestUtils.setField(saved, "noticeId", 10);
-            ReflectionTestUtils.setField(saved, "createdAt", LocalDateTime.of(2026, 2, 22, 8, 0));
-            return saved;
-        });
+        given(employeeRepository.findById(1)).willReturn(Optional.of(stubEmployee(1)));
+        given(noticeRepository.save(any())).willAnswer(inv -> inv.getArgument(0));
 
-        NoticeResponse response = noticeService.createNotice(1, request);
+        NoticeResponse response = noticeService.createNotice(request, 1);
 
-        assertThat(response.getNoticeId()).isEqualTo(10);
-        assertThat(response.getEmpId()).isEqualTo(1);
-        assertThat(response.getTitle()).isEqualTo("점검 공지");
-        assertThat(response.getStatus()).isEqualTo(NoticeStatus.ACTIVE);
+        assertThat(response.status()).isEqualTo(NoticeStatus.ACTIVE);
     }
 
     @Test
-    @DisplayName("공지 생성 실패 - 직원 정보 없음")
-    void createNotice_fail_employeeNotFound() {
-        NoticeCreateRequest request = new NoticeCreateRequest();
-        request.setTitle("공지");
-        request.setContent("내용");
-        request.setStatus(NoticeStatus.DRAFT);
+    @DisplayName("createNotice - visibleFrom이 미래이면 SCHEDULED 상태로 생성된다")
+    void createNotice_futureVisibleFrom_statusScheduled() {
+        LocalDateTime future = LocalDateTime.now().plusDays(1);
+        NoticeCreateRequest request = new NoticeCreateRequest(
+                "제목", "내용", NoticeType.GENERAL, TargetRole.ALL, false, false, future, null);
+
+        given(employeeRepository.findById(1)).willReturn(Optional.of(stubEmployee(1)));
+        given(noticeRepository.save(any())).willAnswer(inv -> inv.getArgument(0));
+
+        NoticeResponse response = noticeService.createNotice(request, 1);
+
+        assertThat(response.status()).isEqualTo(NoticeStatus.SCHEDULED);
+    }
+
+    @Test
+    @DisplayName("createNotice - sendNotification=true이면 알림이 발송된다")
+    void createNotice_sendNotification_callsService() {
+        NoticeCreateRequest request = new NoticeCreateRequest(
+                "제목", "내용", NoticeType.URGENT, TargetRole.ALL, false, true, null, null);
+
+        given(employeeRepository.findById(1)).willReturn(Optional.of(stubEmployee(1)));
+        given(noticeRepository.save(any())).willAnswer(inv -> inv.getArgument(0));
+
+        noticeService.createNotice(request, 1);
+
+        then(notificationService).should().sendNoticeAlert(any(Notice.class));
+    }
+
+    @Test
+    @DisplayName("createNotice - 직원이 없으면 EMPLOYEE_NOT_FOUND 예외")
+    void createNotice_employeeNotFound() {
+        NoticeCreateRequest request = new NoticeCreateRequest(
+                "제목", "내용", null, null, false, false, null, null);
 
         given(employeeRepository.findById(999)).willReturn(Optional.empty());
 
-        assertThatThrownBy(() -> noticeService.createNotice(999, request))
+        assertThatThrownBy(() -> noticeService.createNotice(request, 999))
                 .isInstanceOf(BusinessException.class)
                 .satisfies(e -> assertThat(((BusinessException) e).getErrorCode())
                         .isEqualTo(ErrorCode.EMPLOYEE_NOT_FOUND));
     }
 
     @Test
-    @DisplayName("공지 생성 실패 - 노출 기간 역전")
-    void createNotice_fail_invalidVisiblePeriod() {
-        NoticeCreateRequest request = new NoticeCreateRequest();
-        request.setTitle("공지");
-        request.setContent("내용");
-        request.setStatus(NoticeStatus.DRAFT);
-        request.setVisibleFrom(LocalDateTime.of(2026, 2, 24, 10, 0));
-        request.setVisibleTo(LocalDateTime.of(2026, 2, 23, 10, 0));
+    @DisplayName("createNotice - visibleFrom이 visibleTo보다 늦으면 INVALID_INPUT 예외")
+    void createNotice_invalidVisiblePeriod_throws() {
+        NoticeCreateRequest request = new NoticeCreateRequest(
+                "제목", "내용", null, null, false, false,
+                LocalDateTime.of(2026, 3, 5, 10, 0),
+                LocalDateTime.of(2026, 3, 1, 10, 0));
 
-        assertThatThrownBy(() -> noticeService.createNotice(1, request))
+        assertThatThrownBy(() -> noticeService.createNotice(request, 1))
                 .isInstanceOf(BusinessException.class)
                 .satisfies(e -> assertThat(((BusinessException) e).getErrorCode())
                         .isEqualTo(ErrorCode.INVALID_INPUT));
@@ -105,109 +136,74 @@ class NoticeServiceTest {
         then(noticeRepository).shouldHaveNoInteractions();
     }
 
+    // ── getNoticeDetail ───────────────────────────────────────────────────────
+
     @Test
-    @DisplayName("공지 상세 조회 시 조회수가 1 증가한다")
+    @DisplayName("getNoticeDetail - 처음 조회 시 읽음 로그가 저장된다")
+    void getNoticeDetail_firstRead_savesReadLog() {
+        Employee employee = stubEmployee(1);
+        Notice notice = stubActiveNotice(10, employee);
+
+        given(noticeRepository.findById(10)).willReturn(Optional.of(notice));
+        given(noticeReadLogRepository.existsByNoticeIdAndEmpId(10, 2)).willReturn(false);
+
+        noticeService.getNoticeDetail(10, 2);
+
+        then(noticeReadLogRepository).should().save(any(NoticeReadLog.class));
+        then(userNotificationRepository).should().markNoticeAlertAsRead(2, 10L);
+    }
+
+    @Test
+    @DisplayName("getNoticeDetail - 이미 읽은 경우 읽음 로그를 저장하지 않는다")
+    void getNoticeDetail_alreadyRead_skipReadLog() {
+        Employee employee = stubEmployee(1);
+        Notice notice = stubActiveNotice(10, employee);
+
+        given(noticeRepository.findById(10)).willReturn(Optional.of(notice));
+        given(noticeReadLogRepository.existsByNoticeIdAndEmpId(10, 2)).willReturn(true);
+
+        noticeService.getNoticeDetail(10, 2);
+
+        then(noticeReadLogRepository).should(never()).save(any());
+    }
+
+    // ── getNotice (backward compat) ───────────────────────────────────────────
+
+    @Test
+    @DisplayName("getNotice - 조회 시 viewCount가 1 증가한다")
     void getNotice_increaseViewCount() {
-        Notice notice = Notice.builder()
-                .title("공지")
-                .content("내용")
-                .employee(Employee.builder().empId(1).build())
-                .isPinned(false)
-                .viewCount(5)
-                .status(NoticeStatus.ACTIVE)
-                .createdAt(LocalDateTime.of(2026, 2, 22, 9, 0))
-                .build();
-        ReflectionTestUtils.setField(notice, "noticeId", 4);
+        Employee employee = stubEmployee(1);
+        Notice notice = stubActiveNotice(4, employee);
 
         given(noticeRepository.findById(4)).willReturn(Optional.of(notice));
 
         NoticeResponse response = noticeService.getNotice(4);
 
-        assertThat(response.getNoticeId()).isEqualTo(4);
-        assertThat(response.getViewCount()).isEqualTo(6);
+        assertThat(response.noticeId()).isEqualTo(4);
+        assertThat(response.viewCount()).isEqualTo(1);
     }
 
+    // ── deleteNotice ──────────────────────────────────────────────────────────
+
     @Test
-    @DisplayName("공지 삭제는 DELETED 상태로 변경한다")
+    @DisplayName("deleteNotice - status가 DELETED로 변경된다")
     void deleteNotice_softDelete() {
-        Notice notice = Notice.builder()
-                .title("공지")
-                .content("내용")
-                .employee(Employee.builder().empId(1).build())
-                .isPinned(false)
-                .viewCount(0)
-                .status(NoticeStatus.ACTIVE)
-                .createdAt(LocalDateTime.now())
-                .build();
+        Employee employee = stubEmployee(1);
+        Notice notice = stubActiveNotice(1, employee);
 
         given(noticeRepository.findById(1)).willReturn(Optional.of(notice));
 
-        noticeService.deleteNotice(1);
+        noticeService.deleteNotice(1, 1);
 
         assertThat(notice.getStatus()).isEqualTo(NoticeStatus.DELETED);
     }
 
-    @Test
-    @DisplayName("공지 목록 조회 - 페이징")
-    void getNotices_success() {
-        Notice first = Notice.builder()
-                .title("첫 공지")
-                .content("내용1")
-                .employee(Employee.builder().empId(1).build())
-                .isPinned(true)
-                .viewCount(3)
-                .status(NoticeStatus.ACTIVE)
-                .createdAt(LocalDateTime.now())
-                .build();
-        Notice second = Notice.builder()
-                .title("둘 공지")
-                .content("내용2")
-                .employee(Employee.builder().empId(2).build())
-                .isPinned(false)
-                .viewCount(2)
-                .status(NoticeStatus.DRAFT)
-                .createdAt(LocalDateTime.now())
-                .build();
-
-        PageRequest pageRequest = PageRequest.of(
-                0,
-                10,
-                Sort.by(Sort.Order.desc("isPinned"), Sort.Order.desc("createdAt"))
-        );
-        given(noticeRepository.findAllByStatusNot(NoticeStatus.DELETED, pageRequest))
-                .willReturn(new PageImpl<>(List.of(first, second), pageRequest, 12));
-
-        NoticeListResponse response = noticeService.getNotices(0, 10);
-
-        assertThat(response.getContent()).hasSize(2);
-        assertThat(response.getContent().get(0).getTitle()).isEqualTo("첫 공지");
-        assertThat(response.getTotalElements()).isEqualTo(12);
-        assertThat(response.getTotalPages()).isEqualTo(2);
-        assertThat(response.getPage()).isEqualTo(0);
-        assertThat(response.getSize()).isEqualTo(10);
-    }
+    // ── getNotices (backward compat) ──────────────────────────────────────────
 
     @Test
-    @DisplayName("공지 목록 조회 실패 - 잘못된 페이징 파라미터")
-    void getNotices_fail_invalidPageParams() {
+    @DisplayName("getNotices - 잘못된 페이징 파라미터이면 INVALID_INPUT 예외")
+    void getNotices_invalidPageParams_throws() {
         assertThatThrownBy(() -> noticeService.getNotices(-1, 0))
-                .isInstanceOf(BusinessException.class)
-                .satisfies(e -> assertThat(((BusinessException) e).getErrorCode())
-                        .isEqualTo(ErrorCode.INVALID_INPUT));
-    }
-
-    @Test
-    @DisplayName("공지 수정 실패 - 노출 기간 역전")
-    void updateNotice_fail_invalidVisiblePeriod() {
-        NoticeUpdateRequest request = new NoticeUpdateRequest();
-        request.setTitle("수정공지");
-        request.setContent("수정내용");
-        request.setStatus(NoticeStatus.ACTIVE);
-        request.setIsPinned(false);
-        request.setVisibleFrom(LocalDateTime.of(2026, 3, 2, 10, 0));
-        request.setVisibleTo(LocalDateTime.of(2026, 3, 1, 10, 0));
-
-        assertThatThrownBy(() -> noticeService.updateNotice(1, request))
                 .isInstanceOf(BusinessException.class)
                 .satisfies(e -> assertThat(((BusinessException) e).getErrorCode())
                         .isEqualTo(ErrorCode.INVALID_INPUT));

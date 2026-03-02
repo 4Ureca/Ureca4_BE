@@ -68,7 +68,7 @@ public class FilterGroupController {
     })
     @PostMapping("/search-filters")
     public ResponseEntity<FilterGroupDetailResponse> createFilterGroup(
-            @AuthenticationPrincipal Integer empId,
+            @AuthenticationPrincipal(expression = "empId") Integer empId,
             @Valid @RequestBody FilterGroupCreateRequest request) {
 
         FilterGroupDetailResponse response = filterGroupService.createFilterGroup(empId, request);
@@ -83,7 +83,7 @@ public class FilterGroupController {
     @ApiResponse(responseCode = "200", description = "조회 성공")
     @GetMapping("/search-filters")
     public ResponseEntity<Map<String, List<FilterGroupListResponse>>> getMyFilterGroups(
-            @AuthenticationPrincipal Integer empId) {
+            @AuthenticationPrincipal(expression = "empId") Integer empId) {
 
         List<FilterGroupListResponse> groups = filterGroupService.getMyFilterGroups(empId);
         return ResponseEntity.ok(Map.of("groups", groups));
@@ -104,7 +104,7 @@ public class FilterGroupController {
     @GetMapping("/search-filters/{id}")
     public ResponseEntity<FilterGroupDetailResponse> getFilterGroupDetail(
             @Parameter(description = "필터 그룹 ID") @PathVariable("id") Integer filterGroupId,
-            @AuthenticationPrincipal Integer empId) {
+            @AuthenticationPrincipal(expression = "empId") Integer empId) {
 
         FilterGroupDetailResponse response =
                 filterGroupService.getFilterGroupDetail(filterGroupId, empId);
@@ -128,7 +128,7 @@ public class FilterGroupController {
     @PutMapping("/search-filters/{id}")
     public ResponseEntity<FilterGroupDetailResponse> updateFilterGroup(
             @Parameter(description = "필터 그룹 ID") @PathVariable("id") Integer filterGroupId,
-            @AuthenticationPrincipal Integer empId,
+            @AuthenticationPrincipal(expression = "empId") Integer empId,
             @Valid @RequestBody FilterGroupUpdateRequest request) {
 
         FilterGroupDetailResponse response =
@@ -151,7 +151,7 @@ public class FilterGroupController {
     @DeleteMapping("/search-filters/{id}")
     public ResponseEntity<Map<String, String>> deleteFilterGroup(
             @Parameter(description = "필터 그룹 ID") @PathVariable("id") Integer filterGroupId,
-            @AuthenticationPrincipal Integer empId) {
+            @AuthenticationPrincipal(expression = "empId") Integer empId) {
 
         filterGroupService.deleteFilterGroup(filterGroupId, empId);
         return ResponseEntity.ok(Map.of("message", "필터 그룹이 삭제되었습니다"));
@@ -169,7 +169,7 @@ public class FilterGroupController {
     })
     @PutMapping("/search-filters/order")
     public ResponseEntity<Map<String, String>> updateFilterGroupOrder(
-            @AuthenticationPrincipal Integer empId,
+            @AuthenticationPrincipal(expression = "empId") Integer empId,
             @Valid @RequestBody FilterGroupOrderRequest request) {
 
         filterGroupService.updateFilterGroupOrder(empId, request);

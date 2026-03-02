@@ -7,7 +7,7 @@ import lombok.Getter;
 @Getter
 @Builder
 public class NoticeListResponse {
-    private List<NoticeResponse> content;
+    private List<NoticeSummary> content;
     private long totalElements;
     private int totalPages;
     private int page;
