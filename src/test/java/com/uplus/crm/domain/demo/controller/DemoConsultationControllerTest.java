@@ -26,6 +26,7 @@ import com.uplus.crm.domain.demo.service.DemoConsultationService;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Optional;
 
 import org.junit.jupiter.api.DisplayName;
@@ -82,6 +83,7 @@ class DemoConsultationControllerTest {
         return new DemoConsultDataResponse(
                 1L, "홍길동", "010-1234-5678", "개인", "남성",
                 LocalDate.of(1990, 1, 1), "VIP", "hong@example.com",
+                List.of(),
                 "CALL", "CAT001", "요금", "청구", "과금오류",
                 180, null, null, null
         );
@@ -153,7 +155,7 @@ class DemoConsultationControllerTest {
         mockAgentAuth();
 
         DemoConsultSubmitRequest request = new DemoConsultSubmitRequest(
-                1L, "CALL", "CAT001", 180,
+                1L, "CALL", "CAT001", 180, null,
                 "고객 요금 오류 제기", "시스템 확인", null
         );
 
