@@ -4,6 +4,7 @@ import com.uplus.crm.common.exception.BusinessException;
 import com.uplus.crm.common.exception.ErrorCode;
 import com.uplus.crm.domain.demo.dto.request.DemoConsultSubmitRequest;
 import com.uplus.crm.domain.demo.dto.response.DemoConsultDataResponse;
+import com.uplus.crm.domain.demo.dto.response.DemoSubscribedProduct;
 import com.uplus.crm.domain.demo.dto.response.DemoConsultSubmitResponse;
 import com.uplus.crm.domain.demo.entity.ConsultationCategoryPolicy;
 import com.uplus.crm.domain.demo.entity.ConsultationResult;
@@ -11,6 +12,7 @@ import com.uplus.crm.domain.demo.entity.Customer;
 import com.uplus.crm.domain.demo.repository.DemoConsultationCategoryRepository;
 import com.uplus.crm.domain.demo.repository.DemoConsultationResultRepository;
 import com.uplus.crm.domain.demo.repository.DemoCustomerRepository;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -37,6 +39,13 @@ public class DemoConsultationService {
         ConsultationCategoryPolicy category = categoryRepository.findById(result.getCategoryCode())
                 .orElseThrow(() -> new BusinessException(ErrorCode.CONSULTATION_NOT_FOUND));
 
+        List<DemoSubscribedProduct> subscribedProducts = customerRepository
+                .findActiveSubscribedProducts(customer.getCustomerId())
+                .stream()
+                .map(p -> new DemoSubscribedProduct(
+                        p.getProductType(), p.getProductCode(), p.getProductName(), p.getCategory()))
+                .toList();
+
         return new DemoConsultDataResponse(
                 customer.getCustomerId(),
                 customer.getName(),
@@ -46,6 +55,7 @@ public class DemoConsultationService {
                 customer.getBirthDate(),
                 customer.getGradeCode(),
                 customer.getEmail(),
+                subscribedProducts,
                 result.getChannel(),
                 category.getCategoryCode(),
                 category.getLargeCategory(),

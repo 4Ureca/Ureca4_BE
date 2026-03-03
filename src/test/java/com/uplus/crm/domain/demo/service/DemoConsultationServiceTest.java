@@ -21,6 +21,7 @@ import com.uplus.crm.domain.demo.repository.DemoCustomerRepository;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Optional;
 
 import org.junit.jupiter.api.DisplayName;
@@ -88,6 +89,7 @@ class DemoConsultationServiceTest {
         given(consultationResultRepository.findOneRandom()).willReturn(Optional.of(result));
         given(customerRepository.findById(1L)).willReturn(Optional.of(customer));
         given(categoryRepository.findById("CAT001")).willReturn(Optional.of(category));
+        given(customerRepository.findActiveSubscribedProducts(1L)).willReturn(List.of());
 
         DemoConsultDataResponse response = demoConsultationService.getRandomConsultData();
 
@@ -98,6 +100,7 @@ class DemoConsultationServiceTest {
         assertThat(response.categoryCode()).isEqualTo("CAT001");
         assertThat(response.largeCategory()).isEqualTo("요금");
         assertThat(response.durationSec()).isEqualTo(180);
+        assertThat(response.subscribedProducts()).isEmpty();
         // IAM 필드는 반드시 null
         assertThat(response.iamIssue()).isNull();
         assertThat(response.iamAction()).isNull();
@@ -154,7 +157,7 @@ class DemoConsultationServiceTest {
     @DisplayName("submitConsult - 정상 저장 후 consultId와 createdAt을 반환한다")
     void submitConsult_success_returnsSavedIdAndCreatedAt() {
         DemoConsultSubmitRequest request = new DemoConsultSubmitRequest(
-                1L, "CALL", "CAT001", 240,
+                1L, "CALL", "CAT001", 240, null,
                 "고객이 요금 오류 제기", "시스템 확인 후 재청구", "추후 모니터링 필요"
         );
 
@@ -184,7 +187,7 @@ class DemoConsultationServiceTest {
     @DisplayName("submitConsult - 저장 시 empId가 인증된 직원 ID로 설정된다")
     void submitConsult_setsEmpIdFromAuthentication() {
         DemoConsultSubmitRequest request = new DemoConsultSubmitRequest(
-                2L, "CHATTING", "CAT002", 300, null, null, null
+                2L, "CHATTING", "CAT002", 300, null, null, null, null
         );
 
         given(consultationResultRepository.save(any(ConsultationResult.class)))

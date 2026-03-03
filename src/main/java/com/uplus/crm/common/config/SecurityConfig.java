@@ -41,6 +41,7 @@ public class SecurityConfig {
                     "/swagger-ui/**",
                     "/v3/api-docs/**",
                     "/webjars/**",
+                    "/error",
                     "/auth/login",
                     "/auth/google/**",
                     "/auth/refresh",
