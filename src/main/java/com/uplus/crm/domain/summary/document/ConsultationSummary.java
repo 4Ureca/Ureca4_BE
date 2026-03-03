@@ -18,6 +18,7 @@ import org.springframework.data.mongodb.core.mapping.Document;
 @CompoundIndex(name = "idx_consultedAt_agentId",
     def = "{'consultedAt':-1,'agent.id':1}")
 @Getter
+@Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
@@ -45,12 +46,14 @@ public class ConsultationSummary {
   private LocalDateTime createdAt;
 
   @Getter
+  @Builder
   public static class Agent {
     private Long _id;
     private String name;
   }
 
   @Getter
+  @Builder
   public static class Category {
     private String code;
     private String large;
@@ -59,6 +62,7 @@ public class ConsultationSummary {
   }
 
   @Getter
+  @Builder
   public static class Iam {
     private String issue;
     private String action;
@@ -68,6 +72,7 @@ public class ConsultationSummary {
   }
 
   @Getter
+  @Builder
   public static class Summary {
     private String status;
     private String content;
@@ -75,6 +80,7 @@ public class ConsultationSummary {
   }
 
   @Getter
+  @Builder
   public static class Customer {
     private Long _id;
     private String type;
@@ -86,6 +92,7 @@ public class ConsultationSummary {
   }
 
   @Getter
+  @Builder
   public static class Cancellation {
     private Boolean intent;
     private Boolean defenseAttempted;
