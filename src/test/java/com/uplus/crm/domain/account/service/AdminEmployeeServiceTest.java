@@ -18,7 +18,6 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
@@ -183,45 +182,41 @@ class AdminEmployeeServiceTest {
         @Test
         @DisplayName("실패 - 요청 본문 null")
         void fail_nullRequest() {
-          given(employeeRepository.findById(1)).willReturn(Optional.of(mockEmployee));
-
-          assertThatThrownBy(() -> adminEmployeeService.updateEmployee(1, null))
-              .isInstanceOf(NullPointerException.class);
+            assertThatThrownBy(() -> adminEmployeeService.updateEmployee(1, null))
+                    .isInstanceOf(BusinessException.class)
+                    .satisfies(e -> assertThat(((BusinessException) e).getErrorCode())
+                            .isEqualTo(ErrorCode.INVALID_INPUT));
         }
 
         @Test
         @DisplayName("실패 - 이름 blank")
         void fail_blankName() {
-          AdminEmployeeUpdateRequestDto req = AdminEmployeeUpdateRequestDto.builder()
-              .name("")
-              .email("hong@lgup.com")
-              .deptId(10)
-              .jobRoleId(20)
-              .build();
+            AdminEmployeeUpdateRequestDto req = AdminEmployeeUpdateRequestDto.builder()
+                    .name("")
+                    .email("hong@lgup.com")
+                    .deptId(10)
+                    .jobRoleId(20)
+                    .build();
 
-          given(employeeRepository.findById(1)).willReturn(Optional.of(mockEmployee));
-
-          assertThatThrownBy(() -> adminEmployeeService.updateEmployee(1, req))
-              .isInstanceOf(BusinessException.class)
-              .satisfies(e -> assertThat(((BusinessException) e).getErrorCode())
-                  .isEqualTo(ErrorCode.INVALID_INPUT));
+            assertThatThrownBy(() -> adminEmployeeService.updateEmployee(1, req))
+                    .isInstanceOf(BusinessException.class)
+                    .satisfies(e -> assertThat(((BusinessException) e).getErrorCode())
+                            .isEqualTo(ErrorCode.INVALID_INPUT));
         }
 
         @Test
         @DisplayName("실패 - deptId null")
         void fail_nullDeptId() {
-          AdminEmployeeUpdateRequestDto req = AdminEmployeeUpdateRequestDto.builder()
-              .name("홍길동")
-              .email("hong@lgup.com")
-              .jobRoleId(20)
-              .build();
+            AdminEmployeeUpdateRequestDto req = AdminEmployeeUpdateRequestDto.builder()
+                    .name("홍길동")
+                    .email("hong@lgup.com")
+                    .jobRoleId(20)
+                    .build();
 
-          given(employeeRepository.findById(1)).willReturn(Optional.of(mockEmployee));
-
-          assertThatThrownBy(() -> adminEmployeeService.updateEmployee(1, req))
-              .isInstanceOf(BusinessException.class)
-              .satisfies(e -> assertThat(((BusinessException) e).getErrorCode())
-                  .isEqualTo(ErrorCode.INVALID_INPUT));
+            assertThatThrownBy(() -> adminEmployeeService.updateEmployee(1, req))
+                    .isInstanceOf(BusinessException.class)
+                    .satisfies(e -> assertThat(((BusinessException) e).getErrorCode())
+                            .isEqualTo(ErrorCode.INVALID_INPUT));
         }
 
         @Test
