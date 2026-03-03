@@ -13,8 +13,10 @@ import com.uplus.crm.domain.demo.dto.request.DemoConsultSubmitRequest;
 import com.uplus.crm.domain.demo.dto.response.DemoConsultDataResponse;
 import com.uplus.crm.domain.demo.dto.response.DemoConsultSubmitResponse;
 import com.uplus.crm.domain.consultation.entity.ConsultationCategoryPolicy;
+import com.uplus.crm.domain.consultation.entity.ConsultationRawText;
 import com.uplus.crm.domain.consultation.entity.ConsultationResult;
 import com.uplus.crm.domain.consultation.entity.Customer;
+import com.uplus.crm.domain.consultation.repository.ConsultationRawTextRepository;
 import com.uplus.crm.domain.demo.repository.DemoConsultationCategoryRepository;
 import com.uplus.crm.domain.demo.repository.DemoConsultationResultRepository;
 import com.uplus.crm.domain.demo.repository.DemoCustomerRepository;
@@ -41,6 +43,7 @@ class DemoConsultationServiceTest {
     @Mock private DemoConsultationResultRepository consultationResultRepository;
     @Mock private DemoCustomerRepository customerRepository;
     @Mock private DemoConsultationCategoryRepository categoryRepository;
+    @Mock private ConsultationRawTextRepository rawTextRepository;
 
     // ── 픽스처 헬퍼 ─────────────────────────────────────────────────────────
 
@@ -90,6 +93,7 @@ class DemoConsultationServiceTest {
         given(customerRepository.findById(1L)).willReturn(Optional.of(customer));
         given(categoryRepository.findById("CAT001")).willReturn(Optional.of(category));
         given(customerRepository.findActiveSubscribedProducts(1L)).willReturn(List.of());
+        given(rawTextRepository.findFirstByConsultId(10L)).willReturn(Optional.empty());
 
         DemoConsultDataResponse response = demoConsultationService.getRandomConsultData();
 
@@ -105,6 +109,8 @@ class DemoConsultationServiceTest {
         assertThat(response.iamIssue()).isNull();
         assertThat(response.iamAction()).isNull();
         assertThat(response.iamMemo()).isNull();
+        // rawTextJson - 원문 없으면 null
+        assertThat(response.rawTextJson()).isNull();
     }
 
     @Test

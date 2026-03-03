@@ -62,6 +62,9 @@ public record ConsultDataResponse(
         String iamAction,
 
         @Schema(description = "IAM 메모", example = "추후 모니터링 필요")
-        String iamMemo
+        String iamMemo,
+
+        @Schema(description = "상담 원문 JSON", example = "{\"messages\":[...]}")
+        String rawTextJson
 ) {
 }

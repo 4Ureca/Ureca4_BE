@@ -7,7 +7,9 @@ import com.uplus.crm.domain.consultation.dto.response.SubscribedProduct;
 import com.uplus.crm.domain.consultation.entity.ConsultationCategoryPolicy;
 import com.uplus.crm.domain.consultation.entity.ConsultationResult;
 import com.uplus.crm.domain.consultation.entity.Customer;
+import com.uplus.crm.domain.consultation.entity.ConsultationRawText;
 import com.uplus.crm.domain.consultation.repository.ConsultationCategoryRepository;
+import com.uplus.crm.domain.consultation.repository.ConsultationRawTextRepository;
 import com.uplus.crm.domain.consultation.repository.ConsultationResultRepository;
 import com.uplus.crm.domain.consultation.repository.CustomerRepository;
 import java.util.List;
@@ -22,6 +24,7 @@ public class ConsultationService {
     private final ConsultationResultRepository consultationResultRepository;
     private final CustomerRepository customerRepository;
     private final ConsultationCategoryRepository categoryRepository;
+    private final ConsultationRawTextRepository rawTextRepository;
 
     /**
      * DB에서 랜덤 상담결과 1건 조회 → 고객정보 + 상담기본정보 + IAM 필드 포함 반환.
@@ -44,6 +47,10 @@ public class ConsultationService {
                         p.getProductType(), p.getProductCode(), p.getProductName(), p.getCategory()))
                 .toList();
 
+        String rawTextJson = rawTextRepository.findFirstByConsultId(result.getConsultId())
+                .map(ConsultationRawText::getRawTextJson)
+                .orElse(null);
+
         return new ConsultDataResponse(
                 result.getConsultId(),
                 customer.getCustomerId(),
@@ -63,7 +70,8 @@ public class ConsultationService {
                 result.getDurationSec(),
                 result.getIamIssue(),
                 result.getIamAction(),
-                result.getIamMemo()
+                result.getIamMemo(),
+                rawTextJson
         );
     }
 }

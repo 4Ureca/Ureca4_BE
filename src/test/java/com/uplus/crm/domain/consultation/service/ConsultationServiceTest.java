@@ -12,7 +12,9 @@ import com.uplus.crm.domain.consultation.dto.response.ConsultDataResponse;
 import com.uplus.crm.domain.consultation.entity.ConsultationCategoryPolicy;
 import com.uplus.crm.domain.consultation.entity.ConsultationResult;
 import com.uplus.crm.domain.consultation.entity.Customer;
+import com.uplus.crm.domain.consultation.entity.ConsultationRawText;
 import com.uplus.crm.domain.consultation.repository.ConsultationCategoryRepository;
+import com.uplus.crm.domain.consultation.repository.ConsultationRawTextRepository;
 import com.uplus.crm.domain.consultation.repository.ConsultationResultRepository;
 import com.uplus.crm.domain.consultation.repository.CustomerRepository;
 
@@ -36,6 +38,7 @@ class ConsultationServiceTest {
     @Mock private ConsultationResultRepository consultationResultRepository;
     @Mock private CustomerRepository customerRepository;
     @Mock private ConsultationCategoryRepository categoryRepository;
+    @Mock private ConsultationRawTextRepository rawTextRepository;
 
     // ── 픽스처 헬퍼 ─────────────────────────────────────────────────────────
 
@@ -84,10 +87,14 @@ class ConsultationServiceTest {
         Customer customer = stubCustomer(1L);
         ConsultationCategoryPolicy category = stubCategory("CAT001");
 
+        ConsultationRawText rawText = mock(ConsultationRawText.class);
+        given(rawText.getRawTextJson()).willReturn("{\"messages\":[]}");
+
         given(consultationResultRepository.findOneRandom()).willReturn(Optional.of(result));
         given(customerRepository.findById(1L)).willReturn(Optional.of(customer));
         given(categoryRepository.findById("CAT001")).willReturn(Optional.of(category));
         given(customerRepository.findActiveSubscribedProducts(1L)).willReturn(List.of());
+        given(rawTextRepository.findFirstByConsultId(10L)).willReturn(Optional.of(rawText));
 
         ConsultDataResponse response = consultationService.getRandomConsultData();
 
@@ -104,6 +111,7 @@ class ConsultationServiceTest {
         assertThat(response.iamIssue()).isEqualTo("고객이 요금 오류 제기");
         assertThat(response.iamAction()).isEqualTo("시스템 확인 후 재청구");
         assertThat(response.iamMemo()).isEqualTo("추후 모니터링 필요");
+        assertThat(response.rawTextJson()).isEqualTo("{\"messages\":[]}");
     }
 
     @Test

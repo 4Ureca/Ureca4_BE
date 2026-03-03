@@ -65,7 +65,8 @@ class ConsultationControllerTest {
                 LocalDate.of(1990, 1, 1), "VIP", "hong@example.com",
                 List.of(),
                 "CALL", "CAT001", "요금", "청구", "과금오류",
-                180, "고객이 요금 오류 제기", "시스템 확인 후 재청구", "추후 모니터링 필요"
+                180, "고객이 요금 오류 제기", "시스템 확인 후 재청구", "추후 모니터링 필요",
+                null
         );
     }
 

@@ -7,8 +7,10 @@ import com.uplus.crm.domain.demo.dto.response.DemoConsultDataResponse;
 import com.uplus.crm.domain.demo.dto.response.DemoSubscribedProduct;
 import com.uplus.crm.domain.demo.dto.response.DemoConsultSubmitResponse;
 import com.uplus.crm.domain.consultation.entity.ConsultationCategoryPolicy;
+import com.uplus.crm.domain.consultation.entity.ConsultationRawText;
 import com.uplus.crm.domain.consultation.entity.ConsultationResult;
 import com.uplus.crm.domain.consultation.entity.Customer;
+import com.uplus.crm.domain.consultation.repository.ConsultationRawTextRepository;
 import com.uplus.crm.domain.demo.repository.DemoConsultationCategoryRepository;
 import com.uplus.crm.domain.demo.repository.DemoConsultationResultRepository;
 import com.uplus.crm.domain.demo.repository.DemoCustomerRepository;
@@ -24,6 +26,7 @@ public class DemoConsultationService {
     private final DemoConsultationResultRepository consultationResultRepository;
     private final DemoCustomerRepository customerRepository;
     private final DemoConsultationCategoryRepository categoryRepository;
+    private final ConsultationRawTextRepository rawTextRepository;
 
     /**
      * DB에서 랜덤 상담결과 1건 조회 → 고객정보 + 상담기본정보 반환 (IAM 필드는 null).
@@ -46,6 +49,10 @@ public class DemoConsultationService {
                         p.getProductType(), p.getProductCode(), p.getProductName(), p.getCategory()))
                 .toList();
 
+        String rawTextJson = rawTextRepository.findFirstByConsultId(result.getConsultId())
+                .map(ConsultationRawText::getRawTextJson)
+                .orElse(null);
+
         return new DemoConsultDataResponse(
                 customer.getCustomerId(),
                 customer.getName(),
@@ -64,7 +71,8 @@ public class DemoConsultationService {
                 result.getDurationSec(),
                 null,
                 null,
-                null
+                null,
+                rawTextJson
         );
     }
 

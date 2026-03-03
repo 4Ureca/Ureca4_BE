@@ -59,6 +59,9 @@ public record DemoConsultDataResponse(
         String iamAction,
 
         @Schema(description = "IAM 메모 (null로 반환 — 상담사가 직접 입력)", example = "null")
-        String iamMemo
+        String iamMemo,
+
+        @Schema(description = "상담 원문 JSON", example = "{\"messages\":[...]}")
+        String rawTextJson
 ) {
 }
