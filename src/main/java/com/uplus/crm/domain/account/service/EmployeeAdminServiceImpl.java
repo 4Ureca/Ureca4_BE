@@ -103,6 +103,11 @@ public class EmployeeAdminServiceImpl implements EmployeeAdminService {
     /** 직원 계정 정보 수정 (관리자) */
     @Override
     public AdminEmployeeUpdateResponseDto updateEmployee(Integer empId, AdminEmployeeUpdateRequestDto req) {
+        if (req == null || req.getName() == null || req.getName().isBlank()
+                || req.getDeptId() == null || req.getJobRoleId() == null) {
+            throw new BusinessException(ErrorCode.INVALID_INPUT);
+        }
+
         Employee employee = employeeRepository.findById(empId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.EMPLOYEE_NOT_FOUND));
 

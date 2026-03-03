@@ -206,7 +206,7 @@ class NoticeControllerTest {
     void getNoticeDetail_notFound() throws Exception {
         mockAdminAuth();
 
-        given(noticeService.getNoticeDetail(eq(999), eq(1)))
+        given(noticeService.getNoticeDetail(eq(999), eq(1), any()))
                 .willThrow(new BusinessException(ErrorCode.NOTICE_NOT_FOUND));
 
         mockMvc.perform(get("/v1/notices/999")

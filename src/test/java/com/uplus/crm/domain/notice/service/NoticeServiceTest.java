@@ -147,7 +147,7 @@ class NoticeServiceTest {
         given(noticeRepository.findById(10)).willReturn(Optional.of(notice));
         given(noticeReadLogRepository.existsByNoticeIdAndEmpId(10, 2)).willReturn(false);
 
-        noticeService.getNoticeDetail(10, 2);
+        noticeService.getNoticeDetail(10, 2, "상담사");
 
         then(noticeReadLogRepository).should().save(any(NoticeReadLog.class));
         then(userNotificationRepository).should().markNoticeAlertAsRead(2, 10L);
@@ -162,7 +162,7 @@ class NoticeServiceTest {
         given(noticeRepository.findById(10)).willReturn(Optional.of(notice));
         given(noticeReadLogRepository.existsByNoticeIdAndEmpId(10, 2)).willReturn(true);
 
-        noticeService.getNoticeDetail(10, 2);
+        noticeService.getNoticeDetail(10, 2, "상담사");
 
         then(noticeReadLogRepository).should(never()).save(any());
     }
