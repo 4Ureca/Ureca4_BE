@@ -1,4 +1,4 @@
-package com.uplus.crm.domain.demo.entity;
+package com.uplus.crm.domain.consultation.entity;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -12,10 +12,6 @@ import lombok.NoArgsConstructor;
 
 import java.time.LocalDate;
 
-/**
- * customers 테이블 매핑 (읽기 전용).
- * 추후 리팩터링 시 공유 엔티티로 이동 예정.
- */
 @Entity
 @Table(name = "customers")
 @Getter

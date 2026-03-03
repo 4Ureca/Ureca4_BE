@@ -1,4 +1,4 @@
-package com.uplus.crm.domain.demo.entity;
+package com.uplus.crm.domain.consultation.entity;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -15,10 +15,6 @@ import org.hibernate.annotations.CreationTimestamp;
 
 import java.time.LocalDateTime;
 
-/**
- * consultation_results 테이블 매핑 (읽기 + 저장).
- * 추후 리팩터링 시 공유 엔티티로 이동 예정.
- */
 @Entity
 @Table(name = "consultation_results")
 @Getter
