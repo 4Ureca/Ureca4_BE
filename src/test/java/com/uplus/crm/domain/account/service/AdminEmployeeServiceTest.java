@@ -18,12 +18,12 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.time.LocalDateTime;
 import java.util.Optional;
+import org.springframework.security.crypto.password.PasswordEncoder;
 
 import static org.assertj.core.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
@@ -32,13 +32,13 @@ import static org.mockito.BDDMockito.*;
 @ExtendWith(MockitoExtension.class)
 class AdminEmployeeServiceTest {
 
-    @InjectMocks
-    private EmployeeAdminServiceImpl adminEmployeeService;
+    private EmployeeAdminService adminEmployeeService;
 
     @Mock private EmployeeRepository employeeRepository;
     @Mock private EmployeeDetailRepository employeeDetailRepository;
     @Mock private DepartmentRepository departmentRepository;
     @Mock private JobRoleRepository jobRoleRepository;
+    @Mock private PasswordEncoder passwordEncoder;
 
     private Employee mockEmployee;
     private Department mockDept;
@@ -47,7 +47,18 @@ class AdminEmployeeServiceTest {
 
     @BeforeEach
     void setUp() {
-        mockEmployee = Employee.builder()
+
+      adminEmployeeService =
+          new EmployeeAdminServiceImpl(
+              employeeRepository,
+              employeeDetailRepository,
+              departmentRepository,
+              jobRoleRepository,
+              passwordEncoder
+          );
+
+
+      mockEmployee = Employee.builder()
                 .empId(1)
                 .loginId("EMP001")
                 .password("encodedPassword")

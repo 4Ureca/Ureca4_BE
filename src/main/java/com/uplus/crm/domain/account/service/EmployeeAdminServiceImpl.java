@@ -87,7 +87,11 @@ public class EmployeeAdminServiceImpl implements EmployeeAdminService {
     @Override
     public EmployeeStatusUpdateResponseDto updateEmployeeStatus(Integer empId,
             EmployeeStatusUpdateRequestDto request) {
-        Employee employee = employeeRepository.findById(empId)
+      if (request == null || request.getIsActive() == null) {
+        throw new BusinessException(ErrorCode.INVALID_INPUT);
+      }
+
+      Employee employee = employeeRepository.findById(empId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.EMPLOYEE_NOT_FOUND));
 
         employee.changeActiveStatus(request.getIsActive());
