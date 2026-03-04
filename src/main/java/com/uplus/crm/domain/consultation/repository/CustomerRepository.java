@@ -1,4 +1,4 @@
-package com.uplus.crm.domain.demo.repository;
+package com.uplus.crm.domain.consultation.repository;
 
 import com.uplus.crm.domain.consultation.entity.Customer;
 import java.util.List;
@@ -6,7 +6,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
-public interface DemoCustomerRepository extends JpaRepository<Customer, Long> {
+public interface CustomerRepository extends JpaRepository<Customer, Long> {
 
     interface SubscribedProductProjection {
         String getProductType();
@@ -17,8 +17,7 @@ public interface DemoCustomerRepository extends JpaRepository<Customer, Long> {
 
     /**
      * 고객의 현재 활성 가입 상품(인터넷/TV·모바일·부가서비스)을 한 번에 조회한다.
-     * V8 이후 스키마 기준: customer_contracts에 customer_id가 없으므로
-     * 각 subscription 테이블의 customer_id로 직접 조회한다.
+     * V8 이후 스키마 기준: 각 subscription 테이블의 customer_id로 직접 조회한다.
      * extinguish_at / extinguish_date 가 NULL인 행만 대상으로 한다.
      */
     @Query(value = """

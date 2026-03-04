@@ -1,11 +1,14 @@
-package com.uplus.crm.domain.demo.dto.response;
+package com.uplus.crm.domain.consultation.dto.response;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import java.time.LocalDate;
 import java.util.List;
 
-@Schema(description = "랜덤 상담 데이터 응답")
-public record DemoConsultDataResponse(
+@Schema(description = "상담 결과서 응답 (IAM 포함)")
+public record ConsultDataResponse(
+
+        @Schema(description = "상담 식별자", example = "101")
+        Long consultId,
 
         @Schema(description = "고객 식별자", example = "1001")
         Long customerId,
@@ -32,7 +35,7 @@ public record DemoConsultDataResponse(
         String email,
 
         @Schema(description = "현재 활성 가입 상품 목록 (해지되지 않은 상품)")
-        List<DemoSubscribedProduct> subscribedProducts,
+        List<SubscribedProduct> subscribedProducts,
 
         @Schema(description = "상담 채널", allowableValues = {"CALL", "CHATTING"}, example = "CALL")
         String channel,
@@ -52,13 +55,13 @@ public record DemoConsultDataResponse(
         @Schema(description = "상담 소요 시간(초)", example = "300")
         int durationSec,
 
-        @Schema(description = "IAM 이슈 (null로 반환 — 상담사가 직접 입력)", example = "null")
+        @Schema(description = "IAM 이슈", example = "고객이 요금 오류를 제기함")
         String iamIssue,
 
-        @Schema(description = "IAM 조치 (null로 반환 — 상담사가 직접 입력)", example = "null")
+        @Schema(description = "IAM 조치", example = "시스템 확인 후 재청구")
         String iamAction,
 
-        @Schema(description = "IAM 메모 (null로 반환 — 상담사가 직접 입력)", example = "null")
+        @Schema(description = "IAM 메모", example = "추후 모니터링 필요")
         String iamMemo,
 
         @Schema(description = "상담 원문 JSON", example = "{\"messages\":[...]}")

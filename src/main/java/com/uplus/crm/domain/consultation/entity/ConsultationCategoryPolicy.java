@@ -1,4 +1,4 @@
-package com.uplus.crm.domain.demo.entity;
+package com.uplus.crm.domain.consultation.entity;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -8,10 +8,6 @@ import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
-/**
- * consultation_category_policy 테이블 매핑 (읽기 전용).
- * 추후 리팩터링 시 공유 엔티티로 이동 예정.
- */
 @Entity
 @Table(name = "consultation_category_policy")
 @Getter

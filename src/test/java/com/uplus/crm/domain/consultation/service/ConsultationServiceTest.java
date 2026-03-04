@@ -1,28 +1,24 @@
-package com.uplus.crm.domain.demo.service;
+package com.uplus.crm.domain.consultation.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
 import static org.mockito.Mockito.mock;
 
 import com.uplus.crm.common.exception.BusinessException;
 import com.uplus.crm.common.exception.ErrorCode;
-import com.uplus.crm.domain.demo.dto.request.DemoConsultSubmitRequest;
-import com.uplus.crm.domain.demo.dto.response.DemoConsultDataResponse;
-import com.uplus.crm.domain.demo.dto.response.DemoConsultSubmitResponse;
+import com.uplus.crm.domain.consultation.dto.response.ConsultDataResponse;
 import com.uplus.crm.domain.consultation.entity.ConsultationCategoryPolicy;
-import com.uplus.crm.domain.consultation.entity.ConsultationRawText;
 import com.uplus.crm.domain.consultation.entity.ConsultationResult;
 import com.uplus.crm.domain.consultation.entity.Customer;
+import com.uplus.crm.domain.consultation.entity.ConsultationRawText;
+import com.uplus.crm.domain.consultation.repository.ConsultationCategoryRepository;
 import com.uplus.crm.domain.consultation.repository.ConsultationRawTextRepository;
-import com.uplus.crm.domain.demo.repository.DemoConsultationCategoryRepository;
-import com.uplus.crm.domain.demo.repository.DemoConsultationResultRepository;
-import com.uplus.crm.domain.demo.repository.DemoCustomerRepository;
+import com.uplus.crm.domain.consultation.repository.ConsultationResultRepository;
+import com.uplus.crm.domain.consultation.repository.CustomerRepository;
 
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -32,17 +28,16 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.test.util.ReflectionTestUtils;
 
 @ExtendWith(MockitoExtension.class)
-class DemoConsultationServiceTest {
+class ConsultationServiceTest {
 
     @InjectMocks
-    private DemoConsultationService demoConsultationService;
+    private ConsultationService consultationService;
 
-    @Mock private DemoConsultationResultRepository consultationResultRepository;
-    @Mock private DemoCustomerRepository customerRepository;
-    @Mock private DemoConsultationCategoryRepository categoryRepository;
+    @Mock private ConsultationResultRepository consultationResultRepository;
+    @Mock private CustomerRepository customerRepository;
+    @Mock private ConsultationCategoryRepository categoryRepository;
     @Mock private ConsultationRawTextRepository rawTextRepository;
 
     // ── 픽스처 헬퍼 ─────────────────────────────────────────────────────────
@@ -55,6 +50,9 @@ class DemoConsultationServiceTest {
                 .channel("CALL")
                 .categoryCode(categoryCode)
                 .durationSec(180)
+                .iamIssue("고객이 요금 오류 제기")
+                .iamAction("시스템 확인 후 재청구")
+                .iamMemo("추후 모니터링 필요")
                 .build();
     }
 
@@ -83,20 +81,24 @@ class DemoConsultationServiceTest {
     // ── getRandomConsultData ─────────────────────────────────────────────────
 
     @Test
-    @DisplayName("getRandomConsultData - 정상 조회 시 고객정보와 상담기본정보를 반환하고 IAM 3필드는 null이다")
-    void getRandomConsultData_success_returnsDataWithNullIam() {
+    @DisplayName("getRandomConsultData - 정상 조회 시 IAM 3필드를 포함한 전체 상담 데이터를 반환한다")
+    void getRandomConsultData_success_returnsDataWithIam() {
         ConsultationResult result = stubResult(10L, 1L, "CAT001");
         Customer customer = stubCustomer(1L);
         ConsultationCategoryPolicy category = stubCategory("CAT001");
+
+        ConsultationRawText rawText = mock(ConsultationRawText.class);
+        given(rawText.getRawTextJson()).willReturn("{\"messages\":[]}");
 
         given(consultationResultRepository.findOneRandom()).willReturn(Optional.of(result));
         given(customerRepository.findById(1L)).willReturn(Optional.of(customer));
         given(categoryRepository.findById("CAT001")).willReturn(Optional.of(category));
         given(customerRepository.findActiveSubscribedProducts(1L)).willReturn(List.of());
-        given(rawTextRepository.findFirstByConsultId(10L)).willReturn(Optional.empty());
+        given(rawTextRepository.findFirstByConsultId(10L)).willReturn(Optional.of(rawText));
 
-        DemoConsultDataResponse response = demoConsultationService.getRandomConsultData();
+        ConsultDataResponse response = consultationService.getRandomConsultData();
 
+        assertThat(response.consultId()).isEqualTo(10L);
         assertThat(response.customerId()).isEqualTo(1L);
         assertThat(response.customerName()).isEqualTo("홍길동");
         assertThat(response.phone()).isEqualTo("010-1234-5678");
@@ -105,12 +107,11 @@ class DemoConsultationServiceTest {
         assertThat(response.largeCategory()).isEqualTo("요금");
         assertThat(response.durationSec()).isEqualTo(180);
         assertThat(response.subscribedProducts()).isEmpty();
-        // IAM 필드는 반드시 null
-        assertThat(response.iamIssue()).isNull();
-        assertThat(response.iamAction()).isNull();
-        assertThat(response.iamMemo()).isNull();
-        // rawTextJson - 원문 없으면 null
-        assertThat(response.rawTextJson()).isNull();
+        // IAM 필드는 DB 값을 그대로 반환
+        assertThat(response.iamIssue()).isEqualTo("고객이 요금 오류 제기");
+        assertThat(response.iamAction()).isEqualTo("시스템 확인 후 재청구");
+        assertThat(response.iamMemo()).isEqualTo("추후 모니터링 필요");
+        assertThat(response.rawTextJson()).isEqualTo("{\"messages\":[]}");
     }
 
     @Test
@@ -118,7 +119,7 @@ class DemoConsultationServiceTest {
     void getRandomConsultData_noResult_throwsConsultationNotFound() {
         given(consultationResultRepository.findOneRandom()).willReturn(Optional.empty());
 
-        assertThatThrownBy(() -> demoConsultationService.getRandomConsultData())
+        assertThatThrownBy(() -> consultationService.getRandomConsultData())
                 .isInstanceOf(BusinessException.class)
                 .satisfies(e -> assertThat(((BusinessException) e).getErrorCode())
                         .isEqualTo(ErrorCode.CONSULTATION_NOT_FOUND));
@@ -135,7 +136,7 @@ class DemoConsultationServiceTest {
         given(consultationResultRepository.findOneRandom()).willReturn(Optional.of(result));
         given(customerRepository.findById(999L)).willReturn(Optional.empty());
 
-        assertThatThrownBy(() -> demoConsultationService.getRandomConsultData())
+        assertThatThrownBy(() -> consultationService.getRandomConsultData())
                 .isInstanceOf(BusinessException.class)
                 .satisfies(e -> assertThat(((BusinessException) e).getErrorCode())
                         .isEqualTo(ErrorCode.CONSULTATION_NOT_FOUND));
@@ -147,64 +148,12 @@ class DemoConsultationServiceTest {
         ConsultationResult result = stubResult(10L, 1L, "UNKNOWN");
 
         given(consultationResultRepository.findOneRandom()).willReturn(Optional.of(result));
-        // getter 스텁 없이 bare mock 사용 — 이 경로에서 getter는 호출되지 않음
         given(customerRepository.findById(1L)).willReturn(Optional.of(mock(Customer.class)));
         given(categoryRepository.findById("UNKNOWN")).willReturn(Optional.empty());
 
-        assertThatThrownBy(() -> demoConsultationService.getRandomConsultData())
+        assertThatThrownBy(() -> consultationService.getRandomConsultData())
                 .isInstanceOf(BusinessException.class)
                 .satisfies(e -> assertThat(((BusinessException) e).getErrorCode())
                         .isEqualTo(ErrorCode.CONSULTATION_NOT_FOUND));
-    }
-
-    // ── submitConsult ────────────────────────────────────────────────────────
-
-    @Test
-    @DisplayName("submitConsult - 정상 저장 후 consultId와 createdAt을 반환한다")
-    void submitConsult_success_returnsSavedIdAndCreatedAt() {
-        DemoConsultSubmitRequest request = new DemoConsultSubmitRequest(
-                1L, "CALL", "CAT001", 240, null,
-                "고객이 요금 오류 제기", "시스템 확인 후 재청구", "추후 모니터링 필요"
-        );
-
-        LocalDateTime now = LocalDateTime.now();
-        ConsultationResult saved = ConsultationResult.builder()
-                .consultId(99L)
-                .empId(1)
-                .customerId(1L)
-                .channel("CALL")
-                .categoryCode("CAT001")
-                .durationSec(240)
-                .iamIssue("고객이 요금 오류 제기")
-                .iamAction("시스템 확인 후 재청구")
-                .iamMemo("추후 모니터링 필요")
-                .build();
-        ReflectionTestUtils.setField(saved, "createdAt", now);
-
-        given(consultationResultRepository.save(any(ConsultationResult.class))).willReturn(saved);
-
-        DemoConsultSubmitResponse response = demoConsultationService.submitConsult(request, 1);
-
-        assertThat(response.consultId()).isEqualTo(99L);
-        assertThat(response.createdAt()).isEqualTo(now);
-    }
-
-    @Test
-    @DisplayName("submitConsult - 저장 시 empId가 인증된 직원 ID로 설정된다")
-    void submitConsult_setsEmpIdFromAuthentication() {
-        DemoConsultSubmitRequest request = new DemoConsultSubmitRequest(
-                2L, "CHATTING", "CAT002", 300, null, null, null, null
-        );
-
-        given(consultationResultRepository.save(any(ConsultationResult.class)))
-                .willAnswer(inv -> {
-                    ConsultationResult arg = inv.getArgument(0);
-                    assertThat(arg.getEmpId()).isEqualTo(7);
-                    return arg;
-                });
-
-        demoConsultationService.submitConsult(request, 7);
-
-        then(consultationResultRepository).should().save(any(ConsultationResult.class));
     }
 }

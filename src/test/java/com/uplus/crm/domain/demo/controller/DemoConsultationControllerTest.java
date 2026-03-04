@@ -85,7 +85,7 @@ class DemoConsultationControllerTest {
                 LocalDate.of(1990, 1, 1), "VIP", "hong@example.com",
                 List.of(),
                 "CALL", "CAT001", "요금", "청구", "과금오류",
-                180, null, null, null
+                180, null, null, null, null
         );
     }
 
