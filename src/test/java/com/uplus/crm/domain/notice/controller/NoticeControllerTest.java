@@ -109,7 +109,7 @@ class NoticeControllerTest {
                 }
                 """;
 
-        mockMvc.perform(post("/v1/notices")
+        mockMvc.perform(post("/notices")
                         .header("Authorization", "Bearer mock-token")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(body))
@@ -133,7 +133,7 @@ class NoticeControllerTest {
                 }
                 """;
 
-        mockMvc.perform(post("/v1/notices")
+        mockMvc.perform(post("/notices")
                         .header("Authorization", "Bearer mock-token")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(body))
@@ -150,7 +150,7 @@ class NoticeControllerTest {
                 { "content": "공지 내용", "sendNotification": false }
                 """;
 
-        mockMvc.perform(post("/v1/notices")
+        mockMvc.perform(post("/notices")
                         .header("Authorization", "Bearer mock-token")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(body))
@@ -172,7 +172,7 @@ class NoticeControllerTest {
         given(noticeService.getNoticeList(eq(1), eq("관리자"), any(Pageable.class)))
                 .willReturn(new PageImpl<>(List.of(summary)));
 
-        mockMvc.perform(get("/v1/notices")
+        mockMvc.perform(get("/notices")
                         .header("Authorization", "Bearer mock-token"))
                 .andDo(print())
                 .andExpect(status().isOk())
@@ -192,7 +192,7 @@ class NoticeControllerTest {
         given(noticeService.getNoticeList(eq(2), eq("상담사"), any(Pageable.class)))
                 .willReturn(new PageImpl<>(List.of(summary)));
 
-        mockMvc.perform(get("/v1/notices")
+        mockMvc.perform(get("/notices")
                         .header("Authorization", "Bearer mock-token"))
                 .andDo(print())
                 .andExpect(status().isOk())
@@ -209,7 +209,7 @@ class NoticeControllerTest {
         given(noticeService.getNoticeDetail(eq(999), eq(1), eq("관리자")))
                 .willThrow(new BusinessException(ErrorCode.NOTICE_NOT_FOUND));
 
-        mockMvc.perform(get("/v1/notices/999")
+        mockMvc.perform(get("/notices/999")
                         .header("Authorization", "Bearer mock-token"))
                 .andDo(print())
                 .andExpect(status().isNotFound())
@@ -223,7 +223,7 @@ class NoticeControllerTest {
     void deleteNotice_adminSuccess() throws Exception {
         mockAdminAuth();
 
-        mockMvc.perform(delete("/v1/notices/1")
+        mockMvc.perform(delete("/notices/1")
                         .header("Authorization", "Bearer mock-token"))
                 .andDo(print())
                 .andExpect(status().isOk())
@@ -234,7 +234,7 @@ class NoticeControllerTest {
     @Test
     @DisplayName("토큰 없으면 403 Forbidden")
     void noToken_403() throws Exception {
-        mockMvc.perform(get("/v1/notices"))
+        mockMvc.perform(get("/notices"))
                 .andDo(print())
                 .andExpect(status().isForbidden());
     }

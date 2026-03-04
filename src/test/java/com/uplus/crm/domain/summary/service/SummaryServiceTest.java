@@ -6,7 +6,7 @@ import static org.mockito.BDDMockito.*;
 import com.uplus.crm.common.exception.BusinessException;
 import com.uplus.crm.common.exception.ErrorCode;
 import com.uplus.crm.domain.summary.document.ConsultationSummary;
-import com.uplus.crm.domain.summary.repository.ConsultationResultRepository;
+import com.uplus.crm.domain.summary.repository.SummaryConsultationResultRepository;
 import com.uplus.crm.domain.summary.repository.SummaryRepository;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -26,7 +26,7 @@ class SummaryServiceTest {
   private SummaryRepository summaryRepository;
 
   @Mock
-  private ConsultationResultRepository consultationResultRepository;
+  private SummaryConsultationResultRepository consultationResultRepository;
 
   @InjectMocks
   private SummaryService summaryService;
