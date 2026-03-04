@@ -1,12 +1,12 @@
 package com.uplus.crm.domain.summary.controller;
 
 import com.uplus.crm.common.exception.ErrorResponse;
-import com.uplus.crm.domain.summary.dto.FilterGroupCreateRequest;
-import com.uplus.crm.domain.summary.dto.FilterGroupDetailResponse;
-import com.uplus.crm.domain.summary.dto.FilterGroupListResponse;
-import com.uplus.crm.domain.summary.dto.FilterGroupOrderRequest;
-import com.uplus.crm.domain.summary.dto.FilterGroupUpdateRequest;
-import com.uplus.crm.domain.summary.dto.FilterResponse;
+import com.uplus.crm.domain.summary.dto.request.FilterGroupCreateRequest;
+import com.uplus.crm.domain.summary.dto.response.FilterGroupDetailResponse;
+import com.uplus.crm.domain.summary.dto.response.FilterGroupListResponse;
+import com.uplus.crm.domain.summary.dto.request.FilterGroupOrderRequest;
+import com.uplus.crm.domain.summary.dto.request.FilterGroupUpdateRequest;
+import com.uplus.crm.domain.summary.dto.response.FilterResponse;
 import com.uplus.crm.domain.summary.service.FilterGroupService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -28,7 +28,6 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 @Tag(name = "Search Filter", description = "검색 조건 저장/조회/수정/삭제 API")

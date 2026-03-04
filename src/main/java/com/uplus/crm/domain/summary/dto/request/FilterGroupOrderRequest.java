@@ -1,4 +1,4 @@
-package com.uplus.crm.domain.summary.dto;
+package com.uplus.crm.domain.summary.dto.request;
 
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotEmpty;

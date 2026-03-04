@@ -1,4 +1,4 @@
-package com.uplus.crm.domain.summary.dto;
+package com.uplus.crm.domain.summary.dto.response;
 
 import com.uplus.crm.domain.summary.entity.FilterGroup;
 import java.time.LocalDateTime;

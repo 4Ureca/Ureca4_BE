@@ -38,7 +38,10 @@ public enum ErrorCode {
     DEPARTMENT_NOT_FOUND(HttpStatus.NOT_FOUND, "존재하지 않는 부서입니다."),
     JOB_ROLE_NOT_FOUND(HttpStatus.NOT_FOUND, "존재하지 않는 직무입니다."),
 
-    // 409 Conflict
+    CONSULTATION_RESULT_NOT_FOUND(HttpStatus.NOT_FOUND, "상담 결과서를 찾을 수 없습니다."),
+    SUMMARY_NOT_FOUND(HttpStatus.NOT_FOUND, "요약 데이터를 찾을 수 없습니다."),
+
+  // 409 Conflict
     DUPLICATE_LOGIN_ID(HttpStatus.CONFLICT, "이미 사용 중인 로그인 아이디입니다."),
     DUPLICATE_EMAIL(HttpStatus.CONFLICT, "이미 사용 중인 이메일입니다."),
 
