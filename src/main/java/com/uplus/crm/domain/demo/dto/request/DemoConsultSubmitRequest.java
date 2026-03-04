@@ -7,7 +7,7 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
 import java.util.List;
 
-@Schema(description = "상담 결과 제출 요청 — GET /v1/demo/consultation 응답값을 그대로 채워 보내고, iamIssue/iamAction/iamMemo만 직접 입력합니다.")
+@Schema(description = "상담 결과 제출 요청 — GET /demo/consultation 응답값을 그대로 채워 보내고, iamIssue/iamAction/iamMemo만 직접 입력합니다.")
 public record DemoConsultSubmitRequest(
 
         @Schema(description = "고객 식별자 (GET 응답의 customerId)", example = "1001")

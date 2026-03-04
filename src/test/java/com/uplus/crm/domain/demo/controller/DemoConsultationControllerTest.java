@@ -89,15 +89,15 @@ class DemoConsultationControllerTest {
         );
     }
 
-    // ── GET /v1/demo/consultation ─────────────────────────────────────────────
+    // ── GET /demo/consultation ─────────────────────────────────────────────
 
     @Test
-    @DisplayName("GET /v1/demo/consultation - 상담사 인증 시 200 OK + 고객정보 반환")
+    @DisplayName("GET /demo/consultation - 상담사 인증 시 200 OK + 고객정보 반환")
     void getRandomConsultData_agentAuth_200() throws Exception {
         mockAgentAuth();
         given(demoConsultationService.getRandomConsultData()).willReturn(stubDataResponse());
 
-        mockMvc.perform(get("/v1/demo/consultation")
+        mockMvc.perform(get("/demo/consultation")
                         .header("Authorization", "Bearer mock-token"))
                 .andDo(print())
                 .andExpect(status().isOk())
@@ -113,12 +113,12 @@ class DemoConsultationControllerTest {
     }
 
     @Test
-    @DisplayName("GET /v1/demo/consultation - 관리자 인증 시도 200 OK")
+    @DisplayName("GET /demo/consultation - 관리자 인증 시도 200 OK")
     void getRandomConsultData_adminAuth_200() throws Exception {
         mockAdminAuth();
         given(demoConsultationService.getRandomConsultData()).willReturn(stubDataResponse());
 
-        mockMvc.perform(get("/v1/demo/consultation")
+        mockMvc.perform(get("/demo/consultation")
                         .header("Authorization", "Bearer mock-token"))
                 .andDo(print())
                 .andExpect(status().isOk())
@@ -126,31 +126,31 @@ class DemoConsultationControllerTest {
     }
 
     @Test
-    @DisplayName("GET /v1/demo/consultation - 토큰 없으면 403 Forbidden")
+    @DisplayName("GET /demo/consultation - 토큰 없으면 403 Forbidden")
     void getRandomConsultData_noToken_403() throws Exception {
-        mockMvc.perform(get("/v1/demo/consultation"))
+        mockMvc.perform(get("/demo/consultation"))
                 .andDo(print())
                 .andExpect(status().isForbidden());
     }
 
     @Test
-    @DisplayName("GET /v1/demo/consultation - 데이터 없으면 404 + CONSULTATION_NOT_FOUND")
+    @DisplayName("GET /demo/consultation - 데이터 없으면 404 + CONSULTATION_NOT_FOUND")
     void getRandomConsultData_noData_404() throws Exception {
         mockAgentAuth();
         given(demoConsultationService.getRandomConsultData())
                 .willThrow(new BusinessException(ErrorCode.CONSULTATION_NOT_FOUND));
 
-        mockMvc.perform(get("/v1/demo/consultation")
+        mockMvc.perform(get("/demo/consultation")
                         .header("Authorization", "Bearer mock-token"))
                 .andDo(print())
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.error").value("CONSULTATION_NOT_FOUND"));
     }
 
-    // ── POST /v1/demo/consultation ────────────────────────────────────────────
+    // ── POST /demo/consultation ────────────────────────────────────────────
 
     @Test
-    @DisplayName("POST /v1/demo/consultation - 정상 요청 시 201 Created + consultId 반환")
+    @DisplayName("POST /demo/consultation - 정상 요청 시 201 Created + consultId 반환")
     void submitConsult_agentAuth_201() throws Exception {
         mockAgentAuth();
 
@@ -166,7 +166,7 @@ class DemoConsultationControllerTest {
         given(demoConsultationService.submitConsult(any(DemoConsultSubmitRequest.class), eq(1)))
                 .willReturn(response);
 
-        mockMvc.perform(post("/v1/demo/consultation")
+        mockMvc.perform(post("/demo/consultation")
                         .header("Authorization", "Bearer mock-token")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
@@ -178,7 +178,7 @@ class DemoConsultationControllerTest {
     }
 
     @Test
-    @DisplayName("POST /v1/demo/consultation - customerId 누락 시 400 Bad Request")
+    @DisplayName("POST /demo/consultation - customerId 누락 시 400 Bad Request")
     void submitConsult_missingCustomerId_400() throws Exception {
         mockAgentAuth();
 
@@ -190,7 +190,7 @@ class DemoConsultationControllerTest {
                 }
                 """;
 
-        mockMvc.perform(post("/v1/demo/consultation")
+        mockMvc.perform(post("/demo/consultation")
                         .header("Authorization", "Bearer mock-token")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(body))
@@ -200,7 +200,7 @@ class DemoConsultationControllerTest {
     }
 
     @Test
-    @DisplayName("POST /v1/demo/consultation - channel 누락 시 400 Bad Request")
+    @DisplayName("POST /demo/consultation - channel 누락 시 400 Bad Request")
     void submitConsult_missingChannel_400() throws Exception {
         mockAgentAuth();
 
@@ -212,7 +212,7 @@ class DemoConsultationControllerTest {
                 }
                 """;
 
-        mockMvc.perform(post("/v1/demo/consultation")
+        mockMvc.perform(post("/demo/consultation")
                         .header("Authorization", "Bearer mock-token")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(body))
@@ -222,7 +222,7 @@ class DemoConsultationControllerTest {
     }
 
     @Test
-    @DisplayName("POST /v1/demo/consultation - durationSec이 0 이하이면 400 Bad Request")
+    @DisplayName("POST /demo/consultation - durationSec이 0 이하이면 400 Bad Request")
     void submitConsult_invalidDurationSec_400() throws Exception {
         mockAgentAuth();
 
@@ -235,7 +235,7 @@ class DemoConsultationControllerTest {
                 }
                 """;
 
-        mockMvc.perform(post("/v1/demo/consultation")
+        mockMvc.perform(post("/demo/consultation")
                         .header("Authorization", "Bearer mock-token")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(body))
@@ -245,7 +245,7 @@ class DemoConsultationControllerTest {
     }
 
     @Test
-    @DisplayName("POST /v1/demo/consultation - 토큰 없으면 403 Forbidden")
+    @DisplayName("POST /demo/consultation - 토큰 없으면 403 Forbidden")
     void submitConsult_noToken_403() throws Exception {
         String body = """
                 {
@@ -256,7 +256,7 @@ class DemoConsultationControllerTest {
                 }
                 """;
 
-        mockMvc.perform(post("/v1/demo/consultation")
+        mockMvc.perform(post("/demo/consultation")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(body))
                 .andDo(print())

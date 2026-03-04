@@ -70,15 +70,15 @@ class ConsultationControllerTest {
         );
     }
 
-    // ── GET /v1/consultation ──────────────────────────────────────────────────
+    // ── GET /consultation ──────────────────────────────────────────────────
 
     @Test
-    @DisplayName("GET /v1/consultation - 인증 시 200 OK + IAM 포함 전체 상담 데이터 반환")
+    @DisplayName("GET /consultation - 인증 시 200 OK + IAM 포함 전체 상담 데이터 반환")
     void getRandomConsultData_agentAuth_200() throws Exception {
         mockAgentAuth();
         given(consultationService.getRandomConsultData()).willReturn(stubDataResponse());
 
-        mockMvc.perform(get("/v1/consultation")
+        mockMvc.perform(get("/consultation")
                         .header("Authorization", "Bearer mock-token"))
                 .andDo(print())
                 .andExpect(status().isOk())
@@ -95,21 +95,21 @@ class ConsultationControllerTest {
     }
 
     @Test
-    @DisplayName("GET /v1/consultation - 토큰 없으면 403 Forbidden")
+    @DisplayName("GET /consultation - 토큰 없으면 403 Forbidden")
     void getRandomConsultData_noToken_403() throws Exception {
-        mockMvc.perform(get("/v1/consultation"))
+        mockMvc.perform(get("/consultation"))
                 .andDo(print())
                 .andExpect(status().isForbidden());
     }
 
     @Test
-    @DisplayName("GET /v1/consultation - 데이터 없으면 404 + CONSULTATION_NOT_FOUND")
+    @DisplayName("GET /consultation - 데이터 없으면 404 + CONSULTATION_NOT_FOUND")
     void getRandomConsultData_noData_404() throws Exception {
         mockAgentAuth();
         given(consultationService.getRandomConsultData())
                 .willThrow(new BusinessException(ErrorCode.CONSULTATION_NOT_FOUND));
 
-        mockMvc.perform(get("/v1/consultation")
+        mockMvc.perform(get("/consultation")
                         .header("Authorization", "Bearer mock-token"))
                 .andDo(print())
                 .andExpect(status().isNotFound())

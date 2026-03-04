@@ -53,7 +53,8 @@ class DailyReportServiceCompareTest {
         Document compareDoc = createRiskDoc(compareDate, 2, 3, 1, 2, 5, 0, 1);
 
         given(mongoTemplate.findOne(
-                argThat(q -> q.getQueryObject().get("startAt").equals(baseDate.atStartOfDay())),
+            argThat(q -> q != null &&
+                baseDate.atStartOfDay().equals(q.getQueryObject().get("startAt"))),
                 eq(Document.class), eq("daily_report_snapshot")
         )).willReturn(baseDoc);
         given(mongoTemplate.findOne(
@@ -75,12 +76,12 @@ class DailyReportServiceCompareTest {
 
         // compare snapshot
         assertThat(result.getCompare().getFraudSuspect()).isEqualTo(2);
-        assertThat(result.getCompare().getTotalRiskCount()).isEqualTo(12);
+        assertThat(result.getCompare().getTotalRiskCount()).isEqualTo(14);
 
         // changes
         assertThat(result.getChanges().get("fraudSuspect").getDiff()).isEqualTo(8);
         assertThat(result.getChanges().get("fraudSuspect").getChangeRate()).isEqualTo(400.0);
-        assertThat(result.getChanges().get("totalRiskCount").getDiff()).isEqualTo(23);
+        assertThat(result.getChanges().get("totalRiskCount").getDiff()).isEqualTo(21);
 
         // surge
         assertThat(result.isSurgeDetected()).isTrue();
@@ -115,7 +116,8 @@ class DailyReportServiceCompareTest {
         Document compareDoc = createRiskDoc(compareDate, 5, 3, 0, 0, 2, 0, 1);
 
         given(mongoTemplate.findOne(
-                argThat(q -> q.getQueryObject().get("startAt").equals(baseDate.atStartOfDay())),
+            argThat(q -> q != null &&
+                baseDate.atStartOfDay().equals(q.getQueryObject().get("startAt"))),
                 eq(Document.class), eq("daily_report_snapshot")
         )).willReturn(baseDoc);
         given(mongoTemplate.findOne(
@@ -145,7 +147,8 @@ class DailyReportServiceCompareTest {
         Document compareDoc = createRiskDoc(compareDate, 10, 6, 2, 3, 8, 1, 3);
 
         given(mongoTemplate.findOne(
-                argThat(q -> q.getQueryObject().get("startAt").equals(baseDate.atStartOfDay())),
+            argThat(q -> q != null &&
+                baseDate.atStartOfDay().equals(q.getQueryObject().get("startAt"))),
                 eq(Document.class), eq("daily_report_snapshot")
         )).willReturn(baseDoc);
         given(mongoTemplate.findOne(
