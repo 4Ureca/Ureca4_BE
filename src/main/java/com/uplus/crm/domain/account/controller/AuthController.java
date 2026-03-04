@@ -1,4 +1,143 @@
 package com.uplus.crm.domain.account.controller;
 
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+
+import com.uplus.crm.domain.account.dto.request.GoogleAuthRequestDto;
+import com.uplus.crm.domain.account.dto.request.LoginRequestDto;
+import com.uplus.crm.domain.account.dto.request.MyInfoUpdateRequestDto;
+import com.uplus.crm.domain.account.dto.request.PasswordChangeRequestDto;
+import com.uplus.crm.domain.account.dto.response.EmailCheckResponseDto;
+import com.uplus.crm.domain.account.dto.response.GoogleAuthResponseDto;
+import com.uplus.crm.domain.account.dto.response.LoginResponseDto;
+import com.uplus.crm.domain.account.dto.response.LogoutResponseDto;
+import com.uplus.crm.domain.account.dto.response.MyInfoResponseDto;
+import com.uplus.crm.domain.account.dto.response.MyInfoUpdateResponseDto;
+import com.uplus.crm.domain.account.dto.response.PasswordChangeResponseDto;
+import com.uplus.crm.domain.account.dto.response.TokenRefreshResponseDto;
+import com.uplus.crm.domain.account.service.AuthService;
+
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
+
+@Tag(name = "Auth", description = "인증 및 계정 정보 관련 API")
+@RestController
+@RequestMapping("/auth")
+@RequiredArgsConstructor
 public class AuthController {
+
+    private final AuthService authService;
+
+    // --- 1. 구글 관련 인증 ---
+
+    @Operation(summary = "Google OAuth 로그인", description = "Google authorization code를 전달받아 로그인 처리합니다.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Google 로그인 성공"),
+            @ApiResponse(responseCode = "400", description = "authorization code가 유효하지 않음"),
+            @ApiResponse(responseCode = "401", description = "Google 인증 실패"),
+            @ApiResponse(responseCode = "404", description = "시스템에 연동된 계정 없음")
+    })
+    @PostMapping("/google")
+    public ResponseEntity<GoogleAuthResponseDto> googleLogin(
+            @Valid @RequestBody GoogleAuthRequestDto request,
+            HttpServletResponse response) {
+        return ResponseEntity.ok(authService.googleLogin(request, response));
+    }
+
+    @Operation(summary = "구글 이메일 중복 확인", description = "시스템에 등록된 이메일인지 확인하여 가입 가능 여부를 반환합니다.")
+    @GetMapping("/google/email-check")
+    public ResponseEntity<EmailCheckResponseDto> checkEmail(@RequestParam("email") String email) {
+        return ResponseEntity.ok(authService.checkEmailAvailability(email));
+    }
+
+    // --- 2. 일반 인증 및 토큰 관리 ---
+
+    @Operation(summary = "일반 로그인", description = "계정 아이디와 비밀번호로 로그인을 시도합니다.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "로그인 성공"),
+            @ApiResponse(responseCode = "400", description = "잘못된 파라미터 요청"),
+            @ApiResponse(responseCode = "401", description = "아이디 또는 비밀번호 불일치")
+    })
+    @PostMapping("/login")
+    public ResponseEntity<LoginResponseDto> login(
+            @Valid @RequestBody LoginRequestDto request,
+            HttpServletResponse response) {
+        return ResponseEntity.ok(authService.login(request, response));
+    }
+
+    @Operation(summary = "로그아웃", description = "HttpOnly 쿠키의 Refresh Token을 삭제하고 로그아웃 처리합니다.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "로그아웃 성공"),
+            @ApiResponse(responseCode = "401", description = "유효하지 않은 토큰")
+    })
+    @PostMapping("/logout")
+    public ResponseEntity<LogoutResponseDto> logout(
+            HttpServletRequest request,
+            HttpServletResponse response) {
+        return ResponseEntity.ok(authService.logout(request, response));
+    }
+
+    @Operation(summary = "토큰 갱신", description = "HttpOnly 쿠키의 Refresh Token을 이용해 새로운 Access Token을 발급합니다.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "토큰 갱신 성공"),
+            @ApiResponse(responseCode = "401", description = "Refresh Token 만료 또는 유효하지 않음")
+    })
+    @PostMapping("/refresh")
+    public ResponseEntity<TokenRefreshResponseDto> refresh(
+            HttpServletRequest request,
+            HttpServletResponse response) {
+        return ResponseEntity.ok(authService.refresh(request, response));
+    }
+
+
+    // --- 3. 계정 및 메뉴 정보 조회 ---
+
+    @Operation(summary = "내 정보 및 메뉴 권한 조회", description = "현재 로그인된 직원의 상세 정보와 접근 가능한 메뉴 코드 목록을 조회합니다.")
+
+    @GetMapping("/me")
+    public ResponseEntity<MyInfoResponseDto> getMyInfo(@AuthenticationPrincipal(expression = "empId") Integer empId) {
+        return ResponseEntity.ok(authService.getMyInfo(empId));
+    }
+
+
+    @Operation(summary = "내 정보 수정", description = "로그인한 사용자 본인의 기본 정보 수정")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "수정 성공"),
+            @ApiResponse(responseCode = "400", description = "입력값 오류 또는 날짜 형식 오류"),
+            @ApiResponse(responseCode = "409", description = "이메일 중복")
+    })
+    @PutMapping("/me")
+    public ResponseEntity<MyInfoUpdateResponseDto> updateMyInfo(
+            @AuthenticationPrincipal(expression = "empId") Integer empId,
+            @RequestBody MyInfoUpdateRequestDto req) {
+        return ResponseEntity.ok(authService.updateMyInfo(empId, req));
+    }
+
+
+    @Operation(summary = "비밀번호 변경", description = "현재 비밀번호 확인 절차를 거친 후 새로운 비밀번호로 변경합니다.")
+
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "비밀번호 변경 성공"),
+            @ApiResponse(responseCode = "400", description = "새 비밀번호 확인 불일치"),
+            @ApiResponse(responseCode = "401", description = "현재 비밀번호가 일치하지 않음")
+    })
+    @PutMapping("/me/password")
+    public ResponseEntity<PasswordChangeResponseDto> changePassword(
+            @AuthenticationPrincipal(expression = "empId") Integer empId,
+            @Valid @RequestBody PasswordChangeRequestDto request) {
+        return ResponseEntity.ok(authService.changePassword(empId, request));
+    }
 }

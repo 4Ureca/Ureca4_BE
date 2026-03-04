@@ -1,12 +1,16 @@
 package com.uplus.crm.domain.account.dto.request;
 
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 // PUT /auth/me — 내 정보 편집
 // Request
 @Getter
+@Builder
 @NoArgsConstructor
+@AllArgsConstructor
 public class MyInfoUpdateRequestDto {
     private String name;              // 이름
     private String email;             // 이메일

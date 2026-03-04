@@ -13,26 +13,33 @@ import java.time.LocalDateTime;
 @Builder
 public class EmployeeDetail {
 
-    @Id
-    @Column(name = "emp_id")
-    private Integer empId;
+	@Id
+	@Column(name = "emp_id")
+	private Integer empId;
 
-    @OneToOne(fetch = FetchType.LAZY)
-    @MapsId
-    @JoinColumn(name = "emp_id")
-    private Employee employee;
+	@OneToOne(fetch = FetchType.LAZY)
+	@MapsId
+	@JoinColumn(name = "emp_id")
+	private Employee employee;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "dept_id", nullable = false)
-    private Department department;
+	@ManyToOne(fetch = FetchType.LAZY)
+	@JoinColumn(name = "dept_id", nullable = false)
+	private Department department;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "job_role_id", nullable = false)
-    private JobRole jobRole;
+	@ManyToOne(fetch = FetchType.LAZY)
+	@JoinColumn(name = "job_role_id", nullable = false)
+	private JobRole jobRole;
 
-    @Column(name = "joined_at")
-    private LocalDate joinedAt;
+	@Column(name = "joined_at")
+	private LocalDate joinedAt;
 
-    @Column(name = "updated_at")
-    private LocalDateTime updatedAt;
+	@Column(name = "updated_at")
+	private LocalDateTime updatedAt;
+
+	public void updateDetail(Department department, JobRole jobRole, LocalDate joinedAt) {
+		this.department = department;
+		this.jobRole = jobRole;
+		this.joinedAt = joinedAt;
+		this.updatedAt = LocalDateTime.now();
+	}
 }

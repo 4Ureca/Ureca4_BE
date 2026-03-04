@@ -1,17 +1,20 @@
 package com.uplus.crm.domain.account.dto.request;
 
-//POST /auth/google — Google OAuth 연동
-
+import jakarta.validation.constraints.NotBlank;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
-@Builder
-@AllArgsConstructor
 @Getter
 @NoArgsConstructor
+@Builder
+@AllArgsConstructor
 public class GoogleAuthRequestDto {
-    private String authorizationCode; // Google authorization code
-    private String redirectUri;       // 리다이렉트 URI
+
+    @NotBlank(message = "Authorization code는 필수입니다.")
+    private String authorizationCode;
+
+    @NotBlank(message = "Redirect URI는 필수입니다.")
+    private String redirectUri;
 }

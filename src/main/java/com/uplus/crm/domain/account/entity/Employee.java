@@ -1,9 +1,21 @@
 package com.uplus.crm.domain.account.entity;
 
-import jakarta.persistence.*;
-import lombok.*;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.OneToOne;
+import jakarta.persistence.Table;
+import lombok.AccessLevel;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
 
 @Entity
 @Table(name = "employees")
@@ -45,8 +57,23 @@ public class Employee {
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
+    @OneToOne(mappedBy = "employee", fetch = FetchType.LAZY)
+    private EmployeeDetail employeeDetail;
+
+    public void updateAccountInfo(String name, String email, String phone, LocalDate birth, String gender) {
+        this.name = name;
+        this.email = email;
+        this.phone = phone;
+        this.birth = birth;
+        this.gender = gender;
+    }
 
     public void updatePassword(String encodedPassword) {
         this.password = encodedPassword;
+    }
+
+
+    public void changeActiveStatus(Boolean isActive) {
+        this.isActive = isActive;
     }
 }
