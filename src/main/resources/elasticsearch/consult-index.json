@@ -1,50 +1,56 @@
 {
   "settings": {
-    "analysis": {
-      "tokenizer": {
-        "nori_user_dict_tokenizer": {
-          "type": "nori_tokenizer",
-          "user_dictionary": "analysis/userdict.txt",
-          "decompound_mode": "mixed"
-        }
-      },
-      "filter": {
-        "nori_pos_filter": {
-          "type": "nori_part_of_speech",
-          "stoptags": [
-            "E","IC","J","MAG","MAJ","MM","SP","SSC","SSO","SC","SE",
-            "XPN","XSA","XSN","XSV"
-          ]
+    "index": {
+      "number_of_shards": 1,
+      "number_of_replicas": 1,
+      "analysis": {
+        "tokenizer": {
+          "nori_user_dict_tokenizer": {
+            "type": "nori_tokenizer",
+            "user_dictionary": "analysis/userdict.txt",
+            "decompound_mode": "mixed"
+          }
         },
-        "synonym_filter": {
-          "type": "synonym",
-          "synonyms_path": "analysis/synonyms.txt"
+        "filter": {
+          "synonym_filter": {
+            "type": "synonym",
+            "synonyms_path": "analysis/synonyms.txt",
+            /* 핵심: 사전 로딩 시 Nori 분석기가 갤폰 등을 쪼개지 못하도록 분리 */
+            "analyzer": "standard"
+          },
+          "nori_pos_filter": {
+            "type": "nori_part_of_speech",
+            "stoptags": [
+              "E", "IC", "J", "MAG", "MAJ", "MM", "SP", "SSC", "SSO", "SC", "SE",
+              "XPN", "XSA", "XSN", "XSV"
+            ]
+          },
+          "stopword_filter": {
+            "type": "stop",
+            "stopwords_path": "analysis/stopwords.txt"
+          }
         },
-        "stopword_filter": {
-          "type": "stop",
-          "stopwords_path": "analysis/stopwords.txt"
-        }
-      },
-      "analyzer": {
-        "consult_index_analyzer": {
-          "type": "custom",
-          "tokenizer": "nori_user_dict_tokenizer",
-          "filter": [
-            "lowercase",
-            "synonym_filter",
-            "nori_pos_filter",
-            "stopword_filter"
-          ]
-        },
-        "consult_search_analyzer": {
-          "type": "custom",
-          "tokenizer": "nori_user_dict_tokenizer",
-          "filter": [
-            "lowercase",
-            "synonym_filter",   /* 순서 변경 */
-            "nori_pos_filter",
-            "stopword_filter"   /* 검색 시에도 불용어 제거를 적용하여 정확도 향상 */
-          ]
+        "analyzer": {
+          "consult_index_analyzer": {
+            "type": "custom",
+            "tokenizer": "nori_user_dict_tokenizer",
+            "filter": [
+              "lowercase",
+              "synonym_filter",
+              "nori_pos_filter",
+              "stopword_filter"
+            ]
+          },
+          "consult_search_analyzer": {
+            "type": "custom",
+            "tokenizer": "nori_user_dict_tokenizer",
+            "filter": [
+              "lowercase",
+              "synonym_filter",
+              "nori_pos_filter",
+              "stopword_filter"
+            ]
+          }
         }
       }
     }
@@ -55,32 +61,49 @@
         "type": "text",
         "analyzer": "consult_index_analyzer",
         "search_analyzer": "consult_search_analyzer",
-        "boost": 2.0
+        "boost": 2.0,
+        "copy_to": "all_text"
       },
       "iam_action": {
         "type": "text",
         "analyzer": "consult_index_analyzer",
-        "search_analyzer": "consult_search_analyzer"
+        "search_analyzer": "consult_search_analyzer",
+        "copy_to": "all_text"
       },
       "iam_memo": {
         "type": "text",
         "analyzer": "consult_index_analyzer",
-        "search_analyzer": "consult_search_analyzer"
+        "search_analyzer": "consult_search_analyzer",
+        "copy_to": "all_text"
       },
       "content": {
         "type": "text",
         "analyzer": "consult_index_analyzer",
+        "search_analyzer": "consult_search_analyzer",
+        "copy_to": "all_text"
+      },
+      "all_text": {
+        "type": "text",
+        "analyzer": "consult_index_analyzer",
         "search_analyzer": "consult_search_analyzer"
       },
+      "sentiment": { "type": "keyword" },
+      "risk_score": { "type": "integer" },
+      "priority": { "type": "keyword" },
       "customer_id": { "type": "keyword" },
       "customer_name": {
         "type": "text",
         "analyzer": "consult_index_analyzer",
-        "fields": { "raw": { "type": "keyword" } }
+        "fields": {
+          "raw": { "type": "keyword" }
+        }
       },
       "customer_type": { "type": "keyword" },
       "grade": { "type": "keyword" },
-      "phone": { "type": "keyword" },
+      "phone": {
+        "type": "keyword",
+        "doc_values": true
+      },
       "email": { "type": "keyword" },
       "created_at": {
         "type": "date",
