@@ -4,7 +4,17 @@ spring:
     driver-class-name: org.h2.Driver
     username: sa
     password:
+
   jpa:
     database-platform: org.hibernate.dialect.H2Dialect
+
   flyway:
-    enabled: true
+    enabled: false
+
+google:
+  oauth:
+    client-id: dummy.apps.googleusercontent.com
+    client-secret: GOCSPX-dummyvalue
+
+jwt:
+  secret: dummyjwtsecretkeydummyjwtsecretkeydummyjwtsecretkey
