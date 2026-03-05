@@ -31,8 +31,8 @@
           "tokenizer": "nori_user_dict_tokenizer",
           "filter": [
             "lowercase",
-            "nori_pos_filter",
             "synonym_filter",
+            "nori_pos_filter",
             "stopword_filter"
           ]
         },
@@ -41,8 +41,9 @@
           "tokenizer": "nori_user_dict_tokenizer",
           "filter": [
             "lowercase",
+            "synonym_filter",   /* 순서 변경 */
             "nori_pos_filter",
-            "synonym_filter"
+            "stopword_filter"   /* 검색 시에도 불용어 제거를 적용하여 정확도 향상 */
           ]
         }
       }
@@ -50,10 +51,40 @@
   },
   "mappings": {
     "properties": {
+      "iam_issue": {
+        "type": "text",
+        "analyzer": "consult_index_analyzer",
+        "search_analyzer": "consult_search_analyzer",
+        "boost": 2.0
+      },
+      "iam_action": {
+        "type": "text",
+        "analyzer": "consult_index_analyzer",
+        "search_analyzer": "consult_search_analyzer"
+      },
+      "iam_memo": {
+        "type": "text",
+        "analyzer": "consult_index_analyzer",
+        "search_analyzer": "consult_search_analyzer"
+      },
       "content": {
         "type": "text",
         "analyzer": "consult_index_analyzer",
         "search_analyzer": "consult_search_analyzer"
+      },
+      "customer_id": { "type": "keyword" },
+      "customer_name": {
+        "type": "text",
+        "analyzer": "consult_index_analyzer",
+        "fields": { "raw": { "type": "keyword" } }
+      },
+      "customer_type": { "type": "keyword" },
+      "grade": { "type": "keyword" },
+      "phone": { "type": "keyword" },
+      "email": { "type": "keyword" },
+      "created_at": {
+        "type": "date",
+        "format": "yyyy-MM-dd HH:mm:ss"
       }
     }
   }
