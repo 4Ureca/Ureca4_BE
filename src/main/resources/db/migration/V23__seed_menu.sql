@@ -23,10 +23,12 @@ FROM (
     UNION ALL
     SELECT 'MENU_DASHBOARD_NOTICE'     AS menu_code, '분류: 대시보드 / 메뉴명: 공지사항' AS menu_desc
     UNION ALL
+	SELECT 'MENU_DASHBOARD_NOTIFICATION_SEND' AS menu_code, '분류: 대시보드 / 메뉴명: 알림 발송' AS menu_desc
+	UNION ALL
     SELECT 'MENU_ADMIN_EMPLOYEE_ACCOUNT' AS menu_code, '분류: 관리 / 메뉴명: 직원 계정 관리' AS menu_desc
     UNION ALL
     SELECT 'MENU_ADMIN_MY_ACCOUNT'     AS menu_code, '분류: 관리 / 메뉴명: 내 계정 관리' AS menu_desc
-) t
+) ｔ
 LEFT JOIN menus m
        ON m.menu_code = t.menu_code
       AND m.is_deleted = 0
