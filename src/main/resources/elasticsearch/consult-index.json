@@ -1,0 +1,60 @@
+{
+  "settings": {
+    "analysis": {
+      "tokenizer": {
+        "nori_user_dict_tokenizer": {
+          "type": "nori_tokenizer",
+          "user_dictionary": "analysis/userdict.txt",
+          "decompound_mode": "mixed"
+        }
+      },
+      "filter": {
+        "nori_pos_filter": {
+          "type": "nori_part_of_speech",
+          "stoptags": [
+            "E","IC","J","MAG","MAJ","MM","SP","SSC","SSO","SC","SE",
+            "XPN","XSA","XSN","XSV"
+          ]
+        },
+        "synonym_filter": {
+          "type": "synonym",
+          "synonyms_path": "analysis/synonyms.txt"
+        },
+        "stopword_filter": {
+          "type": "stop",
+          "stopwords_path": "analysis/stopwords.txt"
+        }
+      },
+      "analyzer": {
+        "consult_index_analyzer": {
+          "type": "custom",
+          "tokenizer": "nori_user_dict_tokenizer",
+          "filter": [
+            "lowercase",
+            "nori_pos_filter",
+            "synonym_filter",
+            "stopword_filter"
+          ]
+        },
+        "consult_search_analyzer": {
+          "type": "custom",
+          "tokenizer": "nori_user_dict_tokenizer",
+          "filter": [
+            "lowercase",
+            "nori_pos_filter",
+            "synonym_filter"
+          ]
+        }
+      }
+    }
+  },
+  "mappings": {
+    "properties": {
+      "content": {
+        "type": "text",
+        "analyzer": "consult_index_analyzer",
+        "search_analyzer": "consult_search_analyzer"
+      }
+    }
+  }
+}
