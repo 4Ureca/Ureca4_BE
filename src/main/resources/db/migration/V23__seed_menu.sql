@@ -28,7 +28,7 @@ FROM (
     SELECT 'MENU_ADMIN_EMPLOYEE_ACCOUNT' AS menu_code, '분류: 관리 / 메뉴명: 직원 계정 관리' AS menu_desc
     UNION ALL
     SELECT 'MENU_ADMIN_MY_ACCOUNT'     AS menu_code, '분류: 관리 / 메뉴명: 내 계정 관리' AS menu_desc
-) ｔ
+) t
 LEFT JOIN menus m
        ON m.menu_code = t.menu_code
       AND m.is_deleted = 0
