@@ -20,6 +20,8 @@ public class ConsultationSummaryDetailResponse {
   private AgentInfo agent;
   private CustomerInfo customer;
   private IamInfo iam;
+  private SummaryInfo summary;
+  private List<String> riskFlags;
   private CancellationInfo cancellation;
   private List<ProductInfo> products;
 
@@ -52,6 +54,13 @@ public class ConsultationSummaryDetailResponse {
     private String action;
     private String issue;
     private Double matchRate;
+  }
+
+  @Getter @Builder
+  public static class SummaryInfo {
+    private String status;
+    private String content;
+    private List<String> keywords;
   }
 
   @Getter @Builder
@@ -119,6 +128,15 @@ public class ConsultationSummaryDetailResponse {
                 .issue(e.getIam().getIssue())
                 .matchRate(e.getIam().getMatchRates())
                 .build())
+
+        .summary(e.getSummary() == null ? null :
+            SummaryInfo.builder()
+                .status(e.getSummary().getStatus())
+                .content(e.getSummary().getContent())
+                .keywords(e.getSummary().getKeywords())
+                .build())
+
+        .riskFlags(e.getRiskFlags())
 
         .cancellation(e.getCancellation() == null ? null :
             CancellationInfo.builder()
