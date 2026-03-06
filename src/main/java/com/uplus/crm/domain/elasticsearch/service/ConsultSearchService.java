@@ -21,7 +21,7 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class ConsultSearchService {
 
-    private static final DateTimeFormatter DATE_FMT = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+    private static final DateTimeFormatter DATE_FMT = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss");
 
     private static final List<String> FULL_FIELDS = List.of(
             "iamIssue^3.0",
@@ -188,7 +188,7 @@ public class ConsultSearchService {
                                                     .field("createdAt")
                                                     .gte(from.format(DATE_FMT))
                                                     .lte(to.format(DATE_FMT))
-                                                    .format("yyyy-MM-dd HH:mm:ss")
+                                                    .format("yyyy-MM-dd'T'HH:mm:ss")
                                             )
                                     )
                             );
@@ -213,13 +213,16 @@ public class ConsultSearchService {
     }
 
     /**
-     * 고객명 검색 (동의어 분석 적용)
+     * 고객명 검색 (부분 이름 검색 지원)
+     * - 분석기 적용 match (오타 허용)
+     * - 정확한 전체 이름 term 검색 (raw 필드)
+     * - 부분 이름 wildcard 검색: 성을 제외한 이름만 입력해도 검색 가능
      */
     public List<ConsultDoc> searchByCustomerName(String customerName) {
         NativeQuery query = NativeQuery.builder()
                 .withQuery(q -> q
                         .bool(b -> b
-                                // 분석기 적용 match
+                                // 분석기 적용 match (오타 허용)
                                 .should(s -> s
                                         .match(m -> m
                                                 .field("customerName")
@@ -228,12 +231,20 @@ public class ConsultSearchService {
                                                 .boost(1.5f)
                                         )
                                 )
-                                // 정확한 키워드 match (raw 필드)
+                                // 정확한 전체 이름 match (raw 필드)
                                 .should(s -> s
                                         .term(t -> t
                                                 .field("customerName.raw")
                                                 .value(customerName)
                                                 .boost(3.0f)
+                                        )
+                                )
+                                // 부분 이름 wildcard 검색 (성 제외 이름만 입력 시에도 검색)
+                                .should(s -> s
+                                        .wildcard(w -> w
+                                                .field("customerName.raw")
+                                                .value("*" + customerName + "*")
+                                                .boost(2.0f)
                                         )
                                 )
                                 .minimumShouldMatch("1")

@@ -59,6 +59,6 @@ public class ConsultDoc {
     @Field(type = FieldType.Keyword)
     private String phone;
 
-    @Field(type = FieldType.Date, format = {}, pattern = "yyyy-MM-dd HH:mm:ss")
+    @Field(type = FieldType.Date, format = {}, pattern = "uuuu-MM-dd'T'HH:mm:ss")
     private LocalDateTime createdAt;
 }

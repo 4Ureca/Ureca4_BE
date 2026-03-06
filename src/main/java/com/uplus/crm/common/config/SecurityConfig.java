@@ -46,7 +46,8 @@ public class SecurityConfig {
                     "/auth/google/**",
                     "/auth/refresh",
                     "/auth/logout",
-                    "/elasticsearch/**"
+                    "/elasticsearch/**",
+                    "/es-test/**"
                 ).permitAll()
                 .anyRequest().authenticated()
             )

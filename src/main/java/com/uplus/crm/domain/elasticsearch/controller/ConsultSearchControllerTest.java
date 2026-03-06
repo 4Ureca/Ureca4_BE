@@ -2,12 +2,16 @@ package com.uplus.crm.domain.elasticsearch.controller;
 
 import com.uplus.crm.domain.elasticsearch.entity.ConsultDoc;
 import com.uplus.crm.domain.elasticsearch.service.ConsultSearchService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.List;
 import java.util.UUID;
 
@@ -18,18 +22,44 @@ public class ConsultSearchControllerTest {
 
     private final ConsultSearchService consultSearchService;
 
-    /**
-     * 테스트 데이터 생성
-     * POST /api/elasticsearch/consult/test-data
-     */
+    @Operation(
+        summary = "[Step 1] 테스트 데이터 적재",
+        description = """
+            Elasticsearch consult-index에 샘플 상담 데이터 18건을 저장합니다.
+            검색 API를 테스트하기 전에 반드시 먼저 호출하세요.
+
+            적재되는 데이터 목록:
+            - C001: 갤폰/번이/미납 (NEGATIVE, HIGH, riskScore=75)
+            - C002: 아폰/기변/선약 (POSITIVE, NORMAL, riskScore=10)
+            - C003: 해지/kt번이/재약정 (NEGATIVE, URGENT, riskScore=90)
+            - C004: 넷플/결합할인/5G (POSITIVE, LOW, riskScore=5)
+            - C005: 폭언/반복민원 (NEGATIVE, URGENT, riskScore=95)
+            - C006: 갤탭/유심/eSIM (NEUTRAL, NORMAL, riskScore=15)
+            - C007: 셋탑/리모콘/이전설치 (NEUTRAL, NORMAL, riskScore=20)
+            - C008: 디플/티빙/웨이브 (POSITIVE, LOW, riskScore=8)
+            - C009: 와이파이/공유기/속도 (NEGATIVE, HIGH, riskScore=40)
+            - C010: 로밍패스/해외로밍 (POSITIVE, NORMAL, riskScore=5)
+            - C011: 피싱/사기의심 (NEGATIVE, URGENT, riskScore=88)
+            - C012: 소비자원/위약금 (NEGATIVE, URGENT, riskScore=85)
+            - C013: 폰케어/보험 (NEUTRAL, NORMAL, riskScore=25)
+            - C014: VVIP/요금감면/분납 (POSITIVE, LOW, riskScore=5)
+            - C015: 유쓰/너겟/청구서 (NEGATIVE, HIGH, riskScore=55)
+            - C016: 인터넷전화/신규설치/5GB (POSITIVE, LOW, riskScore=5)
+            - C017: 아이들나라/유튜브프리미엄 (POSITIVE, LOW, riskScore=5)
+            - C018: 5G/LTE/통화품질 (NEGATIVE, HIGH, riskScore=45)
+            """
+    )
     @PostMapping("/test-data")
     public ResponseEntity<String> createTestData() {
-        ConsultDoc doc = ConsultDoc.builder()
+        List<ConsultDoc> docs = List.of(
+
+            // ── C001: 갤폰/번이/미납 ──────────────────────────────────────────
+            ConsultDoc.builder()
                 .id(UUID.randomUUID().toString())
                 .iamIssue("갤럭시 S24 울트라 미납금 번호이동 제한")
                 .iamAction("미납 납부 후 번호이동 가능 안내")
-                .content("고객이 갤폰 미납금 있어서 번이 못 한다고 함")
-                .allText("갤럭시 S24 울트라 미납금 번호이동 제한 미납 납부 후 가능 안내")
+                .content("고객이 갤폰 미납금 있어서 번이 못 한다고 함. 미납요금 납부 후 진행 가능.")
+                .allText("갤럭시 S24 울트라 미납금 번호이동 제한 미납요금 납부 안내")
                 .customerName("김유플")
                 .customerId("C001")
                 .sentiment("NEGATIVE")
@@ -37,96 +67,485 @@ public class ConsultSearchControllerTest {
                 .priority("HIGH")
                 .phone("010-1234-5678")
                 .createdAt(LocalDateTime.now())
-                .build();
+                .build(),
 
-        consultSearchService.saveConsultation(doc);
-        return ResponseEntity.ok("테스트 데이터 저장 완료!");
+            // ── C002: 아폰/기변/선약 ──────────────────────────────────────────
+            ConsultDoc.builder()
+                .id(UUID.randomUUID().toString())
+                .iamIssue("아이폰 16 프로 기기변경 요청")
+                .iamAction("아폰 기변 진행, 선택약정 24개월 안내 및 공시지원금 비교")
+                .content("고객이 아폰으로 기변 원함. 선약 vs 공시 비교 안내. 아이폰 iphone 재고 확인.")
+                .allText("아이폰 iphone 기기변경 기변 선택약정 선약 공시지원금")
+                .customerName("이사과")
+                .customerId("C002")
+                .sentiment("POSITIVE")
+                .riskScore(10)
+                .priority("NORMAL")
+                .phone("010-2345-6789")
+                .createdAt(LocalDateTime.now().minusDays(1))
+                .build(),
+
+            // ── C003: 해지위험/kt/재약정 ─────────────────────────────────────
+            ConsultDoc.builder()
+                .id(UUID.randomUUID().toString())
+                .iamIssue("서비스 해지 요청 - 타사 이동 검토 중")
+                .iamAction("해지방어 혜택 제시, 재약정 3만원 할인 안내")
+                .content("고객이 해지 원한다고 함. kt skt로 번이 고려 중. 해지위험 이탈위험 고객. 재약정 시 혜택 안내.")
+                .allText("해지 서비스종료 중도해지 kt skt 번호이동 타사이동 해지위험 이탈위험 재약정 약정연장")
+                .customerName("박해지")
+                .customerId("C003")
+                .sentiment("NEGATIVE")
+                .riskScore(90)
+                .priority("URGENT")
+                .phone("010-3456-7890")
+                .createdAt(LocalDateTime.now().minusDays(2))
+                .build(),
+
+            // ── C004: 넷플/결합할인/5G ───────────────────────────────────────
+            ConsultDoc.builder()
+                .id(UUID.randomUUID().toString())
+                .iamIssue("넷플릭스 OTT 결합 요금제 문의")
+                .iamAction("넷플 결합할인 5G 요금제 안내. 투게더 참쉬운결합 적용.")
+                .content("고객이 넷플 보고 싶다고 함. 결합할인 가족결합 묶음할인 문의. 5G LTE 요금제 비교.")
+                .allText("넷플릭스 netflix 넷플 결합할인 가족결합 투게더 참쉬운결합 5G LTE 요금제")
+                .customerName("최유플")
+                .customerId("C004")
+                .sentiment("POSITIVE")
+                .riskScore(5)
+                .priority("LOW")
+                .phone("010-4567-8901")
+                .createdAt(LocalDateTime.now().minusDays(3))
+                .build(),
+
+            // ── C005: 폭언/반복민원/블랙컨슈머 ──────────────────────────────
+            ConsultDoc.builder()
+                .id(UUID.randomUUID().toString())
+                .iamIssue("폭언 욕설 고객 응대 - 반복 민원 고질 민원")
+                .iamAction("감정노동 보호 절차 진행, 상담 종료")
+                .content("고객이 욕설 및 폭언 갑질 언어폭력 지속. 블랙컨슈머 고질민원 상습민원 이력 있음.")
+                .allText("폭언 욕설 갑질 언어폭력 반복민원 고질민원 상습민원 블랙컨슈머")
+                .customerName("홍민원")
+                .customerId("C005")
+                .sentiment("NEGATIVE")
+                .riskScore(95)
+                .priority("URGENT")
+                .phone("010-5678-9012")
+                .createdAt(LocalDateTime.now().minusDays(4))
+                .build(),
+
+            // ── C006: 갤탭/유심/eSIM ─────────────────────────────────────────
+            ConsultDoc.builder()
+                .id(UUID.randomUUID().toString())
+                .iamIssue("갤럭시탭 신규 개통 - eSIM 유심 설정 문의")
+                .iamAction("갤탭 eSIM 설정 원격 안내. 나노유심 물리유심 교체 불필요 설명.")
+                .content("고객이 갤탭 새로 사서 esim 설정 못 하겠다고 함. 유심 usim 가입자식별모듈 문의.")
+                .allText("갤럭시탭 갤탭 galaxy eSIM 유심 usim 나노유심 물리유심 가입자식별모듈")
+                .customerName("정탭순")
+                .customerId("C006")
+                .sentiment("NEUTRAL")
+                .riskScore(15)
+                .priority("NORMAL")
+                .phone("010-6789-0123")
+                .createdAt(LocalDateTime.now().minusDays(5))
+                .build(),
+
+            // ── C007: 셋탑/리모콘/이전설치 ───────────────────────────────────
+            ConsultDoc.builder()
+                .id(UUID.randomUUID().toString())
+                .iamIssue("이사 후 셋톱박스 이전설치 및 리모컨 불량")
+                .iamAction("이사설치 일정 예약. 리모콘 리모컨 교체 신청 접수.")
+                .content("고객이 이사해서 셋탑 이전설치 원함. 셋탑박스 세톱박스 리모컨 리모콘 고장으로 교체 요청.")
+                .allText("셋톱박스 셋탑 세톱박스 티비박스 리모컨 리모콘 이전설치 이사설치 설치변경")
+                .customerName("오이사")
+                .customerId("C007")
+                .sentiment("NEUTRAL")
+                .riskScore(20)
+                .priority("NORMAL")
+                .phone("010-7890-1234")
+                .createdAt(LocalDateTime.now().minusDays(6))
+                .build(),
+
+            // ── C008: 디플/티빙/웨이브 OTT ────────────────────────────────────
+            ConsultDoc.builder()
+                .id(UUID.randomUUID().toString())
+                .iamIssue("디즈니플러스 티빙 웨이브 OTT 부가서비스 문의")
+                .iamAction("디플 티빙플러스 웨이브플러스 결합 요금제 안내")
+                .content("고객이 디플 구독 중인데 티빙 웨이브도 보고 싶다고 함. OTT 결합상품 설명.")
+                .allText("디즈니플러스 디플 티빙 tving 티빙플러스 웨이브 wavve 웨이브플러스 OTT 부가서비스")
+                .customerName("윤OTT")
+                .customerId("C008")
+                .sentiment("POSITIVE")
+                .riskScore(8)
+                .priority("LOW")
+                .phone("010-8901-2345")
+                .createdAt(LocalDateTime.now().minusDays(7))
+                .build(),
+
+            // ── C009: 와이파이/공유기/속도 ────────────────────────────────────
+            ConsultDoc.builder()
+                .id(UUID.randomUUID().toString())
+                .iamIssue("와이파이 속도 저하 - 공유기 장애 문의")
+                .iamAction("원격 점검 후 공유기 라우터 교체 안내. 기가인터넷 1G 속도 정상 확인.")
+                .content("고객이 와이파이 무선인터넷 느리다고 함. 공유기 라우터 루터 ap 점검. 기가슬림 500m 1G 속도 측정.")
+                .allText("와이파이 wifi 무선인터넷 공유기 라우터 루터 ap 기가인터넷 기가슬림 100m 500m 1g 속도")
+                .customerName("강와이파이")
+                .customerId("C009")
+                .sentiment("NEGATIVE")
+                .riskScore(40)
+                .priority("HIGH")
+                .phone("010-9012-3456")
+                .createdAt(LocalDateTime.now().minusDays(8))
+                .build(),
+
+            // ── C010: 로밍패스/해외로밍 ──────────────────────────────────────
+            ConsultDoc.builder()
+                .id(UUID.randomUUID().toString())
+                .iamIssue("해외 출장 로밍 패스 신청")
+                .iamAction("로밍패스 해외로밍 데이터로밍 유럽 요금제 안내")
+                .content("고객이 유럽 출장 예정. 로밍 데이터로밍 해외로밍 로밍패스 신청 원함. 일 1만원 무제한 안내.")
+                .allText("로밍패스 해외로밍 데이터로밍 유럽로밍 유럽 출장 일 무제한")
+                .customerName("임해외")
+                .customerId("C010")
+                .sentiment("POSITIVE")
+                .riskScore(5)
+                .priority("NORMAL")
+                .phone("010-0123-4567")
+                .createdAt(LocalDateTime.now().minusDays(9))
+                .build(),
+
+            // ── C011: 피싱/사기의심 ────────────────────────────────────────────
+            ConsultDoc.builder()
+                .id(UUID.randomUUID().toString())
+                .iamIssue("보이스피싱 의심 - 사기 부정사용 신고")
+                .iamAction("피싱 사기의심 계정 일시 정지 및 보안 조치 진행")
+                .content("고객이 스미싱 보이스피싱 문자 받았다고 함. 부정사용 사기 의심. 피싱피해 피싱해킹 신고 접수.")
+                .allText("피싱 스미싱 보이스피싱 피싱해킹 사기 부정사용 사기의심 피싱피해")
+                .customerName("서피싱")
+                .customerId("C011")
+                .sentiment("NEGATIVE")
+                .riskScore(88)
+                .priority("URGENT")
+                .phone("010-1122-3344")
+                .createdAt(LocalDateTime.now().minusDays(10))
+                .build(),
+
+            // ── C012: 소비자원/방통위/위약금 ──────────────────────────────────
+            ConsultDoc.builder()
+                .id(UUID.randomUUID().toString())
+                .iamIssue("소비자원 방통위 민원 예고 - 위약금 분쟁")
+                .iamAction("위약금 할인반환금 산정 근거 상세 안내. 분쟁 예방 조치.")
+                .content("고객이 소비자원 방통위에 민원 넣겠다고 함. 위약금 해지비용 해지위약금 환불 요구.")
+                .allText("소비자원 방통위 위약금 할인반환금 해지비용 해지위약금 환불 분쟁 민원")
+                .customerName("조소비자")
+                .customerId("C012")
+                .sentiment("NEGATIVE")
+                .riskScore(85)
+                .priority("URGENT")
+                .phone("010-2233-4455")
+                .createdAt(LocalDateTime.now().minusDays(11))
+                .build(),
+
+            // ── C013: 유플러스폰케어/보험 ─────────────────────────────────────
+            ConsultDoc.builder()
+                .id(UUID.randomUUID().toString())
+                .iamIssue("갤폰 파손 - 유플러스폰케어 보험 청구")
+                .iamAction("폰케어프리미엄 U+폰케어 파손 접수 및 수리비 안내")
+                .content("고객이 갤폰 액정 깨져서 폰케어 보험 청구 원함. 휴대폰보험 스마트폰보험 유플러스폰케어 접수.")
+                .allText("유플러스폰케어 폰케어프리미엄 U+폰케어 휴대폰보험 스마트폰보험 파손 액정 수리")
+                .customerName("권파손")
+                .customerId("C013")
+                .sentiment("NEUTRAL")
+                .riskScore(25)
+                .priority("NORMAL")
+                .phone("010-3344-5566")
+                .createdAt(LocalDateTime.now().minusDays(12))
+                .build(),
+
+            // ── C014: VVIP/다이아몬드/요금감면 ───────────────────────────────
+            ConsultDoc.builder()
+                .id(UUID.randomUUID().toString())
+                .iamIssue("VVIP 다이아몬드 고객 요금감면 및 분할납부 요청")
+                .iamAction("VIP 우수고객 장기할인 요금감면 장애인감면 적용. 분납 분할납부 12개월 안내.")
+                .content("VVIP 브이브이아이피 다이아몬드 우수고객 고객. 요금감면 할인 감면 요청. 분할납부 나눠내기 분납 안내.")
+                .allText("vvip 브이브이아이피 vip 브이아이피 diamond 다이아몬드 우수고객 요금감면 할인 감면 분할납부 분납")
+                .customerName("나VVIP")
+                .customerId("C014")
+                .sentiment("POSITIVE")
+                .riskScore(5)
+                .priority("LOW")
+                .phone("010-4455-6677")
+                .createdAt(LocalDateTime.now().minusDays(13))
+                .build(),
+
+            // ── C015: 유쓰/너겟/청구서 ────────────────────────────────────────
+            ConsultDoc.builder()
+                .id(UUID.randomUUID().toString())
+                .iamIssue("유쓰 너겟 청구서 이중청구 오류")
+                .iamAction("청구서 고지서 명세서 재발행. 이중청구 소급적용 환불 처리.")
+                .content("고객이 유쓰 youth 유스 너겟 nugget 요금제 청구서 명세서 고지서 요금내역서 확인 중 이중청구 발견.")
+                .allText("유쓰 youth 유스 너겟 nugget 청구서 고지서 명세서 요금내역서 이중청구 소급적용")
+                .customerName("하유쓰")
+                .customerId("C015")
+                .sentiment("NEGATIVE")
+                .riskScore(55)
+                .priority("HIGH")
+                .phone("010-5566-7788")
+                .createdAt(LocalDateTime.now().minusDays(14))
+                .build(),
+
+            // ── C016: 인터넷전화/신규설치/5GB ─────────────────────────────────
+            ConsultDoc.builder()
+                .id(UUID.randomUUID().toString())
+                .iamIssue("인터넷전화 홈전화 신규설치 및 데이터 5GB 추가")
+                .iamAction("인터넷전화 유선전화 홈전화 신규설치 예약. 데이터쉐어링 5GB 추가.")
+                .content("고객이 홈전화 인터넷전화 유선전화 신규설치 원함. 데이터 5GB 오기가 5gb 추가 문의.")
+                .allText("인터넷전화 홈전화 유선전화 신규설치 첫설치 데이터쉐어링 5gb 오기가 5g")
+                .customerName("문인터넷")
+                .customerId("C016")
+                .sentiment("POSITIVE")
+                .riskScore(5)
+                .priority("LOW")
+                .phone("010-6677-8899")
+                .createdAt(LocalDateTime.now().minusDays(15))
+                .build(),
+
+            // ── C017: 아이들나라/유튜브프리미엄/요금제 ───────────────────────
+            ConsultDoc.builder()
+                .id(UUID.randomUUID().toString())
+                .iamIssue("아이들나라 유튜브프리미엄 결합 요금제 문의")
+                .iamAction("아이들나라 아이들네이션 유튜브프리미어 유튜브유료 결합상품 안내")
+                .content("고객이 아이들나라 유튜브프리미엄 유튜브유료 결합 원함. 요금상품 요금종류 비교.")
+                .allText("아이들나라 아이들네이션 유튜브프리미엄 유튜브유료 결합할인 요금제 요금상품 요금종류")
+                .customerName("양아이")
+                .customerId("C017")
+                .sentiment("POSITIVE")
+                .riskScore(5)
+                .priority("LOW")
+                .phone("010-7788-9900")
+                .createdAt(LocalDateTime.now().minusDays(16))
+                .build(),
+
+            // ── C018: LTE/5G 속도불만/통화품질 ──────────────────────────────
+            ConsultDoc.builder()
+                .id(UUID.randomUUID().toString())
+                .iamIssue("5G LTE 통화품질 속도 불만 - 네트워크 장애 의심")
+                .iamAction("네트워크재설정 원격점검 안내. 5G 5세대 5g네트워크 기지국 점검 요청.")
+                .content("고객이 5G 5세대 lte 4g 통화품질 속도 불만. 와이파이6 wifi 연결 문제. APN IMEI 초기화 안내.")
+                .allText("5g 5세대 5g네트워크 lte 4g 통화품질 속도 와이파이 wifi 무선인터넷 APN IMEI 원격점검")
+                .customerName("류속도")
+                .customerId("C018")
+                .sentiment("NEGATIVE")
+                .riskScore(45)
+                .priority("HIGH")
+                .phone("010-8899-0011")
+                .createdAt(LocalDateTime.now().minusDays(17))
+                .build()
+        );
+
+        docs.forEach(consultSearchService::saveConsultation);
+        return ResponseEntity.ok("테스트 데이터 " + docs.size() + "건 저장 완료!");
     }
 
-    /**
-     * 통합 키워드 검색 (동의어 사전 적용)
-     * - 갤폰 검색 → 갤럭시 포함 문서 반환
-     * - 번이 검색 → 번호이동 포함 문서 반환
-     * - 오타 허용 (fuzziness AUTO)
-     * GET /api/elasticsearch/consult/search?keyword=갤폰&page=0&size=20
-     */
+    @Operation(
+        summary = "통합 키워드 검색 (동의어 사전 적용)",
+        description = """
+            동의어 사전과 형태소 분석을 적용한 전문 검색입니다.
+            축약어·구어체 입력 시 정규 표현으로 확장 검색됩니다.
+
+            동의어 검색 예시:
+            - 갤폰, 갤럭시폰, galaxy, 삼성폰 → 갤럭시 관련 문서 반환 (C001, C013)
+            - 번이, 통신사변경, 타사이동 → 번호이동 관련 문서 반환 (C001, C003)
+            - 아폰, iphone → 아이폰 관련 문서 반환 (C002)
+            - 넷플, netflix → 넷플릭스 관련 문서 반환 (C004)
+            - 디플 → 디즈니플러스 관련 문서 반환 (C008)
+            - 갤탭 → 갤럭시탭 관련 문서 반환 (C006)
+            - 셋탑 → 셋톱박스 관련 문서 반환 (C007)
+            - 기변 → 기기변경 관련 문서 반환 (C002)
+            - 선약 → 선택약정 관련 문서 반환 (C002)
+            - 분납 → 분할납부 관련 문서 반환 (C014)
+
+            필드별 가중치: iamIssue(×3) > iamAction(×2) > content(×1.5) > allText, iamMemo
+            오타 허용 (fuzziness AUTO) 적용.
+            """
+    )
     @GetMapping("/search")
     public ResponseEntity<List<ConsultDoc>> search(
+            @Parameter(description = "검색 키워드 (축약어 사용 가능: 갤폰, 번이, 넷플, 디플, 아폰 등)", example = "갤폰")
             @RequestParam String keyword,
+            @Parameter(description = "페이지 번호 (0부터 시작)", example = "0")
             @RequestParam(defaultValue = "0") int page,
+            @Parameter(description = "페이지 크기", example = "20")
             @RequestParam(defaultValue = "20") int size) {
         return ResponseEntity.ok(consultSearchService.searchByKeyword(keyword, page, size));
     }
 
-    /**
-     * 고위험 상담 검색 (riskScore ≥ threshold 또는 위험 키워드)
-     * GET /api/elasticsearch/consult/search/high-risk?keyword=해지&threshold=70
-     */
+    @Operation(
+        summary = "고위험 상담 검색",
+        description = """
+            riskScore가 threshold 이상이거나 위험 키워드를 포함하는 상담을 검색합니다.
+            결과는 riskScore 내림차순으로 반환됩니다.
+
+            테스트 예시:
+            - keyword=해지, threshold=70 → C003(90), C011(88), C012(85) 반환
+            - keyword=폭언, threshold=80 → C005(95), C011(88), C012(85) 반환
+            - keyword=피싱, threshold=50 → C011(88) 반환
+
+            동의어 적용:
+            - 해지위험, 이탈위험, 해지예정 → 해지위험
+            - 폭언, 욕설, 갑질, 언어폭력 → 폭언욕설
+            - 반복민원, 고질민원, 블랙컨슈머 → 반복민원
+            - 피싱, 스미싱, 보이스피싱 → 피싱해킹
+            """
+    )
     @GetMapping("/search/high-risk")
     public ResponseEntity<List<ConsultDoc>> searchHighRisk(
+            @Parameter(description = "위험 관련 키워드 (해지, 폭언, 피싱, 사기 등)", example = "해지")
             @RequestParam String keyword,
+            @Parameter(description = "riskScore 최소 임계값 (이 값 이상인 문서 포함)", example = "70")
             @RequestParam(defaultValue = "70") int threshold) {
         return ResponseEntity.ok(consultSearchService.searchHighRisk(keyword, threshold));
     }
 
-    /**
-     * 감정 분류 + 키워드 복합 검색
-     * GET /api/elasticsearch/consult/search/sentiment?sentiment=NEGATIVE&keyword=해지
-     */
+    @Operation(
+        summary = "감정 분류 + 키워드 복합 검색",
+        description = """
+            고객 감정(sentiment) 필터와 키워드를 결합하여 검색합니다.
+            keyword를 생략하면 해당 감정의 전체 상담을 반환합니다.
+
+            sentiment 값:
+            - NEGATIVE: 부정 감정 (C001, C003, C005, C009, C011, C012, C015, C018)
+            - POSITIVE: 긍정 감정 (C002, C004, C008, C010, C014, C016, C017)
+            - NEUTRAL: 중립 (C006, C007, C013)
+
+            테스트 예시:
+            - sentiment=NEGATIVE, keyword=해지 → C003 반환
+            - sentiment=NEGATIVE, keyword=폭언 → C005 반환
+            - sentiment=POSITIVE, keyword=아이폰 → C002 반환
+            - sentiment=NEGATIVE (keyword 없음) → NEGATIVE 전체 8건 반환
+            """
+    )
     @GetMapping("/search/sentiment")
     public ResponseEntity<List<ConsultDoc>> searchBySentiment(
+            @Parameter(description = "감정 분류 값 (POSITIVE / NEGATIVE / NEUTRAL)", example = "NEGATIVE")
             @RequestParam String sentiment,
+            @Parameter(description = "추가 키워드 (생략 시 해당 감정 전체 반환)", example = "해지")
             @RequestParam(required = false) String keyword,
+            @Parameter(description = "페이지 번호", example = "0")
             @RequestParam(defaultValue = "0") int page,
+            @Parameter(description = "페이지 크기", example = "20")
             @RequestParam(defaultValue = "20") int size) {
         return ResponseEntity.ok(
                 consultSearchService.searchBySentimentAndKeyword(sentiment, keyword, page, size));
     }
 
-    /**
-     * 날짜 범위 + 키워드 검색
-     * GET /api/elasticsearch/consult/search/date?keyword=미납&from=2024-01-01T00:00:00&to=2024-12-31T23:59:59
-     */
+    @Operation(
+        summary = "날짜 범위 + 키워드 검색",
+        description = """
+            상담 생성일(createdAt) 범위와 키워드를 결합하여 검색합니다.
+            결과는 최신순(createdAt 내림차순)으로 반환됩니다.
+
+            날짜 형식: yyyy-MM-dd
+
+            테스트 예시 (테스트 데이터 기준):
+            - keyword=미납, from=오늘-2일, to=오늘 → C001 반환
+            - keyword=해지, from=오늘-3일, to=오늘-1일 → C003 반환
+            - keyword=없음(생략), from=2025-01-01, to=2030-12-31 → 전체 18건 반환
+            """
+    )
     @GetMapping("/search/date")
     public ResponseEntity<List<ConsultDoc>> searchByDate(
+            @Parameter(description = "검색 키워드 (생략 시 날짜 범위 내 전체 반환)", example = "미납")
             @RequestParam(required = false) String keyword,
-            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime from,
-            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime to,
+            @Parameter(description = "검색 시작일 (yyyy-MM-dd)", example = "2025-01-01")
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
+            @Parameter(description = "검색 종료일 (yyyy-MM-dd)", example = "2030-12-31")
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to,
+            @Parameter(description = "페이지 번호", example = "0")
             @RequestParam(defaultValue = "0") int page,
+            @Parameter(description = "페이지 크기", example = "20")
             @RequestParam(defaultValue = "20") int size) {
         return ResponseEntity.ok(
-                consultSearchService.searchByDateRangeAndKeyword(keyword, from, to, page, size));
+                consultSearchService.searchByDateRangeAndKeyword(
+                        keyword,
+                        from.atStartOfDay(),
+                        to.atTime(LocalTime.MAX),
+                        page, size));
     }
 
-    /**
-     * 우선순위 필터 검색
-     * GET /api/elasticsearch/consult/search/priority?priority=URGENT&keyword=해지
-     */
+    @Operation(
+        summary = "우선순위 필터 검색",
+        description = """
+            처리 우선순위(priority) 필터와 키워드를 결합하여 검색합니다.
+            결과는 riskScore 내림차순으로 반환됩니다.
+
+            priority 값:
+            - URGENT: 긴급 (C003·C005·C011·C012)
+            - HIGH: 높음 (C001·C009·C015·C018)
+            - NORMAL: 보통 (C002·C006·C007·C010·C013)
+            - LOW: 낮음 (C004·C008·C014·C016·C017)
+
+            테스트 예시:
+            - priority=URGENT → 4건 반환 (riskScore: 95, 90, 88, 85)
+            - priority=URGENT, keyword=해지 → C003 반환
+            - priority=HIGH, keyword=와이파이 → C009 반환
+            - priority=LOW, keyword=넷플 → C004 반환
+            """
+    )
     @GetMapping("/search/priority")
     public ResponseEntity<List<ConsultDoc>> searchByPriority(
+            @Parameter(description = "우선순위 (URGENT / HIGH / NORMAL / LOW)", example = "URGENT")
             @RequestParam String priority,
+            @Parameter(description = "추가 키워드 (생략 시 해당 우선순위 전체 반환)", example = "해지")
             @RequestParam(required = false) String keyword,
+            @Parameter(description = "페이지 번호", example = "0")
             @RequestParam(defaultValue = "0") int page,
+            @Parameter(description = "페이지 크기", example = "20")
             @RequestParam(defaultValue = "20") int size) {
         return ResponseEntity.ok(
                 consultSearchService.searchByPriority(priority, keyword, page, size));
     }
 
-    /**
-     * 고객명 검색
-     * GET /api/elasticsearch/consult/search/customer?name=김유플
-     */
+    @Operation(
+        summary = "고객명 검색",
+        description = """
+            고객 이름으로 상담 이력을 검색합니다.
+            형태소 분석 적용 검색(퍼지 매칭)과 정확한 키워드 검색(raw 필드)을 병행합니다.
+
+            테스트 예시 (테스트 데이터 고객명):
+            - 김유플 → C001
+            - 이사과 → C002
+            - 박해지 → C003
+            - 최유플 → C004
+            - 홍민원 → C005
+            - 정탭순 → C006
+            - 오이사  → C007
+            - 윤OTT → C008
+            - 강와이파이 → C009
+            - 임해외 → C010
+            """
+    )
     @GetMapping("/search/customer")
-    public ResponseEntity<List<ConsultDoc>> searchByCustomerName(@RequestParam String name) {
+    public ResponseEntity<List<ConsultDoc>> searchByCustomerName(
+            @Parameter(description = "고객 이름", example = "김유플")
+            @RequestParam String name) {
         return ResponseEntity.ok(consultSearchService.searchByCustomerName(name));
     }
 
-    /**
-     * 고객 ID로 상담 이력 조회 (최신순)
-     * GET /api/elasticsearch/consult/customer/C001
-     */
+    @Operation(
+        summary = "고객 ID로 상담 이력 조회",
+        description = """
+            특정 고객의 전체 상담 이력을 최신순으로 반환합니다.
+
+            테스트 데이터 customerId 목록:
+            C001 ~ C018 (총 18건, 각 고객당 1건씩 적재됨)
+
+            예시: C003 입력 시 해지/위험 관련 상담 이력 반환
+            """
+    )
     @GetMapping("/customer/{customerId}")
-    public ResponseEntity<List<ConsultDoc>> getByCustomerId(@PathVariable String customerId) {
+    public ResponseEntity<List<ConsultDoc>> getByCustomerId(
+            @Parameter(description = "고객 ID (예: C001 ~ C018)", example = "C003")
+            @PathVariable String customerId) {
         return ResponseEntity.ok(consultSearchService.findByCustomerId(customerId));
     }
 }
