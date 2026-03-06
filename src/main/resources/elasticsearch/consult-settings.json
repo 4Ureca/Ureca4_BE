@@ -1,0 +1,33 @@
+{
+  "analysis": {
+    "analyzer": {
+      "korean_analyzer": {
+        "type": "custom",
+        "tokenizer": "nori_mixed_tokenizer",
+        "filter": [
+          "nori_readingform",
+          "lowercase",
+          "synonym_filter",
+          "stop_filter"
+        ]
+      }
+    },
+    "tokenizer": {
+      "nori_mixed_tokenizer": {
+        "type": "nori_tokenizer",
+        "decompound_mode": "mixed",
+        "user_dictionary": "analysis/userdict.txt"
+      }
+    },
+    "filter": {
+      "synonym_filter": {
+        "type": "synonym",
+        "synonyms_path": "analysis/synonyms.txt"
+      },
+      "stop_filter": {
+        "type": "stop",
+        "stopwords_path": "analysis/stopwords.txt"
+      }
+    }
+  }
+}

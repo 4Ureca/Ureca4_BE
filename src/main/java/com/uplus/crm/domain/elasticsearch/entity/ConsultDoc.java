@@ -12,26 +12,26 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 @Builder
 @Document(indexName = "consult-index")
-@Setting(settingPath = "elasticsearch/consult-index.json")
+@Setting(settingPath = "elasticsearch/consult-settings.json")
 public class ConsultDoc {
 
     @Id
     private String id;
 
-    @Field(type = FieldType.Text, analyzer = "consult_index_analyzer", searchAnalyzer = "consult_search_analyzer")
+    // 모든 분석기 이름을 korean_analyzer로 통일합니다.
+    @Field(type = FieldType.Text, analyzer = "korean_analyzer")
     private String content;
 
-    // [수정] boost 속성 제거 (쿼리 시점에 적용합니다)
-    @Field(type = FieldType.Text, analyzer = "consult_index_analyzer", searchAnalyzer = "consult_search_analyzer")
+    @Field(type = FieldType.Text, analyzer = "korean_analyzer")
     private String iamIssue;
 
-    @Field(type = FieldType.Text, analyzer = "consult_index_analyzer", searchAnalyzer = "consult_search_analyzer")
+    @Field(type = FieldType.Text, analyzer = "korean_analyzer")
     private String iamAction;
 
-    @Field(type = FieldType.Text, analyzer = "consult_index_analyzer", searchAnalyzer = "consult_search_analyzer")
+    @Field(type = FieldType.Text, analyzer = "korean_analyzer")
     private String iamMemo;
 
-    @Field(type = FieldType.Text, analyzer = "consult_index_analyzer", searchAnalyzer = "consult_search_analyzer")
+    @Field(type = FieldType.Text, analyzer = "korean_analyzer")
     private String allText;
 
     @Field(type = FieldType.Keyword)
@@ -46,9 +46,8 @@ public class ConsultDoc {
     @Field(type = FieldType.Keyword)
     private String customerId;
 
-    // [수정] @InnerField 에러 해결: @MultiField를 사용해야 합니다.
     @MultiField(
-            mainField = @Field(type = FieldType.Text, analyzer = "consult_index_analyzer"),
+            mainField = @Field(type = FieldType.Text, analyzer = "korean_analyzer"),
             otherFields = {
                     @InnerField(suffix = "raw", type = FieldType.Keyword)
             }
@@ -58,7 +57,6 @@ public class ConsultDoc {
     @Field(type = FieldType.Keyword)
     private String phone;
 
-    // [수정] DateFormat.custom 에러 해결: pattern을 바로 쓰거나 다른 enum 사용
     @Field(type = FieldType.Date, format = {}, pattern = "yyyy-MM-dd HH:mm:ss")
     private LocalDateTime createdAt;
 }

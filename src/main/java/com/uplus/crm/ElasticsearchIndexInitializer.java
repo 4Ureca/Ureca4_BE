@@ -19,10 +19,10 @@ public class ElasticsearchIndexInitializer {
 
     InputStream is = getClass()
         .getClassLoader()
-        .getResourceAsStream("elasticsearch/consult-index.json");
+        .getResourceAsStream("elasticsearch/consult-settings.json");
 
     if (is == null) {
-      throw new IllegalStateException("consult-index.json not found in resources");
+      throw new IllegalStateException("consult-settings.json not found in resources");
     }
 
     String json = new String(is.readAllBytes());

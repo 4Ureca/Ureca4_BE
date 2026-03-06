@@ -1,0 +1,22 @@
+{
+  "properties": {
+    "content": { "type": "text", "analyzer": "korean_analyzer" },
+    "iamIssue": { "type": "text", "analyzer": "korean_analyzer" },
+    "iamAction": { "type": "text", "analyzer": "korean_analyzer" },
+    "iamMemo": { "type": "text", "analyzer": "korean_analyzer" },
+    "allText": { "type": "text", "analyzer": "korean_analyzer" },
+    "customerName": {
+      "type": "text",
+      "analyzer": "korean_analyzer",
+      "fields": {
+        "raw": { "type": "keyword" }
+      }
+    },
+    "sentiment": { "type": "keyword" },
+    "priority": { "type": "keyword" },
+    "customerId": { "type": "keyword" },
+    "phone": { "type": "keyword" },
+    "riskScore": { "type": "integer" },
+    "createdAt": { "type": "date", "format": "yyyy-MM-dd HH:mm:ss" }
+  }
+}
