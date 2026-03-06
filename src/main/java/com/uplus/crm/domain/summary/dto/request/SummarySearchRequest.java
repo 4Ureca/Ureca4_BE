@@ -3,6 +3,7 @@ package com.uplus.crm.domain.summary.dto.request;
 import java.time.LocalDate;
 import java.util.List;
 import lombok.Getter;
+import lombok.Setter;
 import org.springframework.format.annotation.DateTimeFormat;
 
 /**
@@ -12,6 +13,7 @@ import org.springframework.format.annotation.DateTimeFormat;
  * <p>상세 검색: IAM 3종, 고객 4종, 위험 유형 체크리스트, 상담사 이름</p>
  */
 @Getter
+@Setter
 public class SummarySearchRequest {
 
   // ── 기본 검색 ──────────────────────────────────────────────────────────────
