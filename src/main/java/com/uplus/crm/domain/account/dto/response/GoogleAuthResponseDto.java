@@ -16,4 +16,5 @@ public class GoogleAuthResponseDto {
     private String accessToken;
     private LocalDateTime expiredAt;
     private Boolean isNewUser;
+    private String role; // "consultant"(상담사) , "admin"(관리자), "others"(일반) , 슈퍼관리자는 삭제.
 }

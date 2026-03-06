@@ -3,6 +3,7 @@ package com.uplus.crm.domain.account.repository.mysql;
 import com.uplus.crm.domain.account.entity.Employee;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -12,8 +13,10 @@ import java.util.Optional;
 public interface EmployeeRepository extends JpaRepository<Employee, Integer> {
 
     // --- 1. 인증 및 중복 체크 ---
+    @EntityGraph(attributePaths = {"employeeDetail", "employeeDetail.jobRole"})
     Optional<Employee> findByLoginId(String loginId);
 
+    @EntityGraph(attributePaths = {"employeeDetail", "employeeDetail.jobRole"})
     Optional<Employee> findByEmail(String email);
 
     boolean existsByEmail(String email);
