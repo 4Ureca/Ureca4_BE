@@ -1,0 +1,3 @@
+LG,유플러스,uplus
+아이폰,아폰,iphone
+갤럭시,갤폰,galaxy
