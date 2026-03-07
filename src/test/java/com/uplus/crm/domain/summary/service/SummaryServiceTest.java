@@ -83,7 +83,7 @@ class SummaryServiceTest {
     // ── 목록 조회 ─────────────────────────────────────────────────────────
 
     @Test
-    @DisplayName("목록 조회: keyword 없으면 MongoDB 전체 검색")
+    @DisplayName("목록 조회: keyword 없으면 MongoDB 전체 검색 (ES 미호출)")
     void search_noKeyword_returnsMongoPage() {
         Pageable pageable = PageRequest.of(0, 10, Sort.by(Sort.Direction.DESC, "consultedAt"));
         ConsultationSummary entity = makeSummary(1L);
@@ -96,40 +96,44 @@ class SummaryServiceTest {
 
         assertThat(result.getTotalElements()).isEqualTo(1);
         assertThat(result.getContent()).hasSize(1);
-        then(consultSearchService).should(never()).searchConsultIdsByKeyword(any());
+        then(consultSearchService).should(never()).searchWithPriority(any());
     }
 
     @Test
-    @DisplayName("목록 조회: keyword 있고 ES가 consultId 반환하면 IN 필터 적용")
-    void search_keywordWithEsIds_appliesInFilter() {
+    @DisplayName("목록 조회: AND 결과(해지) + OR-only 결과 → AND 우선 페이지 조립")
+    void search_keywordWithEsIds_andFirstOrSecond() {
         Pageable pageable = PageRequest.of(0, 10);
         SummarySearchRequest req = new SummarySearchRequest();
         req.setKeyword("해지");
 
-        given(consultSearchService.searchConsultIdsByKeyword("해지")).willReturn(List.of(1L, 2L));
+        // AND: consultId 1,2 / OR-only: consultId 3,4
+        var esResult = new ConsultSearchService.KeywordSearchResult(
+                List.of(1L, 2L), List.of(3L, 4L));
+        given(consultSearchService.searchWithPriority("해지")).willReturn(esResult);
         given(mongoTemplate.count(any(Query.class), any(Class.class))).willReturn(2L);
         given(mongoTemplate.find(any(Query.class), any(Class.class))).willReturn(List.of());
 
         summaryService.search(req, pageable);
 
-        then(consultSearchService).should().searchConsultIdsByKeyword("해지");
+        then(consultSearchService).should().searchWithPriority("해지");
     }
 
     @Test
-    @DisplayName("목록 조회: ES consultId 없으면 MongoDB regex fallback")
+    @DisplayName("목록 조회: ES 결과 없으면 MongoDB regex fallback")
     void search_keywordEsEmpty_mongoFallback() {
         Pageable pageable = PageRequest.of(0, 10);
         SummarySearchRequest req = new SummarySearchRequest();
         req.setKeyword("해지");
 
-        given(consultSearchService.searchConsultIdsByKeyword("해지")).willReturn(List.of());
+        var emptyResult = new ConsultSearchService.KeywordSearchResult(List.of(), List.of());
+        given(consultSearchService.searchWithPriority("해지")).willReturn(emptyResult);
         given(mongoTemplate.count(any(Query.class), any(Class.class))).willReturn(0L);
         given(mongoTemplate.find(any(Query.class), any(Class.class))).willReturn(List.of());
 
         summaryService.search(req, pageable);
 
-        // ES를 호출했지만 빈 결과 → MongoDB regex fallback (예외 없이 정상 동작)
-        then(consultSearchService).should().searchConsultIdsByKeyword("해지");
+        // ES 호출했지만 빈 결과 → MongoDB regex fallback (예외 없이 정상 동작)
+        then(consultSearchService).should().searchWithPriority("해지");
     }
 
     // ── 상세 조회 ─────────────────────────────────────────────────────────
