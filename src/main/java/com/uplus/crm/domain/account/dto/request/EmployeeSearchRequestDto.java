@@ -5,17 +5,13 @@ import lombok.Getter;
 import lombok.Setter;
 
 @Getter
-@Setter
+@Setter 
 public class EmployeeSearchRequestDto {
     private Integer page = 0;
     private Integer size = 20;
-
-    @Parameter(name = "dept_id")
-    private Integer deptId;
-
-    @Parameter(name = "job_role_id")
-    private Integer jobRoleId;
-
-    private String status; // ACTIVE, INACTIVE
-    private String keyword; // 이름 또는 사번
+    private Integer dept_id;
+    private Integer job_role_id;
+    @Parameter(description = "계정 상태 (활성화 / 비활성화 / 전체)", example = "활성화")
+    private String status;
+    private String keyword;
 }
