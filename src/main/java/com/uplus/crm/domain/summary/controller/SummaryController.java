@@ -101,10 +101,32 @@ public class SummaryController {
 
   @Operation(
       summary = "상담요약 상세 조회",
-      description = "consultId로 상담 요약 상세 정보를 조회합니다. IAM, 해지 분석, 상품 계약 정보를 포함합니다.")
+      description = """
+          RDB + MongoDB 데이터를 CompletableFuture로 병렬 조회하여 병합한 상세 응답을 반환합니다.
+
+          **데이터 소스**
+          | 소스 | 제공 데이터 |
+          |------|------------|
+          | RDB `consultation_results` | 기본 상담 정보 (필수, 없으면 404) |
+          | RDB `customers` | 고객 프로필 (MongoDB 없을 때 fallback) |
+          | RDB `consultation_raw_texts` | 상담 원문 스크립트 (`rawTextJson`) |
+          | RDB `consultation_category_policy` | 카테고리명 (MongoDB 없을 때 fallback) |
+          | RDB 가입 상품 UNION | HOME/MOBILE/ADDITIONAL 현재 가입 상품 |
+          | RDB `employees + employee_details` | 상담사 소속 부서 |
+          | MongoDB `consultation_summary` | AI 요약, IAM, 위험유형, 해지 분석 (선택) |
+
+          **응답 구조**
+          - `content.aiSummary` : AI 생성 요약
+          - `content.rawTextJson` : 상담 원문 스크립트 (JSON)
+          - `analysis` : IAM matchRate, riskFlags, 해지 방어 분석
+          - `activeSubscriptions` : 현재 가입 상품 목록 (HOME/MOBILE/ADDITIONAL)
+
+          MongoDB 데이터 없어도 404 반환하지 않고 RDB 기반 부분 응답.
+          """)
   @GetMapping("/{consultId}")
   public ConsultationSummaryDetailResponse detail(
-      @Parameter(description = "상담 결과서 ID") @PathVariable Long consultId) {
+      @Parameter(description = "상담 결과서 ID (consultation_results.consult_id)")
+      @PathVariable Long consultId) {
 
     return service.getDetail(consultId);
   }
