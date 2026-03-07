@@ -23,7 +23,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 @Tag(name = "상담요약", description = "AI 요약 처리가 완료된 상담 요약문 검색 및 조회")
 @RestController
-@RequestMapping("/api/summaries")
+@RequestMapping("/summaries")
 @RequiredArgsConstructor
 public class SummaryController {
 
