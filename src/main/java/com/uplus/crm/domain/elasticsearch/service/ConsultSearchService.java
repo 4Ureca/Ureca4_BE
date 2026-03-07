@@ -19,9 +19,11 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Objects;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -246,6 +248,86 @@ public class ConsultSearchService {
                                             )
                                     )
                             );
+                            return b;
+                        })
+                )
+                .withPageable(PageRequest.of(0, 1000))
+                .build();
+    }
+
+    /**
+     * AND 우선 / OR 보완 검색 결과.
+     *
+     * @param andMatchIds  모든 토큰이 일치하는 문서의 consultId (우선 노출)
+     * @param orOnlyMatchIds 일부 토큰만 일치하는 문서의 consultId (후순위 노출)
+     */
+    public record KeywordSearchResult(List<Long> andMatchIds, List<Long> orOnlyMatchIds) {
+        public boolean isEmpty() {
+            return andMatchIds.isEmpty() && orOnlyMatchIds.isEmpty();
+        }
+    }
+
+    /**
+     * AND 우선 + OR 보완 검색.
+     *
+     * <p>복수 토큰 입력 시 두 번의 ES 검색을 수행한다:</p>
+     * <ol>
+     *   <li>AND 검색 (모든 토큰 must) → {@code andMatchIds}</li>
+     *   <li>OR 검색 (최소 1개 토큰 should) → AND에 없는 ID만 {@code orOnlyMatchIds}</li>
+     * </ol>
+     *
+     * <p>단일 토큰은 OR와 AND 구분이 없으므로 {@code andMatchIds}에만 담아 반환.</p>
+     *
+     * @param keyword 공백 구분 복합 키워드
+     */
+    public KeywordSearchResult searchWithPriority(String keyword) {
+        List<String> tokens = tokenize(keyword);
+        if (tokens.isEmpty()) return new KeywordSearchResult(List.of(), List.of());
+
+        // 단일 토큰: AND/OR 구분 없음
+        if (tokens.size() == 1) {
+            List<Long> ids = extractConsultIds(
+                    elasticsearchOperations.search(buildSingleTokenQuery(tokens.get(0)), ConsultDoc.class));
+            return new KeywordSearchResult(ids, List.of());
+        }
+
+        // AND IDs: 모든 토큰 포함
+        List<Long> andIds = extractConsultIds(
+                elasticsearchOperations.search(buildCrossTokenQuery(tokens), ConsultDoc.class));
+
+        // OR IDs: 최소 1개 토큰 포함
+        List<Long> orIds = extractConsultIds(
+                elasticsearchOperations.search(buildOrTokenQuery(tokens), ConsultDoc.class));
+
+        // OR-only: OR에 있지만 AND에 없는 것
+        Set<Long> andSet = new HashSet<>(andIds);
+        List<Long> orOnlyIds = orIds.stream()
+                .filter(id -> !andSet.contains(id))
+                .toList();
+
+        return new KeywordSearchResult(andIds, orOnlyIds);
+    }
+
+    /**
+     * 복수 토큰 OR 쿼리.
+     * 각 토큰을 {@code should} 절로 처리 — 최소 1개 이상 일치해야 함.
+     */
+    private NativeQuery buildOrTokenQuery(List<String> tokens) {
+        return NativeQuery.builder()
+                .withQuery(q -> q
+                        .bool(b -> {
+                            tokens.forEach(token ->
+                                    b.should(s -> s
+                                            .multiMatch(mm -> mm
+                                                    .fields(FULL_FIELDS)
+                                                    .query(token)
+                                                    .type(TextQueryType.BestFields)
+                                                    .fuzziness("AUTO")
+                                                    .minimumShouldMatch("1")
+                                            )
+                                    )
+                            );
+                            b.minimumShouldMatch("1");
                             return b;
                         })
                 )

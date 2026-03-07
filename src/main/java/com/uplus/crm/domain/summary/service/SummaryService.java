@@ -23,6 +23,7 @@ import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.stream.Stream;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
@@ -66,24 +67,127 @@ public class SummaryService {
     /**
      * Hybrid 검색 — ES(keyword) + MongoDB(조건절) 결합.
      *
+     * <p><b>keyword AND/OR 우선순위 처리</b></p>
      * <ul>
-     *   <li>keyword: ES → consultId 목록 → MongoDB IN 필터
-     *       (ES consultId 없으면 MongoDB regex fallback)</li>
-     *   <li>나머지 필터: MongoDB Criteria로 직접 처리</li>
+     *   <li>복수 토큰(예: "갑질 반복민원"):
+     *       <ol>
+     *         <li>AND 검색 — 모든 토큰 포함 문서 → 상위 노출</li>
+     *         <li>OR 검색  — 일부 토큰 포함 문서 → 하위 노출 (AND 결과 없으면 단독 노출)</li>
+     *       </ol>
+     *   </li>
+     *   <li>단일 토큰: 기존 단일 쿼리 그대로</li>
+     *   <li>ES consultId 없으면 MongoDB regex fallback</li>
      * </ul>
      */
     public Page<ConsultationSummaryListResponse> search(
             SummarySearchRequest req, Pageable pageable) {
 
-        Criteria criteria = buildCriteria(req);
-        Query query = new Query(criteria).with(pageable);
-        long total = mongoTemplate.count(new Query(criteria), ConsultationSummary.class);
-        List<ConsultationSummary> content = mongoTemplate.find(query, ConsultationSummary.class);
+        if (StringUtils.hasText(req.getKeyword())) {
+            return searchWithKeywordPriority(req, pageable);
+        }
+        return doMongoPage(buildNonKeywordCriteria(req), pageable);
+    }
 
+    /**
+     * AND 우선 / OR 보완 페이지 조립.
+     *
+     * <p>페이지 내 순서: AND 결과 → OR-only 결과</p>
+     * <ul>
+     *   <li>페이지 내 AND 슬롯을 먼저 채우고, 남은 슬롯을 OR-only로 채운다.</li>
+     *   <li>ES 결과가 전혀 없으면 MongoDB regex fallback.</li>
+     * </ul>
+     */
+    private Page<ConsultationSummaryListResponse> searchWithKeywordPriority(
+            SummarySearchRequest req, Pageable pageable) {
+
+        ConsultSearchService.KeywordSearchResult esResult =
+                consultSearchService.searchWithPriority(req.getKeyword());
+
+        // ES 결과 없음 → MongoDB regex fallback
+        if (esResult.isEmpty()) {
+            Pattern kw = iPattern(req.getKeyword());
+            Criteria keywordFallback = new Criteria().orOperator(
+                    Criteria.where("iam.issue").regex(kw),
+                    Criteria.where("iam.action").regex(kw),
+                    Criteria.where("iam.memo").regex(kw),
+                    Criteria.where("summary.content").regex(kw),
+                    Criteria.where("summary.keywords").regex(kw)
+            );
+            Criteria base = buildNonKeywordCriteria(req);
+            Criteria combined = base.getCriteriaObject().isEmpty()
+                    ? keywordFallback
+                    : new Criteria().andOperator(base, keywordFallback);
+            return doMongoPage(combined, pageable);
+        }
+
+        Criteria base = buildNonKeywordCriteria(req);
+        int pageSize  = pageable.getPageSize();
+        long offset   = pageable.getOffset();
+
+        // AND 파트 카운트
+        long andTotal = 0;
+        if (!esResult.andMatchIds().isEmpty()) {
+            andTotal = mongoTemplate.count(
+                    new Query(withIdFilter(base, esResult.andMatchIds())),
+                    ConsultationSummary.class);
+        }
+
+        // OR-only 파트 카운트
+        long orTotal = 0;
+        if (!esResult.orOnlyMatchIds().isEmpty()) {
+            orTotal = mongoTemplate.count(
+                    new Query(withIdFilter(base, esResult.orOnlyMatchIds())),
+                    ConsultationSummary.class);
+        }
+
+        long totalCount = andTotal + orTotal;
+        List<ConsultationSummaryListResponse> pageContent = new ArrayList<>();
+
+        // ── AND 파트 (이 페이지에서 차지할 슬롯) ─────────────────────────
+        if (!esResult.andMatchIds().isEmpty() && offset < andTotal) {
+            int andTake = (int) Math.min(pageSize, andTotal - offset);
+            List<ConsultationSummary> andDocs = mongoTemplate.find(
+                    new Query(withIdFilter(base, esResult.andMatchIds()))
+                            .with(pageable.getSort())
+                            .skip((int) offset)
+                            .limit(andTake),
+                    ConsultationSummary.class);
+            pageContent.addAll(andDocs.stream()
+                    .map(ConsultationSummaryListResponse::from).toList());
+        }
+
+        // ── OR-only 파트 (남은 슬롯 채우기) ──────────────────────────────
+        int remaining = pageSize - pageContent.size();
+        if (remaining > 0 && !esResult.orOnlyMatchIds().isEmpty()) {
+            long orSkip = Math.max(0, offset - andTotal);
+            List<ConsultationSummary> orDocs = mongoTemplate.find(
+                    new Query(withIdFilter(base, esResult.orOnlyMatchIds()))
+                            .with(pageable.getSort())
+                            .skip((int) orSkip)
+                            .limit(remaining),
+                    ConsultationSummary.class);
+            pageContent.addAll(orDocs.stream()
+                    .map(ConsultationSummaryListResponse::from).toList());
+        }
+
+        return new PageImpl<>(pageContent, pageable, totalCount);
+    }
+
+    /** MongoDB Criteria에 consultId IN 필터를 AND로 결합 */
+    private Criteria withIdFilter(Criteria base, List<Long> ids) {
+        Criteria idCrit = Criteria.where("consultId").in(ids);
+        if (base == null || base.getCriteriaObject().isEmpty()) return idCrit;
+        return new Criteria().andOperator(base, idCrit);
+    }
+
+    /** Criteria + Pageable로 MongoDB 페이지 조회 */
+    private Page<ConsultationSummaryListResponse> doMongoPage(Criteria criteria, Pageable pageable) {
+        long total = mongoTemplate.count(new Query(criteria), ConsultationSummary.class);
+        List<ConsultationSummary> content = mongoTemplate.find(
+                new Query(criteria).with(pageable), ConsultationSummary.class);
         return new PageImpl<>(
                 content.stream().map(ConsultationSummaryListResponse::from).toList(),
-                pageable,
-                total);
+                pageable, total);
     }
 
     // ─────────────────────────────────────────────────────────────────────
@@ -208,25 +312,12 @@ public class SummaryService {
     // 검색 조건 빌더 (목록 조회용)
     // ─────────────────────────────────────────────────────────────────────
 
-    private Criteria buildCriteria(SummarySearchRequest req) {
+    /**
+     * keyword를 제외한 나머지 필터 Criteria 생성.
+     * keyword는 {@link #searchWithKeywordPriority}에서 별도로 처리한다.
+     */
+    private Criteria buildNonKeywordCriteria(SummarySearchRequest req) {
         List<Criteria> conditions = new ArrayList<>();
-
-        // keyword — ES Hybrid (ES consultId 없으면 MongoDB regex fallback)
-        if (StringUtils.hasText(req.getKeyword())) {
-            List<Long> esIds = consultSearchService.searchConsultIdsByKeyword(req.getKeyword());
-            if (!esIds.isEmpty()) {
-                conditions.add(Criteria.where("consultId").in(esIds));
-            } else {
-                Pattern kw = iPattern(req.getKeyword());
-                conditions.add(new Criteria().orOperator(
-                        Criteria.where("iam.issue").regex(kw),
-                        Criteria.where("iam.action").regex(kw),
-                        Criteria.where("iam.memo").regex(kw),
-                        Criteria.where("summary.content").regex(kw),
-                        Criteria.where("summary.keywords").regex(kw)
-                ));
-            }
-        }
 
         // 상담 기간
         if (req.getFrom() != null || req.getTo() != null) {
@@ -241,10 +332,15 @@ public class SummaryService {
             conditions.add(Criteria.where("agent.name").regex(iPattern(req.getConsultantName())));
         }
 
-        // 상담 카테고리명 (large/medium/small OR)
+        // 상담 카테고리 검색 — consultation_category_policy 기준 4개 필드 OR
+        // category.code  : 'M_FEE_01' 등 코드 직접 입력
+        // category.large : '요금/납부', '해지/재약정' 등 대분류
+        // category.medium: '요금제 변경', '미납 안내' 등 중분류
+        // category.small : '5G 요금제 안내', '분할 납부 신청' 등 소분류
         if (StringUtils.hasText(req.getCategoryName())) {
             Pattern cat = iPattern(req.getCategoryName());
             conditions.add(new Criteria().orOperator(
+                    Criteria.where("category.code").regex(cat),
                     Criteria.where("category.large").regex(cat),
                     Criteria.where("category.medium").regex(cat),
                     Criteria.where("category.small").regex(cat)
