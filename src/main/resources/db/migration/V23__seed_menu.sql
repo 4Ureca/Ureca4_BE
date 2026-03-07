@@ -19,7 +19,7 @@ FROM (
     UNION ALL
     SELECT 'MENU_DASHBOARD_CUSTOMER_TYPE' AS menu_code, '분류: 대시보드 / 메뉴명: 고객유형별 대응' AS menu_desc
     UNION ALL
-    SELECT 'MENU_DASHBOARD_BEST_PRACTICE' AS menu_code, '분류: 대시보드 / 메뉴명: 우수 상담 사례' AS menu_desc
+    SELECT 'MENU_DASH1BOARD_BEST_PRACTICE' AS menu_code, '분류: 대시보드 / 메뉴명: 우수 상담 사례' AS menu_desc
     UNION ALL
     SELECT 'MENU_DASHBOARD_NOTICE'     AS menu_code, '분류: 대시보드 / 메뉴명: 공지사항' AS menu_desc
     UNION ALL

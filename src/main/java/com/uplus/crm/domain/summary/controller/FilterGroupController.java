@@ -64,7 +64,23 @@ public class FilterGroupController {
             summary = "검색 조건 저장",
             description = "현재 검색 폼의 조건을 이름 붙여서 저장합니다. "
                     + "filter_groups(31) 1건 + filter_custom(32) N건을 하나의 트랜잭션으로 생성합니다. "
-                    + "같은 filterId가 여러 개면 OR 조건으로 해석됩니다."
+                    + "같은 filterId가 여러 개면 OR 조건으로 해석됩니다.\n\n"
+                    + "**filterId → filterKey 매핑표**\n"
+                    + "| ID | filterKey | 설명 | filterValue 형식 |\n"
+                    + "|----|-----------|------|------------------|\n"
+                    + "| 1 | keyword | 자율검색 (상담내용/상품명 OR) | 자유 텍스트 |\n"
+                    + "| 2 | consult_from | 상담 시작일 | yyyy-MM-dd |\n"
+                    + "| 3 | consult_to | 상담 종료일 | yyyy-MM-dd |\n"
+                    + "| 4 | consultant_name | 담당 상담사 이름 | 자유 텍스트 (부분 일치) |\n"
+                    + "| 5 | category_name | 상담 카테고리명 | 카테고리명 문자열 |\n"
+                    + "| 6 | channel | 상담 채널 | CALL 또는 CHATTING |\n"
+                    + "| 10 | customer_name | 고객 이름 | 자유 텍스트 (부분 일치) |\n"
+                    + "| 11 | customer_phone | 고객 연락처 | 자유 텍스트 (부분 일치) |\n"
+                    + "| 12 | customer_type | 고객 유형 | 개인 또는 법인 |\n"
+                    + "| 13 | customer_grade | 고객 등급 (OR, 복수 가능) | VVIP / VIP / DIAMOND |\n"
+                    + "| 14 | risk_type | 위험 유형 (OR, 복수 가능) | 폭언/욕설 / 해지위험 / 반복민원 / 사기의심 / 정책악용 / 과도한 보상 요구 / 피싱피해 |\n"
+                    + "| 15 | product_name | 상품명 | 자유 텍스트 (부분 일치) |\n"
+                    + "| 17 | consult_satisfaction | 고객만족도 | 숫자 (예: 4, 5) |"
     )
     @ApiResponses({
             @ApiResponse(responseCode = "201", description = "생성 성공"),
