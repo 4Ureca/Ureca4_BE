@@ -13,8 +13,6 @@ spring:
     baseline-on-migrate: false
     validate-on-migrate: true
     clean-disabled: true
-    # 로컬에서 의도적으로 삭제된 마이그레이션 파일을 무시 (예: V25)
-    ignore-migration-patterns: "*:missing"
 
   jpa:
     hibernate:
