@@ -21,7 +21,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-@Tag(name = "상담요약", description = "AI 요약 처리가 완료된 상담 요약문 검색 및 조회")
+@Tag(name = "④ 상담 검색")
 @RestController
 @RequestMapping("/summaries")
 @RequiredArgsConstructor
@@ -30,10 +30,12 @@ public class SummaryController {
   private final SummaryService service;
 
   @Operation(
-      summary = "IAM 검색 추천 키워드",
+      tags = {"④ 상담 검색"},
+      summary = "[Step 1] 검색어 자동완성",
       description = """
-          IAM 기반 검색(issue / action / memo) 및 통합 keyword 검색 입력창에서
-          자동완성·추천검색어를 제공합니다.
+          검색창 입력 중 호출하는 자동완성 API입니다.
+
+          **분류**: 단순 검색용 — ES 미사용, MongoDB 집계
 
           **데이터 소스 (MongoDB)**
           - `summary.keywords` : AI가 추출한 상담 키워드 (주 소스, 빈도 내림차순)
@@ -43,10 +45,7 @@ public class SummaryController {
           - `q`    : 입력 중인 prefix. 미입력 시 전체 인기 키워드 Top N 반환
           - `size` : 반환 개수 (기본 10, 최대 30)
 
-          **적용 위치**
-          - `keyword` 통합 검색 입력창
-          - `iamIssue` / `iamAction` / `iamMemo` 각 입력창
-          - 저장된 검색조건 재실행 전 조건 확인 화면
+          **사용 순서**: Step 1 → Step 2(목록) → Step 3(상세)
           """)
   @GetMapping("/suggest")
   public List<String> suggest(
@@ -59,33 +58,34 @@ public class SummaryController {
   }
 
   @Operation(
-      summary = "상담요약 목록 검색",
+      tags = {"④ 상담 검색"},
+      summary = "[Step 2] 상담 목록 검색 (Hybrid Search)",
       description = """
-          Hybrid 검색(ES + MongoDB)으로 상담 요약문을 검색합니다.
+          키워드 + 필터 조건으로 상담 요약 목록을 검색합니다.
 
-          **Search Type (ES 동의어·추천어 적용)**
-          - `keyword`        : 자율검색 — ES로 consultId 조인 후 MongoDB 필터 (fallback: MongoDB regex)
-          - `consultantName` : 담당 상담사 이름 부분 일치
-          - `customerName`   : 고객 이름 부분 일치
-          - `productName`    : 상품명 부분 일치 (가입/해지 상품 배열)
+          **분류**: 단순 검색용 — ES를 검색 엔진으로 사용
+          keyword 입력 시: ES 동의어 검색 → consultId 조인 → MongoDB 필터
+          keyword 미입력 시: MongoDB 조건절만 사용
 
-          **Toggle Type (MongoDB 조건절)**
-          - `from` / `to`         : 상담 기간 (yyyy-MM-dd)
-          - `categoryName`        : 상담 카테고리명 (large/medium/small OR 검색)
-          - `channel`             : 상담 채널 (CALL / CHATTING)
-          - `customerPhone`       : 고객 연락처 부분 일치
-          - `customerType`        : 고객 유형 (개인 / 법인)
-          - `customerGrades`      : 고객 등급 복수 선택 (VVIP, VIP, DIAMOND)
-          - `riskTypes`           : 위험 유형 복수 선택, OR (폭언/욕설, 해지위험, 반복민원 등)
-          - `satisfactionScore`   : 고객만족도 최소값 1~5 (이상 검색)
+          **[ES 적용] keyword 검색 (동의어·오타 허용)**
+          - `keyword` : 자유 검색어 (AND 우선 → OR 보완 순으로 노출)
+            예) "갤폰 해지" → 갤럭시+해지 모두 포함 문서 먼저, 하나만 포함 문서 후순위
+          - 동의어 자동 확장: 갤폰→갤럭시, 번이→번호이동, 넷플→넷플릭스
 
-          **응답 포함 필드**
-          - consultId, consultedAt, channel
-          - customerName, customerType, customerGrade
-          - categoryCode, categoryLarge, categoryMedium, categorySmall
-          - agentId, agentName, riskFlags
-          - summaryContent (미리보기 150자), summaryStatus
-          - iamMatchRate, defenseAttempted
+          **[MongoDB 필터]**
+          - `from` / `to`       : 상담 기간 (yyyy-MM-dd)
+          - `consultantName`    : 담당 상담사 이름 부분 일치
+          - `customerName`      : 고객 이름 부분 일치
+          - `customerPhone`     : 고객 연락처 부분 일치
+          - `customerType`      : 고객 유형 (개인 / 법인)
+          - `customerGrades`    : 고객 등급 복수 선택 (VVIP, VIP, DIAMOND)
+          - `categoryName`      : 상담 카테고리명 (대/중/소분류 OR 검색)
+          - `channel`           : 상담 채널 (CALL / CHATTING)
+          - `riskTypes`         : 위험 유형 복수 선택 (폭언/욕설, 해지위험, 반복민원 등)
+          - `productName`       : 상품명 부분 일치 (가입/해지 상품)
+          - `satisfactionScore` : 고객만족도 최소값 1~5
+
+          **사용 순서**: Step 1(자동완성) → Step 2 → Step 3(상세)
           """)
   @GetMapping
   public Page<ConsultationSummaryListResponse> list(
@@ -100,28 +100,26 @@ public class SummaryController {
   }
 
   @Operation(
-      summary = "상담요약 상세 조회",
+      tags = {"④ 상담 검색"},
+      summary = "[Step 3] 상담 상세 조회",
       description = """
-          RDB + MongoDB 데이터를 CompletableFuture로 병렬 조회하여 병합한 상세 응답을 반환합니다.
+          목록에서 선택한 상담의 전체 상세 정보를 반환합니다.
 
-          **데이터 소스**
+          **분류**: 단순 조회 — ES 미사용, RDB + MongoDB 병렬 조회
+
+          **데이터 소스 (6개 병렬 조회)**
           | 소스 | 제공 데이터 |
           |------|------------|
           | RDB `consultation_results` | 기본 상담 정보 (필수, 없으면 404) |
-          | RDB `customers` | 고객 프로필 (MongoDB 없을 때 fallback) |
-          | RDB `consultation_raw_texts` | 상담 원문 스크립트 (`rawTextJson`) |
-          | RDB `consultation_category_policy` | 카테고리명 (MongoDB 없을 때 fallback) |
+          | RDB `customers` | 고객 프로필 |
+          | RDB `consultation_raw_texts` | 상담 원문 스크립트 (rawTextJson) |
+          | RDB `consultation_category_policy` | 카테고리명 |
           | RDB 가입 상품 UNION | HOME/MOBILE/ADDITIONAL 현재 가입 상품 |
-          | RDB `employees + employee_details` | 상담사 소속 부서 |
-          | MongoDB `consultation_summary` | AI 요약, IAM, 위험유형, 해지 분석 (선택) |
+          | MongoDB `consultation_summary` | AI 요약, IAM, 위험유형, 해지 분석 |
 
-          **응답 구조**
-          - `content.aiSummary` : AI 생성 요약
-          - `content.rawTextJson` : 상담 원문 스크립트 (JSON)
-          - `analysis` : IAM matchRate, riskFlags, 해지 방어 분석
-          - `activeSubscriptions` : 현재 가입 상품 목록 (HOME/MOBILE/ADDITIONAL)
+          MongoDB 데이터가 없어도 404 없이 RDB 기반 부분 응답 반환.
 
-          MongoDB 데이터 없어도 404 반환하지 않고 RDB 기반 부분 응답.
+          **사용 순서**: Step 1(자동완성) → Step 2(목록) → Step 3
           """)
   @GetMapping("/{consultId}")
   public ConsultationSummaryDetailResponse detail(

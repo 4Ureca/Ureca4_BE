@@ -30,7 +30,7 @@ public class ConsultIndexSyncController {
 
     @Operation(
             tags = {"① ES 셋업"},
-            summary = "실제 대화원문 ES 동기화 (최초 1회 or 재동기화)",
+            summary = "[셋업 Step 2A] 실제 대화원문 ES 동기화 — 운영 데이터 사용 시",
             description = """
                     MySQL `consultation_raw_texts`의 **실제 상담 대화원문**을 ES에 동기화합니다.
                     더미 데이터가 아닌 실제 운영 데이터로 분석하려면 이 API를 사용하세요.

@@ -26,7 +26,7 @@ public class ConsultSearchControllerTest {
 
     @Operation(
         tags = {"① ES 셋업"},
-        summary = "더미 데이터 적재 (테스트 전용, 최초 1회)",
+        summary = "[셋업 Step 2B] 더미 데이터 적재 — 테스트 전용, 최초 1회",
         description = """
             ES + MongoDB에 샘플 상담 100건을 동시 저장합니다.
             실제 DB 데이터가 없는 환경에서 검색·분석 API를 테스트할 때 사용합니다.
@@ -849,22 +849,25 @@ public class ConsultSearchControllerTest {
 
     @Operation(
         tags = {"③ ES 분석"},
-        summary = "응대품질 분석 — 인삿말·마무리 인사 누락 상담 조회",
+        summary = "[분석 Step 1] 응대품질 — 인삿말·마무리 누락 상담 조회",
         description = """
-            실제 대화원문(consultation_raw_texts)에서 추출한 **상담사 발화** 기준으로
-            인삿말·마무리 인사 포함 여부를 감지하여 응대품질 미달 상담을 반환합니다.
+            분류: 분석된 데이터 검색
+            인덱싱 시 실제 대화원문의 상담사 발화를 분석하여 자동 계산된
+            hasGreeting / hasFarewell 값을 기준으로 조회합니다.
 
-            ✅ 정확한 결과를 위해 POST /admin/es/sync 를 먼저 실행하세요.
+            ✅ 전제조건: POST /admin/es/sync 완료 (실제 대화원문 기반 분석)
 
-            **파라미터 조합**
-            - `hasGreeting=false`           → 인사말 없이 시작한 상담
-            - `hasFarewell=false`           → 마무리 인사 없이 종료한 상담
-            - `hasGreeting=false&hasFarewell=false` → 둘 다 없는 최우선 관리 대상
-            - 파라미터 생략                 → 전체 상담 (riskScore 내림차순)
+            파라미터 조합
+            - hasGreeting=false                   → 인사말 없이 시작한 상담
+            - hasFarewell=false                   → 마무리 인사 없이 종료한 상담
+            - hasGreeting=false&hasFarewell=false → 둘 다 없는 최우선 관리 대상
+            - 파라미터 생략                       → 전체 상담 (riskScore 내림차순)
 
-            **감지 패턴 (상담사 발화 기준)**
+            감지 패턴 (고객 발화 제외, 상담사 발화만)
             - 인사말: 안녕하세요, 안녕하십니까, 반갑습니다 등
             - 마무리: 감사합니다, 수고하세요, 안녕히 계세요 등
+
+            사용 순서: [분석 Step 1] 응대품질 → [분석 Step 2] 키워드 검색
             """
     )
     @GetMapping("/analysis/quality")
@@ -884,20 +887,27 @@ public class ConsultSearchControllerTest {
 
     @Operation(
         tags = {"③ ES 분석"},
-        summary = "분석용 키워드 검색 — 응대 어근 제거 후 실질 내용 검색",
+        summary = "[분석 Step 2] 분석용 키워드 검색 — 응대 어근 제거 후 실질 내용 검색",
         description = """
-            분석 전용 분석기(`korean_analysis_index_analyzer`)로 인덱싱된 `allText.analysis`
-            서브필드를 검색합니다. 모든 상담에 공통으로 등장하는 응대 어근이 제거되어
-            실질적인 상담 내용 키워드만 매칭됩니다.
+            분류: 분석된 데이터 검색
+            응대품질 분석 전용 분석기(korean_analysis_index_analyzer)로 인덱싱된
+            allText.analysis 서브필드를 검색합니다.
+            모든 상담에 공통으로 등장하는 응대 어근이 제거되어 실질 내용만 매칭됩니다.
 
-            **제거되는 토큰 (analysis_stopwords.txt)**
+            일반 검색(/summaries?keyword=...)과의 차이
+            - 일반 검색: 동의어 확장, 오타 허용, 응대어 포함 전 필드 검색
+            - 이 API: 응대 어근 제거 후 순수 상담 내용 패턴만 검색 → 군집 분석 적합
+
+            제거되는 토큰 (analysis_stopwords.txt)
             - 인삿말 어근: 안녕, 반갑, 감사, 죄송, 수고, 실례
             - 공통 응대 어근: 확인, 안내, 처리, 연결, 진행, 설명
 
-            **활용 예시**
-            - `keyword=미납` → 미납 관련 상담만 정밀 필터링
-            - `keyword=해지위협` → 해지 의도 상담 군집 탐지
-            - `keyword=친절응대` → 응대품질 우수 상담 검색 (분석용 동의어 사전 적용)
+            활용 예시
+            - keyword=미납       → 미납 관련 상담만 정밀 필터링
+            - keyword=해지위협   → 해지 의도 상담 군집 탐지
+            - keyword=친절응대   → analysis_synonyms.txt 동의어 사전 적용 검색
+
+            사용 순서: [분석 Step 1] 응대품질 → [분석 Step 2] 키워드 검색
             """
     )
     @GetMapping("/analysis/keywords")

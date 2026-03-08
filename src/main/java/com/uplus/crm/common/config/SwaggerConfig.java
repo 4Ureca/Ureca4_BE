@@ -52,8 +52,20 @@ public class SwaggerConfig {
                                     """),
                     new Tag().name("③ ES 분석")
                             .description("""
-                                    실제 운영에서 사용하는 분석 API입니다.
-                                    POST /admin/es/sync 로 실제 대화원문을 적재한 후 호출해야 정확한 결과가 나옵니다.
+                                    인덱싱 시점에 미리 계산·저장된 분석값을 조회합니다.
+                                    (hasGreeting/hasFarewell, allText.analysis 서브필드)
+
+                                    ✅ POST /admin/es/sync 로 실제 대화원문을 적재한 후 호출해야 정확한 결과가 나옵니다.
+                                    """),
+                    new Tag().name("④ 상담 검색")
+                            .description("""
+                                    ES를 검색 엔진으로 사용하는 단순 검색 API입니다.
+                                    키워드 입력 → ES 검색 → consultId 추출 → MongoDB/RDB 상세 데이터 반환.
+
+                                    [사용 순서]
+                                    1. GET /summaries/suggest   → 키워드 자동완성
+                                    2. GET /summaries           → 목록 검색 (keyword + 필터)
+                                    3. GET /summaries/{id}      → 상세 조회
                                     """)
             ));
   }
