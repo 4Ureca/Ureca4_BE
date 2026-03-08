@@ -93,6 +93,24 @@ public class ConsultSearchService {
     }
 
     /**
+     * 상담사 발화 텍스트를 기준으로 인삿말·마무리 인사를 감지하여 저장.
+     *
+     * <p>실제 대화원문(consultation_raw_texts)에서 상담사 발화만 추출한 텍스트를 전달하면
+     * 고객 발화의 "감사합니다" 등이 오탐되지 않는다.</p>
+     *
+     * @param consultDoc  저장할 ES 문서 (rawText는 전체 대화 평문으로 미리 세팅)
+     * @param agentText   품질 감지 전용 상담사 발화 텍스트
+     */
+    public void saveConsultation(ConsultDoc consultDoc, String agentText) {
+        String greetingSource = (agentText != null && !agentText.isBlank())
+                ? agentText
+                : buildGreetingTarget(consultDoc);
+        consultDoc.setHasGreeting(containsAny(greetingSource, GREETING_PATTERNS));
+        consultDoc.setHasFarewell(containsAny(greetingSource, FAREWELL_PATTERNS));
+        consultElasticRepository.save(consultDoc);
+    }
+
+    /**
      * {@code consultation_raw_texts.raw_text_json} 을 ES 검색용 평문으로 변환.
      *
      * <p>JSON 구조가 어떻게 되어 있든 모든 문자열 값(value)을 재귀적으로 추출하여
@@ -107,6 +125,53 @@ public class ConsultSearchService {
      * @param rawTextJson consultation_raw_texts.raw_text_json
      * @return 검색 가능한 평문 (null/빈값이면 빈 문자열)
      */
+    /**
+     * 대화원문 JSON에서 상담사 발화 텍스트만 추출 (응대품질 분석 전용).
+     *
+     * <p>지원하는 JSON 구조:</p>
+     * <pre>
+     * {"turns": [{"speaker":"agent","text":"안녕하세요"}, {"speaker":"customer","text":"해지하고 싶어요"}]}
+     * [{"speaker":"상담사","text":"..."}, {"speaker":"고객","text":"..."}]
+     * </pre>
+     *
+     * <p>speaker 필드에 "agent", "상담사", "advisor", "consultant" 중 하나가 포함된 턴만 추출한다.
+     * 구조를 인식할 수 없는 경우 빈 문자열 반환 → 호출 측이 fallback 처리.</p>
+     *
+     * @param rawTextJson consultation_raw_texts.raw_text_json
+     * @return 상담사 발화만 이어 붙인 평문 (인식 실패 시 빈 문자열)
+     */
+    public String extractAgentTextFromJson(String rawTextJson) {
+        if (rawTextJson == null || rawTextJson.isBlank()) return "";
+        try {
+            JsonNode root = OBJECT_MAPPER.readTree(rawTextJson);
+            JsonNode turns = root.isArray() ? root : root.path("turns");
+            if (!turns.isMissingNode() && turns.isArray()) {
+                StringBuilder sb = new StringBuilder();
+                for (JsonNode turn : turns) {
+                    String speaker = turn.path("speaker").asText(
+                            turn.path("role").asText(""));
+                    if (isAgentSpeaker(speaker)) {
+                        String text = turn.path("text").asText(
+                                turn.path("content").asText(""));
+                        if (!text.isBlank()) sb.append(text).append(' ');
+                    }
+                }
+                return sb.toString().trim();
+            }
+            return "";
+        } catch (Exception e) {
+            log.warn("[ConsultSearch] agentText 추출 실패: {}", e.getMessage());
+            return "";
+        }
+    }
+
+    private boolean isAgentSpeaker(String speaker) {
+        if (speaker == null) return false;
+        String s = speaker.toLowerCase();
+        return s.contains("agent") || s.contains("상담사")
+                || s.contains("advisor") || s.contains("consultant");
+    }
+
     public String extractPlainTextFromJson(String rawTextJson) {
         if (rawTextJson == null || rawTextJson.isBlank()) return "";
         try {

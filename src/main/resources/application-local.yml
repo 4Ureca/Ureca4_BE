@@ -24,6 +24,12 @@ spring:
       hibernate:
         format_sql: true
 
+elasticsearch:
+  index:
+    # true: 앱 시작 시 인덱스 자동 재생성 (사전 파일 수정 후 앱 재시작만으로 반영)
+    # 운영 환경(prod)에서는 반드시 false 유지
+    force-recreate: true
+
 logging:
   level:
     org.flywaydb: DEBUG

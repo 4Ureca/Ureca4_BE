@@ -4,6 +4,7 @@ import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import org.elasticsearch.client.Request;
 import org.elasticsearch.client.RestClient;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import java.io.InputStream;
@@ -16,9 +17,21 @@ public class ElasticsearchIndexInitializer {
 
     private final RestClient restClient;
 
+    /**
+     * true 이면 앱 시작 시 기존 인덱스를 삭제하고 최신 분석기 설정으로 재생성한다.
+     * application-local.yml 에서 true 로 설정하면 사전 파일 수정 후 앱 재시작만으로 반영된다.
+     */
+    @Value("${elasticsearch.index.force-recreate:false}")
+    private boolean forceRecreate;
+
     @PostConstruct
     public void createIndex() {
         try {
+            if (forceRecreate) {
+                System.out.println("[ES] force-recreate=true → 인덱스 재생성 시작: " + INDEX_NAME);
+                forceRecreate();
+                return;
+            }
             // 인덱스 이미 존재하면 스킵
             Request headRequest = new Request("HEAD", "/" + INDEX_NAME);
             try {
