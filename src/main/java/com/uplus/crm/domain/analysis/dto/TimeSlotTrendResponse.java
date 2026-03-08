@@ -42,6 +42,7 @@ public class TimeSlotTrendResponse {
 
     public static TimeSlotTrendResponse from(LocalDate date, Document snapshot, String slot) {
         List<Document> trends = snapshot.getList("timeSlotTrend", Document.class);
+        if (trends == null) trends = List.of();
 
         List<Document> filtered = (slot != null)
                 ? trends.stream()
