@@ -1,6 +1,7 @@
 package com.uplus.crm.domain.analysis.service;
 
 import com.uplus.crm.domain.analysis.dto.AgentRankingResponse;
+import com.uplus.crm.domain.analysis.dto.KeywordAnalysisResponse;
 import com.uplus.crm.domain.analysis.dto.PerformanceSummaryResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -43,6 +44,10 @@ public class PerformanceReportService {
         return getAgentRanking(WEEKLY_COLLECTION, date);
     }
 
+    public Optional<KeywordAnalysisResponse> getWeeklyKeywordAnalysis(LocalDate date) {
+        return getKeywordAnalysis(WEEKLY_COLLECTION, date);
+    }
+
     // ==================== 월간 ====================
 
     public Optional<PerformanceSummaryResponse> getMonthlyPerformanceSummary(LocalDate date) {
@@ -51,6 +56,10 @@ public class PerformanceReportService {
 
     public Optional<AgentRankingResponse> getMonthlyAgentRanking(LocalDate date) {
         return getAgentRanking(MONTHLY_COLLECTION, date);
+    }
+
+    public Optional<KeywordAnalysisResponse> getMonthlyKeywordAnalysis(LocalDate date) {
+        return getKeywordAnalysis(MONTHLY_COLLECTION, date);
     }
 
     // ==================== 공통 로직 ====================
@@ -116,6 +125,27 @@ public class PerformanceReportService {
                 .endDate(toDateString(snapshot, "endAt"))
                 .agents(agents)
                 .build());
+    }
+
+    /**
+     * 키워드 분석 조회
+     *
+     * 스냅샷의 keywordSummary에서 topKeywords, longTermTopKeywords, byCustomerType를 반환합니다.
+     */
+    private Optional<KeywordAnalysisResponse> getKeywordAnalysis(String collection, LocalDate date) {
+        Document snapshot = findSnapshotContaining(collection, date);
+
+        if (snapshot == null) {
+            log.info("[PerformanceReport] {} — {} 스냅샷 없음 (키워드)", collection, date);
+            return Optional.empty();
+        }
+
+        KeywordAnalysisResponse response = KeywordAnalysisResponse.from(snapshot);
+        if (response == null) {
+            log.info("[PerformanceReport] {} — {} 스냅샷에 keywordSummary 없음", collection, date);
+            return Optional.empty();
+        }
+        return Optional.of(response);
     }
 
     // ==================== Helper ====================
