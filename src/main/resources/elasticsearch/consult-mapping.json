@@ -54,7 +54,14 @@
     "rawText": {
       "type": "text",
       "analyzer": "korean_index_analyzer",
-      "search_analyzer": "korean_search_analyzer"
+      "search_analyzer": "korean_search_analyzer",
+      "fields": {
+        "analysis": {
+          "type": "text",
+          "analyzer": "korean_analysis_index_analyzer",
+          "search_analyzer": "korean_analysis_search_analyzer"
+        }
+      }
     }
   }
 }

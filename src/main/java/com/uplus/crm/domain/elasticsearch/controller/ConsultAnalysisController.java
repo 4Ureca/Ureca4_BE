@@ -30,38 +30,46 @@ public class ConsultAnalysisController {
     private final ConsultSearchService consultSearchService;
 
     @Operation(
-        summary = "[분석 Step 1] 응대품질 — 인삿말·마무리 누락 상담 조회",
+        summary = "[분석 Step 1] 응대품질 — 인삿말·마무리 누락 / 대화 품질 표현 검색",
         description = """
-            분류: 분석된 데이터 검색
-            인덱싱 시 실제 대화원문(consultation_raw_texts)의 상담사 발화를 분석하여
-            자동 계산된 hasGreeting / hasFarewell 값을 기준으로 조회합니다.
+            상담사의 응대품질을 두 가지 방식으로 조회합니다.
+            전제조건: POST /admin/es/sync 완료 (실제 대화원문 기반)
 
-            전제조건: POST /admin/es/sync 완료 (실제 대화원문 기반 분석)
-
-            파라미터 조합
+            [방식 1] 인삿말·마무리 boolean 필터
+            인덱싱 시 상담사 발화에서 자동 감지한 값으로 필터링합니다.
             - hasGreeting=false                   → 인사말 없이 시작한 상담
             - hasFarewell=false                   → 마무리 인사 없이 종료한 상담
             - hasGreeting=false&hasFarewell=false → 둘 다 없는 최우선 관리 대상
-            - 파라미터 생략                       → 전체 상담 (riskScore 내림차순)
 
-            감지 패턴 (고객 발화 제외, 상담사 발화만)
-            - 인사말: 안녕하세요, 안녕하십니까, 반갑습니다 등
-            - 마무리: 감사합니다, 수고하세요, 안녕히 계세요 등
+            [방식 2] 대화원문 품질 키워드 검색 (keyword)
+            실제 대화 내용을 analysis_synonyms.txt 동의어로 검색합니다.
+            - keyword=친절응대   → "친절하다", "상냥하다" 등이 등장한 상담
+            - keyword=공감응대   → "공감하다", "충분히 이해합니다" 등이 등장한 상담
+            - keyword=불만감정   → 고객이 "화나다", "짜증난다" 등을 표현한 상담
+            - keyword=대기안내   → "잠시만요", "잠시 기다려주세요" 등이 등장한 상담
+            - keyword=지연응대   → 고객이 "오래 걸린다", "빨리 안 된다" 등을 표현한 상담
+
+            [두 방식 조합]
+            hasGreeting=false&keyword=불만감정 → 인사말 없이 불만 고객을 응대한 상담
+
+            참조 DB: Elasticsearch consult-index (rawText.analysis 서브필드)
             """
     )
-    @GetMapping("/analysis/quality")
+        @GetMapping("/analysis/quality")
     public ResponseEntity<List<ConsultDoc>> analyzeQuality(
-            @Parameter(description = "인사말 포함 여부 필터 (true/false, 생략 시 무조건)", example = "false")
+            @Parameter(description = "인사말 포함 여부 필터 (true/false, 생략 시 전체)", example = "false")
             @RequestParam(required = false) Boolean hasGreeting,
-            @Parameter(description = "마무리 인사 포함 여부 필터 (true/false, 생략 시 무조건)", example = "false")
+            @Parameter(description = "마무리 인사 포함 여부 필터 (true/false, 생략 시 전체)", example = "false")
             @RequestParam(required = false) Boolean hasFarewell,
+            @Parameter(description = "대화원문 품질 키워드 (analysis_synonyms.txt 동의어 적용, 예: 친절응대, 불만감정, 대기안내)", example = "친절응대")
+            @RequestParam(required = false) String keyword,
             @Parameter(description = "페이지 번호", example = "0")
             @RequestParam(defaultValue = "0") int page,
             @Parameter(description = "페이지 크기", example = "20")
             @RequestParam(defaultValue = "20") int size) {
 
         return ResponseEntity.ok(
-                consultSearchService.searchByGreetingFlag(hasGreeting, hasFarewell, page, size));
+                consultSearchService.searchByGreetingFlag(hasGreeting, hasFarewell, keyword, page, size));
     }
 
     @Operation(

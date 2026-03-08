@@ -678,7 +678,7 @@ public class ConsultSearchService {
      * </ul>
      */
     public List<ConsultDoc> searchByGreetingFlag(
-            Boolean hasGreeting, Boolean hasFarewell, int page, int size) {
+            Boolean hasGreeting, Boolean hasFarewell, String keyword, int page, int size) {
 
         NativeQuery query = NativeQuery.builder()
                 .withQuery(q -> q
@@ -688,6 +688,13 @@ public class ConsultSearchService {
                             }
                             if (hasFarewell != null) {
                                 b.filter(f -> f.term(t -> t.field("hasFarewell").value(hasFarewell)));
+                            }
+                            if (keyword != null && !keyword.isBlank()) {
+                                b.must(m -> m.multiMatch(mm -> mm
+                                        .fields("rawText.analysis")
+                                        .query(keyword)
+                                        .fuzziness("AUTO")
+                                ));
                             }
                             return b;
                         })
