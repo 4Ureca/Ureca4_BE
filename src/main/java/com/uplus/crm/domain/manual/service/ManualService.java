@@ -67,15 +67,24 @@ public class ManualService {
         manual.setUpdatedAt(LocalDateTime.now());
     }
 
-    /** 3. 조회 (Read): 카테고리 코드가 없으면 전체 조회 ⭐ */
+    /** 3. 조회 (Read): 카테고리 코드가 있으면 유효성 검증 후 조회 ⭐ */
     public List<ManualResponse> getHistory(String categoryCode) {
+        // 1. 카테고리 코드가 파라미터로 넘어온 경우, 실제 존재하는 코드인지 먼저 검증
+        if (categoryCode != null && !categoryCode.isBlank()) {
+            if (!policyRepository.existsById(categoryCode)) {
+                // 존재하지 않는 카테고리 코드라면 404 에러를 던짐
+                throw new BusinessException(ErrorCode.CATEGORY_POLICY_NOT_FOUND);
+            }
+        }
+
         List<Manual> manuals;
         
+        // 2. 필터링 조건에 따른 조회 수행
         if (categoryCode == null || categoryCode.isBlank()) {
-            // 카테고리 코드가 비어있으면 전체 조회 (Repository에 findAllByOrderByCreatedAtDesc 추가 필요)
+            // 카테고리 코드가 없으면 전체 매뉴얼 최신순 조회
             manuals = manualRepository.findAllByOrderByCreatedAtDesc();
         } else {
-            // 카테고리 코드가 있으면 해당 카테고리만 조회
+            // 카테고리 코드가 있으면 해당 카테고리의 매뉴얼만 최신순 조회
             manuals = manualRepository.findAllByCategoryPolicy_CategoryCodeOrderByCreatedAtDesc(categoryCode);
         }
 
