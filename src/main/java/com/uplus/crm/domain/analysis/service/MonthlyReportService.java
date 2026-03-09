@@ -1,5 +1,6 @@
 package com.uplus.crm.domain.analysis.service;
 
+import com.uplus.crm.domain.analysis.dto.ChurnDefenseResponse;
 import com.uplus.crm.domain.analysis.dto.CustomerRiskResponse;
 import com.uplus.crm.domain.analysis.dto.KeywordAnalysisResponse;
 import lombok.RequiredArgsConstructor;
@@ -93,6 +94,26 @@ public class MonthlyReportService {
         KeywordAnalysisResponse response = KeywordAnalysisResponse.from(snapshot);
         if (response == null) {
             log.info("[MonthlyReport] {} 스냅샷에 keywordSummary 필드 없음", date);
+        }
+        return response;
+    }
+
+    /**
+     * 월별 해지방어 패턴 분석 조회
+     *
+     * @param date 해당 월에 포함되는 아무 날짜
+     * @return ChurnDefenseResponse (totalAttempts, successRate, complaintReasons, byCustomerType, byAction)
+     */
+    public ChurnDefenseResponse getMonthlyChurnDefenseAnalysis(LocalDate date) {
+        Document snapshot = findSnapshotContaining(date);
+        if (snapshot == null) {
+            log.info("[MonthlyReport] {} 포함 월별 스냅샷 없음 (해지방어)", date);
+            return null;
+        }
+
+        ChurnDefenseResponse response = ChurnDefenseResponse.from(snapshot);
+        if (response == null) {
+            log.info("[MonthlyReport] {} 스냅샷에 churnDefenseAnalysis 필드 없음", date);
         }
         return response;
     }

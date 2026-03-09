@@ -14,6 +14,13 @@ spring:
   elasticsearch:
     uris: ${ES_URI:http://localhost:9200}
 
+    redis:
+      host: ${REDIS_URI}
+      port: ${REDIS_PORT}
+
+  elasticsearch:
+    uris: ${ES_URI}
+
   jpa:
     show-sql: false
 
