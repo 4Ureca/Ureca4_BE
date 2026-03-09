@@ -7,6 +7,12 @@ spring:
   data:
     mongodb:
       uri: ${MONGO_URI}
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+
+  elasticsearch:
+    uris: ${ES_URI:http://localhost:9200}
 
     redis:
       host: ${REDIS_URI}
