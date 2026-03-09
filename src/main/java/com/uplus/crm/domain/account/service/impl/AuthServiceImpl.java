@@ -147,6 +147,7 @@ public class AuthServiceImpl implements AuthService {
         return LoginResponseDto.builder()
                 .accessToken(tokenResponse.getAccessToken())
                 .expiredAt(tokenResponse.getExpiredAt())
+                .role(tokenResponse.getRole())
                 .build();
     }
 
@@ -244,10 +245,15 @@ public class AuthServiceImpl implements AuthService {
 
         cookieUtil.setRefreshTokenCookie(response, refreshToken);
 
+        String roleName = (employee.getEmployeeDetail() != null && employee.getEmployeeDetail().getJobRole() != null)
+                ? employee.getEmployeeDetail().getJobRole().getRoleName()
+                : "GUEST";  // 기본값 : GUEST
+
         return GoogleAuthResponseDto.builder()
                 .accessToken(accessToken)
                 .expiredAt(jwtUtil.getAccessTokenExpiredAt())
                 .isNewUser(false)
+                .role(roleName)
                 .build();
     }
 
