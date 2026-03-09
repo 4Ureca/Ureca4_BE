@@ -1,5 +1,6 @@
 package com.uplus.crm.domain.analysis.dto;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -21,6 +22,7 @@ import java.util.stream.Collectors;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public class ChurnDefenseResponse {
 
     @Schema(description = "집계 시작일", example = "2025-01-01")
@@ -30,16 +32,16 @@ public class ChurnDefenseResponse {
     private String endDate;
 
     @Schema(description = "해지방어 시도 건수", example = "85")
-    private int totalAttempts;
+    private Integer totalAttempts;
 
     @Schema(description = "방어 성공 건수", example = "52")
-    private int successCount;
+    private Integer successCount;
 
     @Schema(description = "방어 성공률 (%)", example = "61.2")
-    private double successRate;
+    private Double successRate;
 
     @Schema(description = "해지 의향 상담 평균 소요 시간(초)", example = "520")
-    private int avgDurationSec;
+    private Integer avgDurationSec;
 
     @Schema(description = "불만 사유별 방어율")
     private List<ComplaintReason> complaintReasons;

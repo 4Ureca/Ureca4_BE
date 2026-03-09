@@ -1,5 +1,7 @@
 package com.uplus.crm.domain.analysis.dto;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.ArrayList;
@@ -21,6 +23,7 @@ import org.bson.Document;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public class KeywordAnalysisResponse {
 
     private String startDate;

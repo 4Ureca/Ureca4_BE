@@ -1,5 +1,6 @@
 package com.uplus.crm.domain.analysis.dto;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -21,6 +22,7 @@ import java.util.stream.Collectors;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public class SubscriptionAnalysisResponse {
 
     @Schema(description = "집계 시작일", example = "2025-01-13")

@@ -5,6 +5,7 @@ import com.uplus.crm.domain.analysis.dto.AgentRankingResponse;
 import com.uplus.crm.domain.analysis.dto.CategorySummaryResponse;
 import com.uplus.crm.domain.analysis.dto.CustomerRiskCompareResponse;
 import com.uplus.crm.domain.analysis.dto.CustomerRiskResponse;
+import com.uplus.crm.domain.analysis.dto.KeywordAnalysisResponse;
 import com.uplus.crm.domain.analysis.dto.KeywordRankingResponse;
 import com.uplus.crm.domain.analysis.dto.PerformanceSummaryResponse;
 import com.uplus.crm.domain.analysis.dto.TimeSlotTrendResponse;
@@ -126,7 +127,7 @@ public class DailyReportController {
                 .orElse(ResponseEntity.noContent().build());
     }
 
-    @GetMapping("/keywords")
+    @GetMapping("/keywords/top")
     @Operation(summary = "키워드 빈도 순위", description = "슬롯별 또는 전체 키워드 순위/증감율/신규 진입. date 미지정 시 전일 기준.")
     public ResponseEntity<KeywordRankingResponse> getKeywordRanking(
             @Parameter(description = "조회 대상 날짜 (yyyy-MM-dd)", example = "2025-01-15")
@@ -135,6 +136,21 @@ public class DailyReportController {
             @RequestParam(required = false) String slot) {
         LocalDate targetDate = (date != null) ? date : LocalDate.now().minusDays(1);
         return dailyReportService.getKeywordRanking(targetDate, slot)
+                .map(ResponseEntity::ok)
+                .orElse(ResponseEntity.noContent().build());
+    }
+
+    @GetMapping("/keywords/customer-types")
+    @Operation(summary = "고객 유형별 키워드", description = "고객 등급별 빈출 키워드를 조회합니다. date 미지정 시 전일 기준.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "조회 성공"),
+            @ApiResponse(responseCode = "204", description = "해당 날짜 데이터 없음", content = @Content)
+    })
+    public ResponseEntity<KeywordAnalysisResponse> getDailyCustomerTypeKeywords(
+            @Parameter(description = "조회 대상 날짜 (yyyy-MM-dd)", example = "2025-01-15")
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date) {
+        LocalDate targetDate = (date != null) ? date : LocalDate.now().minusDays(1);
+        return dailyReportService.getDailyCustomerTypeKeywords(targetDate)
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.noContent().build());
     }

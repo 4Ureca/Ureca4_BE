@@ -9,6 +9,7 @@ import com.uplus.crm.domain.analysis.dto.CustomerRiskCompareResponse.ChangeDetai
 import com.uplus.crm.domain.analysis.dto.CustomerRiskCompareResponse.RiskSnapshot;
 import com.uplus.crm.domain.analysis.dto.CustomerRiskResponse;
 import com.uplus.crm.domain.analysis.dto.CustomerRiskResponse.SurgeAlert;
+import com.uplus.crm.domain.analysis.dto.KeywordAnalysisResponse;
 import com.uplus.crm.domain.analysis.dto.KeywordRankingResponse;
 import com.uplus.crm.domain.analysis.dto.PerformanceSummaryResponse;
 import com.uplus.crm.domain.analysis.dto.TimeSlotTrendResponse;
@@ -174,6 +175,40 @@ public class DailyReportService {
             return Optional.of(KeywordRankingResponse.fromDaily(date, keywordDoc));
         }
         return Optional.empty();
+    }
+
+    /**
+     * 일별 고객 유형별 키워드 조회
+     *
+     * daily_report_snapshot(키워드 문서, date 기준)의 byGradeCode에서 조회합니다.
+     */
+    public Optional<KeywordAnalysisResponse> getDailyCustomerTypeKeywords(LocalDate date) {
+        Document keywordDoc = findKeywordSnapshot(date);
+        if (keywordDoc == null) return Optional.empty();
+
+        List<Document> gradeList = keywordDoc.getList("byGradeCode", Document.class);
+        if (gradeList == null || gradeList.isEmpty()) return Optional.empty();
+
+        List<KeywordAnalysisResponse.CustomerTypeKeyword> byCustomerType = gradeList.stream()
+                .map(g -> {
+                    List<Document> kwDocs = g.getList("keywords", Document.class);
+                    List<String> keywords = (kwDocs != null)
+                            ? kwDocs.stream()
+                                .map(kw -> kw.getString("keyword"))
+                                .collect(Collectors.toList())
+                            : List.of();
+                    return KeywordAnalysisResponse.CustomerTypeKeyword.builder()
+                            .customerType(g.getString("gradeCode"))
+                            .keywords(keywords)
+                            .build();
+                })
+                .collect(Collectors.toList());
+
+        return Optional.of(KeywordAnalysisResponse.builder()
+                .startDate(date.toString())
+                .endDate(date.toString())
+                .byCustomerType(byCustomerType)
+                .build());
     }
 
     // ==================== 일별 상담사 성과/순위 ====================

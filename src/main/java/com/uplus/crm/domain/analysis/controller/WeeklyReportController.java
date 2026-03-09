@@ -34,28 +34,21 @@ public class WeeklyReportController {
     @Operation(
             summary = "주간 전체 상담 성과 요약",
             description = "weekly_report_snapshot에서 주간 성과 요약을 조회합니다. "
-                    + "총 상담 수, 상담사별 평균 처리 건수, 평균 소요 시간, 평균 고객 만족도를 제공합니다. "
-                    + "date 미지정 시 가장 최근 주간 스냅샷을 조회합니다."
+                    + "총 상담 수, 상담사별 평균 처리 건수, 평균 소요 시간, 평균 고객 만족도를 제공합니다."
     )
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "조회 성공"),
-            @ApiResponse(responseCode = "204", description = "해당 주간 스냅샷 없음 (배치 미실행 또는 데이터 없음)",
-                    content = @Content),
-            @ApiResponse(responseCode = "401", description = "인증 실패 (JWT 토큰 없음/만료)",
-                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
-            @ApiResponse(responseCode = "403", description = "권한 없음 (ADMIN 전용)",
+            @ApiResponse(responseCode = "204", description = "해당 주간 스냅샷 없음", content = @Content),
+            @ApiResponse(responseCode = "401", description = "인증 실패",
                     content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
     })
     @GetMapping("/performance")
     public ResponseEntity<PerformanceSummaryResponse> getPerformanceSummary(
-            @Parameter(description = "기준 날짜 (yyyy-MM-dd). 해당 날짜가 포함된 주간 스냅샷 조회. 미지정 시 최근 스냅샷",
-                    example = "2026-01-15")
+            @Parameter(description = "기준 날짜 (yyyy-MM-dd). 해당 주간 스냅샷 조회", example = "2025-01-18")
             @RequestParam(required = false)
-            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
-            LocalDate date) {
+            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date) {
 
         LocalDate targetDate = (date != null) ? date : LocalDate.now();
-
         return performanceReportService.getWeeklyPerformanceSummary(targetDate)
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.noContent().build());
@@ -63,91 +56,133 @@ public class WeeklyReportController {
 
     @Operation(
             summary = "주간 상담사 성과 순위 (TOP 10)",
-            description = "weekly_report_snapshot에서 상담사별 성과 순위를 조회합니다. "
-                    + "처리 건수 내림차순 기준 상위 10명의 성과 데이터를 제공합니다. "
-                    + "date 미지정 시 가장 최근 주간 스냅샷을 조회합니다."
+            description = "weekly_report_snapshot에서 상담사별 성과 순위를 조회합니다."
     )
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "조회 성공"),
-            @ApiResponse(responseCode = "204", description = "해당 주간 스냅샷 없음 (배치 미실행 또는 데이터 없음)",
-                    content = @Content),
-            @ApiResponse(responseCode = "401", description = "인증 실패 (JWT 토큰 없음/만료)",
-                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
-            @ApiResponse(responseCode = "403", description = "권한 없음 (ADMIN 전용)",
+            @ApiResponse(responseCode = "204", description = "해당 주간 스냅샷 없음", content = @Content),
+            @ApiResponse(responseCode = "401", description = "인증 실패",
                     content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
     })
     @GetMapping("/agent-ranking")
     public ResponseEntity<AgentRankingResponse> getAgentRanking(
-            @Parameter(description = "기준 날짜 (yyyy-MM-dd). 해당 날짜가 포함된 주간 스냅샷 조회. 미지정 시 최근 스냅샷",
-                    example = "2026-01-15")
+            @Parameter(description = "기준 날짜 (yyyy-MM-dd). 해당 주간 스냅샷 조회", example = "2025-01-18")
             @RequestParam(required = false)
-            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
-            LocalDate date) {
+            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date) {
 
         LocalDate targetDate = (date != null) ? date : LocalDate.now();
-
         return performanceReportService.getWeeklyAgentRanking(targetDate)
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.noContent().build());
     }
 
-    @Operation(
-            summary = "주간 키워드 분석 조회",
-            description = "weekly_report_snapshot의 keywordSummary 섹션을 조회합니다. "
-                    + "키워드 빈도 순위(TOP 20), 증감율, 장기 상위 유지 키워드, 고객 유형별 키워드를 제공합니다. "
-                    + "date 미지정 시 가장 최근 주간 스냅샷을 조회합니다."
-    )
+    // ==================== 키워드 분리 ====================
+
+    @GetMapping("/keywords/top")
+    @Operation(summary = "주간 키워드 빈도 순위", description = "키워드 빈도 순위(TOP 20)와 증감율을 조회합니다.")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "조회 성공"),
-            @ApiResponse(responseCode = "204", description = "해당 주간 스냅샷 없음 (배치 미실행 또는 데이터 없음)",
-                    content = @Content),
-            @ApiResponse(responseCode = "401", description = "인증 실패 (JWT 토큰 없음/만료)",
-                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
-            @ApiResponse(responseCode = "403", description = "권한 없음 (ADMIN 전용)",
-                    content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+            @ApiResponse(responseCode = "204", description = "해당 주간 스냅샷 없음", content = @Content)
     })
-    @GetMapping("/keywords")
-    public ResponseEntity<KeywordAnalysisResponse> getKeywordAnalysis(
-            @Parameter(description = "기준 날짜 (yyyy-MM-dd). 해당 날짜가 포함된 주간 스냅샷 조회. 미지정 시 최근 스냅샷",
-                    example = "2025-01-15")
+    public ResponseEntity<KeywordAnalysisResponse> getTopKeywords(
+            @Parameter(description = "기준 날짜 (yyyy-MM-dd)", example = "2025-01-18")
             @RequestParam(required = false)
-            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
-            LocalDate date) {
+            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date) {
 
         LocalDate targetDate = (date != null) ? date : LocalDate.now();
-
         return performanceReportService.getWeeklyKeywordAnalysis(targetDate)
-                .map(ResponseEntity::ok)
+                .map(r -> ResponseEntity.ok(KeywordAnalysisResponse.builder()
+                        .startDate(r.getStartDate())
+                        .endDate(r.getEndDate())
+                        .topKeywords(r.getTopKeywords())
+                        .build()))
                 .orElse(ResponseEntity.noContent().build());
     }
 
-    @Operation(
-            summary = "주간 구독상품 선호도 분석",
-            description = "weekly_report_snapshot의 subscriptionAnalysis 섹션을 조회합니다. "
-                    + "신규 가입/해지 상위 상품, 연령대별 선호 상품을 제공합니다. "
-                    + "date 미지정 시 가장 최근 주간 스냅샷을 조회합니다."
-    )
+    @GetMapping("/keywords/long-term")
+    @Operation(summary = "주간 장기 상위 유지 키워드", description = "장기간 상위권을 유지하는 키워드를 조회합니다.")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "조회 성공"),
-            @ApiResponse(responseCode = "204", description = "해당 주간 스냅샷 없음 (배치 미실행 또는 데이터 없음)",
-                    content = @Content),
-            @ApiResponse(responseCode = "401", description = "인증 실패 (JWT 토큰 없음/만료)",
-                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
-            @ApiResponse(responseCode = "403", description = "권한 없음 (ADMIN 전용)",
-                    content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+            @ApiResponse(responseCode = "204", description = "해당 주간 스냅샷 없음", content = @Content)
     })
-    @GetMapping("/subscription")
-    public ResponseEntity<SubscriptionAnalysisResponse> getSubscription(
-            @Parameter(description = "기준 날짜 (yyyy-MM-dd). 해당 날짜가 포함된 주간 스냅샷 조회. 미지정 시 최근 스냅샷",
-                    example = "2025-01-15")
+    public ResponseEntity<KeywordAnalysisResponse> getLongTermKeywords(
+            @Parameter(description = "기준 날짜 (yyyy-MM-dd)", example = "2025-01-18")
             @RequestParam(required = false)
-            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
-            LocalDate date) {
+            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date) {
 
         LocalDate targetDate = (date != null) ? date : LocalDate.now();
+        return performanceReportService.getWeeklyKeywordAnalysis(targetDate)
+                .map(r -> ResponseEntity.ok(KeywordAnalysisResponse.builder()
+                        .startDate(r.getStartDate())
+                        .endDate(r.getEndDate())
+                        .longTermTopKeywords(r.getLongTermTopKeywords())
+                        .build()))
+                .orElse(ResponseEntity.noContent().build());
+    }
 
+    @GetMapping("/keywords/customer-types")
+    @Operation(summary = "주간 고객 유형별 키워드", description = "고객 등급별 빈출 키워드를 조회합니다.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "조회 성공"),
+            @ApiResponse(responseCode = "204", description = "해당 주간 스냅샷 없음", content = @Content)
+    })
+    public ResponseEntity<KeywordAnalysisResponse> getCustomerTypeKeywords(
+            @Parameter(description = "기준 날짜 (yyyy-MM-dd)", example = "2025-01-18")
+            @RequestParam(required = false)
+            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date) {
+
+        LocalDate targetDate = (date != null) ? date : LocalDate.now();
+        return performanceReportService.getWeeklyKeywordAnalysis(targetDate)
+                .map(r -> ResponseEntity.ok(KeywordAnalysisResponse.builder()
+                        .startDate(r.getStartDate())
+                        .endDate(r.getEndDate())
+                        .byCustomerType(r.getByCustomerType())
+                        .build()))
+                .orElse(ResponseEntity.noContent().build());
+    }
+
+    // ==================== 구독상품 분리 ====================
+
+    @GetMapping("/subscription/products")
+    @Operation(summary = "주간 상품별 신규가입/해지", description = "신규 가입 및 해지 상위 상품(TOP 6)을 조회합니다.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "조회 성공"),
+            @ApiResponse(responseCode = "204", description = "해당 주간 스냅샷 없음", content = @Content)
+    })
+    public ResponseEntity<SubscriptionAnalysisResponse> getSubscriptionProducts(
+            @Parameter(description = "기준 날짜 (yyyy-MM-dd)", example = "2025-01-18")
+            @RequestParam(required = false)
+            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date) {
+
+        LocalDate targetDate = (date != null) ? date : LocalDate.now();
         return performanceReportService.getWeeklySubscription(targetDate)
-                .map(ResponseEntity::ok)
+                .map(r -> ResponseEntity.ok(SubscriptionAnalysisResponse.builder()
+                        .startDate(r.getStartDate())
+                        .endDate(r.getEndDate())
+                        .newSubscriptions(r.getNewSubscriptions())
+                        .canceledSubscriptions(r.getCanceledSubscriptions())
+                        .build()))
+                .orElse(ResponseEntity.noContent().build());
+    }
+
+    @GetMapping("/subscription/age-groups")
+    @Operation(summary = "주간 연령대별 상품 선호도", description = "연령대별 선호 상품(TOP 3)을 조회합니다.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "조회 성공"),
+            @ApiResponse(responseCode = "204", description = "해당 주간 스냅샷 없음", content = @Content)
+    })
+    public ResponseEntity<SubscriptionAnalysisResponse> getSubscriptionAgeGroups(
+            @Parameter(description = "기준 날짜 (yyyy-MM-dd)", example = "2025-01-18")
+            @RequestParam(required = false)
+            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date) {
+
+        LocalDate targetDate = (date != null) ? date : LocalDate.now();
+        return performanceReportService.getWeeklySubscription(targetDate)
+                .map(r -> ResponseEntity.ok(SubscriptionAnalysisResponse.builder()
+                        .startDate(r.getStartDate())
+                        .endDate(r.getEndDate())
+                        .byAgeGroup(r.getByAgeGroup())
+                        .build()))
                 .orElse(ResponseEntity.noContent().build());
     }
 }
