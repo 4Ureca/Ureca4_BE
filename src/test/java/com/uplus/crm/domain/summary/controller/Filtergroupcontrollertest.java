@@ -10,6 +10,7 @@ import com.uplus.crm.domain.summary.dto.response.FilterGroupDetailResponse;
 import com.uplus.crm.domain.summary.dto.response.FilterGroupListResponse;
 import com.uplus.crm.domain.summary.dto.response.FilterResponse;
 import com.uplus.crm.domain.summary.service.FilterGroupService;
+import com.uplus.crm.domain.summary.service.SummaryService;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -39,6 +40,9 @@ class FilterGroupControllerTest {
 
     @MockitoBean
     FilterGroupService filterGroupService;
+
+    @MockitoBean
+    SummaryService summaryService; // FilterGroupController.executeFilterGroup() 의존성
 
     @MockitoBean
     JwtUtil jwtUtil;

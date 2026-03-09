@@ -1,8 +1,11 @@
 package com.uplus.crm.domain.analysis.controller;
 
 import com.uplus.crm.common.exception.ErrorResponse;
+import com.uplus.crm.domain.analysis.dto.CategorySummaryResponse;
 import com.uplus.crm.domain.analysis.dto.CustomerRiskCompareResponse;
 import com.uplus.crm.domain.analysis.dto.CustomerRiskResponse;
+import com.uplus.crm.domain.analysis.dto.KeywordRankingResponse;
+import com.uplus.crm.domain.analysis.dto.TimeSlotTrendResponse;
 import com.uplus.crm.domain.analysis.service.DailyReportService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -93,5 +96,44 @@ public class DailyReportController {
             return ResponseEntity.noContent().build();
         }
         return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/time-slot-trend")
+    @Operation(summary = "시간대별 이슈 트렌드", description = "슬롯별 상담 건수/평균시간/카테고리 분포. date 미지정 시 전일 기준.")
+    public ResponseEntity<TimeSlotTrendResponse> getTimeSlotTrend(
+            @Parameter(description = "조회 대상 날짜 (yyyy-MM-dd)", example = "2025-01-15")
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date,
+            @Parameter(description = "시간대 슬롯 (예: 09-12). 미지정 시 전체 슬롯", example = "09-12")
+            @RequestParam(required = false) String slot) {
+        LocalDate targetDate = (date != null) ? date : LocalDate.now().minusDays(1);
+        return dailyReportService.getTimeSlotTrend(targetDate, slot)
+                .map(ResponseEntity::ok)
+                .orElse(ResponseEntity.noContent().build());
+    }
+
+    @GetMapping("/category-summary")
+    @Operation(summary = "카테고리별 빈도", description = "슬롯별 또는 전체 카테고리 빈도. date 미지정 시 전일 기준.")
+    public ResponseEntity<CategorySummaryResponse> getCategorySummary(
+            @Parameter(description = "조회 대상 날짜 (yyyy-MM-dd)", example = "2025-01-15")
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date,
+            @Parameter(description = "시간대 슬롯 (예: 09-12). 미지정 시 전체 슬롯", example = "09-12")
+            @RequestParam(required = false) String slot) {
+        LocalDate targetDate = (date != null) ? date : LocalDate.now().minusDays(1);
+        return dailyReportService.getCategorySummary(targetDate, slot)
+                .map(ResponseEntity::ok)
+                .orElse(ResponseEntity.noContent().build());
+    }
+
+    @GetMapping("/keyword-ranking")
+    @Operation(summary = "키워드 빈도 순위", description = "슬롯별 또는 전체 키워드 순위/증감율/신규 진입. date 미지정 시 전일 기준.")
+    public ResponseEntity<KeywordRankingResponse> getKeywordRanking(
+            @Parameter(description = "조회 대상 날짜 (yyyy-MM-dd)", example = "2025-01-15")
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date,
+            @Parameter(description = "시간대 슬롯 (예: 09-12). 미지정 시 전체 슬롯", example = "09-12")
+            @RequestParam(required = false) String slot) {
+        LocalDate targetDate = (date != null) ? date : LocalDate.now().minusDays(1);
+        return dailyReportService.getKeywordRanking(targetDate, slot)
+                .map(ResponseEntity::ok)
+                .orElse(ResponseEntity.noContent().build());
     }
 }

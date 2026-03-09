@@ -8,6 +8,10 @@ import java.util.Optional;
 
 public interface DemoConsultationResultRepository extends JpaRepository<ConsultationResult, Long> {
 
-    @Query(value = "SELECT * FROM consultation_results ORDER BY RAND() LIMIT 1", nativeQuery = true)
+    @Query(value = """
+            SELECT cr.* FROM consultation_results cr
+            INNER JOIN consultation_raw_texts rt ON cr.consult_id = rt.consult_id
+            ORDER BY RAND() LIMIT 1
+            """, nativeQuery = true)
     Optional<ConsultationResult> findOneRandom();
 }

@@ -2,11 +2,14 @@ package com.uplus.crm.domain.analysis.service;
 
 import com.uplus.crm.common.exception.BusinessException;
 import com.uplus.crm.common.exception.ErrorCode;
+import com.uplus.crm.domain.analysis.dto.CategorySummaryResponse;
 import com.uplus.crm.domain.analysis.dto.CustomerRiskCompareResponse;
 import com.uplus.crm.domain.analysis.dto.CustomerRiskCompareResponse.ChangeDetail;
 import com.uplus.crm.domain.analysis.dto.CustomerRiskCompareResponse.RiskSnapshot;
 import com.uplus.crm.domain.analysis.dto.CustomerRiskResponse;
 import com.uplus.crm.domain.analysis.dto.CustomerRiskResponse.SurgeAlert;
+import com.uplus.crm.domain.analysis.dto.KeywordRankingResponse;
+import com.uplus.crm.domain.analysis.dto.TimeSlotTrendResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.bson.Document;
@@ -21,6 +24,7 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 @Slf4j
 @Service
@@ -139,6 +143,23 @@ public class DailyReportService {
                 .build();
     }
 
+
+    // ==================== 시간대별 트렌드 / 카테고리 / 키워드 ====================
+
+    public Optional<TimeSlotTrendResponse> getTimeSlotTrend(LocalDate date, String slot) {
+        return Optional.ofNullable(findSnapshot(date.atStartOfDay()))
+                .map(doc -> TimeSlotTrendResponse.from(date, doc, slot));
+    }
+
+    public Optional<CategorySummaryResponse> getCategorySummary(LocalDate date, String slot) {
+        return Optional.ofNullable(findSnapshot(date.atStartOfDay()))
+                .map(doc -> CategorySummaryResponse.from(date, doc, slot));
+    }
+
+    public Optional<KeywordRankingResponse> getKeywordRanking(LocalDate date, String slot) {
+        return Optional.ofNullable(findSnapshot(date.atStartOfDay()))
+                .map(doc -> KeywordRankingResponse.from(date, doc, slot));
+    }
 
     private Document findSnapshot(LocalDateTime startAt) {
         Query query = new Query(Criteria.where("startAt").is(startAt));

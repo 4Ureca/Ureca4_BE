@@ -4,6 +4,7 @@ import com.uplus.crm.common.exception.BusinessException;
 import com.uplus.crm.common.exception.ErrorCode;
 import com.uplus.crm.domain.summary.dto.request.FilterGroupCreateRequest;
 import com.uplus.crm.domain.summary.dto.request.FilterGroupCreateRequest.FilterItemRequest;
+import com.uplus.crm.domain.summary.dto.request.SummarySearchRequest;
 import com.uplus.crm.domain.summary.dto.response.FilterGroupDetailResponse;
 import com.uplus.crm.domain.summary.dto.response.FilterGroupListResponse;
 import com.uplus.crm.domain.summary.dto.request.FilterGroupOrderRequest;
@@ -14,6 +15,8 @@ import com.uplus.crm.domain.summary.entity.FilterCustom;
 import com.uplus.crm.domain.summary.entity.FilterGroup;
 import com.uplus.crm.domain.summary.repository.FilterGroupRepository;
 import com.uplus.crm.domain.summary.repository.FilterRepository;
+import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -148,6 +151,56 @@ public class FilterGroupService {
                     .findFirst()
                     .ifPresent(g -> g.updateSortOrder(order.getSortOrder()));
         });
+    }
+
+    // ==================== 저장된 검색조건 재실행 ====================
+
+    /**
+     * 저장된 필터 그룹의 조건을 SummarySearchRequest로 변환한다.
+     * <ul>
+     *   <li>customer_grade, risk_type 은 복수 값 허용 → List로 누적</li>
+     *   <li>consult_from / consult_to 는 ISO-DATE 문자열(yyyy-MM-dd) 파싱</li>
+     *   <li>consultant_id 는 Long으로 파싱</li>
+     * </ul>
+     *
+     * POST /api/search-filters/{id}/execute 에서 사용
+     */
+    public SummarySearchRequest buildSearchRequest(Integer filterGroupId, Integer empId) {
+        FilterGroup filterGroup = getFilterGroupOrThrow(filterGroupId);
+        validateOwnership(filterGroup, empId);
+
+        SummarySearchRequest req = new SummarySearchRequest();
+        List<String> grades = new ArrayList<>();
+        List<String> risks  = new ArrayList<>();
+
+        for (FilterCustom fc : filterGroup.getFilterCustoms()) {
+            String key = fc.getFilter().getFilterKey();
+            String val = fc.getFilterValue();
+            switch (key) {
+                case "keyword"              -> req.setKeyword(val);
+                case "consult_from"         -> req.setFrom(LocalDate.parse(val));
+                case "consult_to"           -> req.setTo(LocalDate.parse(val));
+                case "consultant_name"      -> req.setConsultantName(val);
+                case "category_name"        -> req.setCategoryName(val);
+                case "channel"              -> req.setChannel(val);
+                case "customer_name"        -> req.setCustomerName(val);
+                case "customer_phone"       -> req.setCustomerPhone(val);
+                case "customer_type"        -> req.setCustomerType(val);
+                case "customer_grade"       -> grades.add(val);
+                case "risk_type"            -> risks.add(val);
+                case "product_name"         -> req.setProductName(val);
+                case "consult_satisfaction" -> {
+                    try { req.setSatisfactionScore(Integer.parseInt(val)); }
+                    catch (NumberFormatException ignored) {}
+                }
+                default -> { /* 비지원 필드는 무시 */ }
+            }
+        }
+
+        if (!grades.isEmpty()) req.setCustomerGrades(grades);
+        if (!risks.isEmpty())  req.setRiskTypes(risks);
+
+        return req;
     }
 
     // ==================== Private 헬퍼 ====================
