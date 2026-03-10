@@ -40,6 +40,9 @@ public enum ErrorCode {
 
     CONSULTATION_RESULT_NOT_FOUND(HttpStatus.NOT_FOUND, "상담 결과서를 찾을 수 없습니다."),
     SUMMARY_NOT_FOUND(HttpStatus.NOT_FOUND, "요약 데이터를 찾을 수 없습니다."),
+    
+    MANUAL_NOT_FOUND(HttpStatus.NOT_FOUND, "존재하지 않는 매뉴얼입니다."),
+    CATEGORY_POLICY_NOT_FOUND(HttpStatus.NOT_FOUND, "존재하지 않는 카테고리 정책입니다."),
 
   // 409 Conflict
     DUPLICATE_LOGIN_ID(HttpStatus.CONFLICT, "이미 사용 중인 로그인 아이디입니다."),
