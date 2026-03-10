@@ -5,13 +5,12 @@
 -- 1. 기존 불필요 컬럼 및 이전 카테고리 컬럼 삭제
 ALTER TABLE manuals DROP FOREIGN KEY fk_manuals_created_by;
 
-ALTER TABLE manuals 
-    DROP COLUMN tags,
-    DROP COLUMN target_customer_type,
-    DROP COLUMN related_manual_ids,
-    DROP COLUMN status,
-    DROP COLUMN category,
-    DROP COLUMN created_by;
+ALTER TABLE manuals DROP COLUMN tags;
+ALTER TABLE manuals DROP COLUMN target_customer_type;
+ALTER TABLE manuals DROP COLUMN related_manual_ids;
+ALTER TABLE manuals DROP COLUMN status;
+ALTER TABLE manuals DROP COLUMN category;
+ALTER TABLE manuals DROP COLUMN created_by;
 
 -- 2. 새로운 연관 관계 컬럼 추가
 ALTER TABLE manuals 
