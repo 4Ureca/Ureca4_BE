@@ -1,7 +1,6 @@
 package com.uplus.crm.domain.analysis.dto;
 
 import java.time.LocalDate;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 import lombok.AllArgsConstructor;
@@ -40,34 +39,6 @@ public class KeywordRankingResponse {
     public static class NewKeyword {
         private String keyword;
         private long count;
-    }
-
-    /**
-     * 일별 키워드 전용 문서에서 응답 생성 (KeywordRankTasklet이 저장한 root-level topKeywords)
-     */
-    public static KeywordRankingResponse fromDaily(LocalDate date, Document keywordDoc) {
-        List<Document> topDocs = keywordDoc.getList("topKeywords", Document.class);
-        List<TopKeyword> topKeywords = new ArrayList<>();
-
-        if (topDocs != null) {
-            int rank = 1;
-            for (Document k : topDocs) {
-                topKeywords.add(TopKeyword.builder()
-                        .keyword(k.getString("keyword"))
-                        .count(k.get("count") instanceof Number
-                                ? ((Number) k.get("count")).longValue() : 0)
-                        .rank(rank++)
-                        .changeRate(0)
-                        .build());
-            }
-        }
-
-        return KeywordRankingResponse.builder()
-                .date(date.toString())
-                .slot(null)
-                .topKeywords(topKeywords)
-                .newKeywords(List.of())
-                .build();
     }
 
     public static KeywordRankingResponse from(LocalDate date, Document snapshot, String slot) {

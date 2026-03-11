@@ -61,7 +61,16 @@ public class KeywordAnalysisResponse {
     @AllArgsConstructor
     public static class CustomerTypeKeyword {
         private String customerType;
-        private List<String> keywords;
+        private List<CustomerKeywordCount> keywords;
+    }
+
+    @Getter
+    @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class CustomerKeywordCount {
+        private String keyword;
+        private long count;
     }
 
     /**
@@ -102,14 +111,14 @@ public class KeywordAnalysisResponse {
                         .totalDays(k.getInteger("totalDays", 0))
                         .build()).collect(Collectors.toList());
 
-        // byCustomerType 파싱
+        // byCustomerType 파싱 (keyword+count Document 또는 String 리스트 호환)
         List<Document> ctDocs = kwSummary.getList("byCustomerType", Document.class);
         List<CustomerTypeKeyword> byCustomerType = ctDocs == null ? List.of() :
                 ctDocs.stream().map(ct -> {
-                    List<String> keywords = ct.getList("keywords", String.class);
+                    List<CustomerKeywordCount> keywords = parseCustomerKeywords(ct);
                     return CustomerTypeKeyword.builder()
                             .customerType(ct.getString("customerType"))
-                            .keywords(keywords != null ? keywords : List.of())
+                            .keywords(keywords)
                             .build();
                 }).collect(Collectors.toList());
 
@@ -123,6 +132,34 @@ public class KeywordAnalysisResponse {
     }
 
     // ==================== Helper ====================
+
+    @SuppressWarnings("unchecked")
+    private static List<CustomerKeywordCount> parseCustomerKeywords(Document ct) {
+        Object raw = ct.get("keywords");
+        if (raw == null) return List.of();
+
+        if (raw instanceof List<?> list && !list.isEmpty()) {
+            Object first = list.get(0);
+            if (first instanceof Document) {
+                // 신규 포맷: [{keyword, count}, ...]
+                return ((List<Document>) raw).stream()
+                        .map(kw -> CustomerKeywordCount.builder()
+                                .keyword(kw.getString("keyword"))
+                                .count(getNumber(kw, "count"))
+                                .build())
+                        .collect(Collectors.toList());
+            } else if (first instanceof String) {
+                // 레거시 포맷: ["키워드1", "키워드2", ...]
+                return ((List<String>) raw).stream()
+                        .map(keyword -> CustomerKeywordCount.builder()
+                                .keyword(keyword)
+                                .count(0)
+                                .build())
+                        .collect(Collectors.toList());
+            }
+        }
+        return List.of();
+    }
 
     private static String toDateString(Document doc, String field) {
         Object val = doc.get(field);

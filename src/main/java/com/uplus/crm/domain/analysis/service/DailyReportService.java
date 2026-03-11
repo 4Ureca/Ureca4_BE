@@ -164,17 +164,8 @@ public class DailyReportService {
     }
 
     public Optional<KeywordRankingResponse> getKeywordRanking(LocalDate date, String slot) {
-        if (slot != null) {
-            // 슬롯별 키워드: 성과 문서(startAt 기준)의 timeSlotTrend에서 조회
-            return Optional.ofNullable(findSnapshot(date.atStartOfDay()))
-                    .map(doc -> KeywordRankingResponse.from(date, doc, slot));
-        }
-        // 전체 키워드: KeywordRankTasklet이 저장한 키워드 문서(date 기준)에서 조회
-        Document keywordDoc = findKeywordSnapshot(date);
-        if (keywordDoc != null) {
-            return Optional.of(KeywordRankingResponse.fromDaily(date, keywordDoc));
-        }
-        return Optional.empty();
+        return Optional.ofNullable(findSnapshot(date.atStartOfDay()))
+                .map(doc -> KeywordRankingResponse.from(date, doc, slot));
     }
 
     /**
@@ -183,22 +174,28 @@ public class DailyReportService {
      * daily_report_snapshot(키워드 문서, date 기준)의 byGradeCode에서 조회합니다.
      */
     public Optional<KeywordAnalysisResponse> getDailyCustomerTypeKeywords(LocalDate date) {
-        Document keywordDoc = findKeywordSnapshot(date);
-        if (keywordDoc == null) return Optional.empty();
+        Document snapshot = findSnapshot(date.atStartOfDay());
+        if (snapshot == null) return Optional.empty();
 
-        List<Document> gradeList = keywordDoc.getList("byGradeCode", Document.class);
+        Document keywordSummary = snapshot.get("keywordSummary", Document.class);
+        if (keywordSummary == null) return Optional.empty();
+
+        List<Document> gradeList = keywordSummary.getList("byCustomerType", Document.class);
         if (gradeList == null || gradeList.isEmpty()) return Optional.empty();
 
         List<KeywordAnalysisResponse.CustomerTypeKeyword> byCustomerType = gradeList.stream()
                 .map(g -> {
                     List<Document> kwDocs = g.getList("keywords", Document.class);
-                    List<String> keywords = (kwDocs != null)
+                    List<KeywordAnalysisResponse.CustomerKeywordCount> keywords = (kwDocs != null)
                             ? kwDocs.stream()
-                                .map(kw -> kw.getString("keyword"))
+                                .map(kw -> KeywordAnalysisResponse.CustomerKeywordCount.builder()
+                                        .keyword(kw.getString("keyword"))
+                                        .count(kw.get("count") instanceof Number n ? n.longValue() : 0L)
+                                        .build())
                                 .collect(Collectors.toList())
                             : List.of();
                     return KeywordAnalysisResponse.CustomerTypeKeyword.builder()
-                            .customerType(g.getString("gradeCode"))
+                            .customerType(g.getString("customerType"))
                             .keywords(keywords)
                             .build();
                 })
@@ -422,13 +419,6 @@ public class DailyReportService {
         return mongoTemplate.findOne(query, Document.class, COLLECTION);
     }
 
-    /**
-     * KeywordRankTasklet이 저장한 키워드 전용 문서 조회 (date 필드 기준)
-     */
-    private Document findKeywordSnapshot(LocalDate date) {
-        Query query = new Query(Criteria.where("date").is(date));
-        return mongoTemplate.findOne(query, Document.class, COLLECTION);
-    }
 
     private SurgeAlert calculateSurgeAlert(Document todayRisk, Document prevDoc, int todayTotal) {
         if (prevDoc == null) return null;

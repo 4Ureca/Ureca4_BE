@@ -87,11 +87,16 @@ class KeywordAnalysisResponseTest {
             assertThat(lt1.getAppearanceDays()).isEqualTo(20);
             assertThat(lt1.getTotalDays()).isEqualTo(28);
 
-            // byCustomerType
+            // byCustomerType (레거시 List<String> 포맷 → CustomerKeywordCount(count=0) 변환 검증)
             assertThat(result.getByCustomerType()).hasSize(2);
             assertThat(result.getByCustomerType().get(0).getCustomerType()).isEqualTo("VIP");
-            assertThat(result.getByCustomerType().get(0).getKeywords())
-                    .containsExactly("해지", "요금제", "번호이동");
+            List<KeywordAnalysisResponse.CustomerKeywordCount> vipKws =
+                    result.getByCustomerType().get(0).getKeywords();
+            assertThat(vipKws).hasSize(3);
+            assertThat(vipKws.get(0).getKeyword()).isEqualTo("해지");
+            assertThat(vipKws.get(0).getCount()).isEqualTo(0); // 레거시 포맷은 count 없음
+            assertThat(vipKws.get(1).getKeyword()).isEqualTo("요금제");
+            assertThat(vipKws.get(2).getKeyword()).isEqualTo("번호이동");
             assertThat(result.getByCustomerType().get(1).getCustomerType()).isEqualTo("DIAMOND");
         }
 

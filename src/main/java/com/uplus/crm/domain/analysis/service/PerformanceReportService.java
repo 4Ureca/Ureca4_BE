@@ -104,13 +104,17 @@ public class PerformanceReportService {
             return Optional.empty();
         }
 
+        Document perfSummary = snapshot.get("performanceSummary", Document.class);
+
         return Optional.of(PerformanceSummaryResponse.builder()
                 .startDate(toDateString(snapshot, "startAt"))
                 .endDate(toDateString(snapshot, "endAt"))
                 .totalConsultCount(getIntOrZero(snapshot, "totalConsultCount"))
-                .avgConsultCountPerAgent(getDoubleOrZero(snapshot, "avgConsultCountPerAgent"))
+                .avgConsultCountPerAgent(perfSummary != null
+                        ? getDoubleOrZero(perfSummary, "avgConsultPerAgent") : 0.0)
                 .avgDurationMinutes(getDoubleOrZero(snapshot, "avgDurationMinutes"))
-                .avgSatisfiedScore(getDoubleOrZero(snapshot, "avgSatisfiedScore"))
+                .avgSatisfiedScore(perfSummary != null
+                        ? getDoubleOrZero(perfSummary, "avgSatisfiedScore") : 0.0)
                 .build());
     }
 
@@ -120,23 +124,25 @@ public class PerformanceReportService {
      * 스냅샷의 agentPerformance 배열에서 consultCount 내림차순 상위 10명을 반환합니다.
      */
     private Optional<AgentRankingResponse> getAgentRanking(String collection, LocalDate date) {
-        Document snapshot = findSnapshotContaining(collection, date, "agentPerformance");
+        Document snapshot = findSnapshotContaining(collection, date, "performanceSummary");
 
         if (snapshot == null) {
             log.info("[PerformanceReport] {} — {} 스냅샷 없음", collection, date);
             return Optional.empty();
         }
 
-        List<Document> agentDocs = snapshot.getList("agentPerformance", Document.class);
+        Document perfSummary = snapshot.get("performanceSummary", Document.class);
+        if (perfSummary == null) return Optional.empty();
+
+        List<Document> agentDocs = perfSummary.getList("agentRanking", Document.class);
         List<AgentRankingResponse.AgentPerformance> agents = new ArrayList<>();
 
         if (agentDocs != null) {
-            int rank = 1;
             int limit = Math.min(agentDocs.size(), 10);
             for (int i = 0; i < limit; i++) {
                 Document doc = agentDocs.get(i);
                 agents.add(AgentRankingResponse.AgentPerformance.builder()
-                        .rank(rank++)
+                        .rank(getIntOrZero(doc, "rank"))
                         .agentId(getLongOrZero(doc, "agentId"))
                         .agentName(doc.getString("agentName"))
                         .consultCount(getIntOrZero(doc, "consultCount"))

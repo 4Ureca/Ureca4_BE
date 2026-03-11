@@ -125,16 +125,17 @@ class DailyReportServiceExtTest {
     @Test
     @DisplayName("고객유형별 키워드 정상 조회")
     void getDailyCustomerTypeKeywords_정상조회() {
-        // given
+        // given: 배치(KeywordRankTasklet)가 저장하는 실제 구조와 동일하게 생성
         Document kw1 = new Document("keyword", "요금").append("count", 15);
         Document kw2 = new Document("keyword", "해지").append("count", 10);
-        Document grade = new Document("gradeCode", "VIP")
+        Document grade = new Document("customerType", "VIP")
                 .append("keywords", List.of(kw1, kw2));
-        Document keywordDoc = new Document("date", DATE)
-                .append("byGradeCode", List.of(grade));
+        Document keywordSummary = new Document("byCustomerType", List.of(grade));
+        Document snapshot = new Document("startAt", DATE.atStartOfDay())
+                .append("keywordSummary", keywordSummary);
 
         given(mongoTemplate.findOne(any(Query.class), eq(Document.class), eq("daily_report_snapshot")))
-                .willReturn(keywordDoc);
+                .willReturn(snapshot);
 
         // when
         Optional<KeywordAnalysisResponse> result = service.getDailyCustomerTypeKeywords(DATE);
@@ -143,7 +144,14 @@ class DailyReportServiceExtTest {
         assertThat(result).isPresent();
         assertThat(result.get().getByCustomerType()).hasSize(1);
         assertThat(result.get().getByCustomerType().get(0).getCustomerType()).isEqualTo("VIP");
-        assertThat(result.get().getByCustomerType().get(0).getKeywords()).containsExactly("요금", "해지");
+
+        List<KeywordAnalysisResponse.CustomerKeywordCount> keywords =
+                result.get().getByCustomerType().get(0).getKeywords();
+        assertThat(keywords).hasSize(2);
+        assertThat(keywords.get(0).getKeyword()).isEqualTo("요금");
+        assertThat(keywords.get(0).getCount()).isEqualTo(15);
+        assertThat(keywords.get(1).getKeyword()).isEqualTo("해지");
+        assertThat(keywords.get(1).getCount()).isEqualTo(10);
     }
 
     @Test
@@ -160,17 +168,15 @@ class DailyReportServiceExtTest {
     @Test
     @DisplayName("키워드 랭킹 정상 조회")
     void getKeywordRanking_슬롯없음_정상() {
-        // given: 키워드 전용 문서 (date 필드 기준)
+        // given: findSnapshot(startAt) → keywordSummary.topKeywords 조회
         Document topKw = new Document("keyword", "요금").append("count", 50)
-                .append("changeRate", 10.5).append("isNew", false);
+                .append("changeRate", 10.5);
         Document keywordSummary = new Document("topKeywords", List.of(topKw));
-        Document keywordDoc = new Document("date", DATE)
+        Document snapshot = new Document("startAt", DATE.atStartOfDay())
                 .append("keywordSummary", keywordSummary);
 
-        // findSnapshot(startAt) 호출은 null을 반환하지 않을 수도 있지만,
-        // getKeywordRanking(slot=null)은 findKeywordSnapshot만 사용
         given(mongoTemplate.findOne(any(Query.class), eq(Document.class), eq("daily_report_snapshot")))
-                .willReturn(keywordDoc);
+                .willReturn(snapshot);
 
         // when
         Optional<KeywordRankingResponse> result = service.getKeywordRanking(DATE, null);
