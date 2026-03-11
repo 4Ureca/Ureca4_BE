@@ -34,3 +34,8 @@ jwt:
 
 server:
   forward-headers-strategy: framework
+
+app:
+  cookie:
+    secure: false
+    same-site: Lax
