@@ -14,6 +14,7 @@ import org.bson.Document;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
+@com.fasterxml.jackson.annotation.JsonInclude(com.fasterxml.jackson.annotation.JsonInclude.Include.NON_NULL)
 public class KeywordRankingResponse {
 
     private String date;

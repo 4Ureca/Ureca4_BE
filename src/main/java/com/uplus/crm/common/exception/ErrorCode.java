@@ -14,6 +14,7 @@ public enum ErrorCode {
     PASSWORD_MISMATCH(HttpStatus.BAD_REQUEST, "새 비밀번호와 확인 비밀번호가 일치하지 않습니다."),
     INVALID_PERMISSION_IDS(HttpStatus.BAD_REQUEST, "유효하지 않은 권한 ID가 포함되어 있습니다."),
     MISSING_TARGET_EMPID(HttpStatus.BAD_REQUEST, "조회할 상담사 ID가 누락되었습니다."), // 관리자용
+    INVALID_PERIOD(HttpStatus.BAD_REQUEST, "지원하지 않는 조회 주기입니다. (daily/weekly/monthly)"),
 
     // 401 Unauthorized
     INVALID_CREDENTIALS(HttpStatus.UNAUTHORIZED, "아이디 또는 비밀번호가 올바르지 않습니다."),
