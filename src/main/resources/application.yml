@@ -18,13 +18,6 @@ spring:
     hibernate:
       ddl-auto: validate
 
-  kafka:
-    consumer:
-      group-id: crm-group
-      auto-offset-reset: earliest
-    producer:
-      acks: all
-
   task:
     scheduling:
       pool:

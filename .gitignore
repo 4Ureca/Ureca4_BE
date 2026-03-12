@@ -51,3 +51,6 @@ bin/
 
 .env
 *.env
+
+### local profile (개인 환경 설정 — 커밋하지 않음)
+src/main/resources/application-local.yml

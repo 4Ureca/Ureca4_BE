@@ -2,6 +2,7 @@ package com.uplus.crm.domain.analysis.controller;
 
 import com.uplus.crm.common.exception.ErrorResponse;
 import com.uplus.crm.domain.analysis.dto.AgentRankingResponse;
+import com.uplus.crm.domain.analysis.dto.ChurnDefenseResponse;
 import com.uplus.crm.domain.analysis.dto.CustomerRiskResponse;
 import com.uplus.crm.domain.analysis.dto.KeywordAnalysisResponse;
 import com.uplus.crm.domain.analysis.dto.PerformanceSummaryResponse;
@@ -148,6 +149,37 @@ public class MonthlyReportController {
 
         LocalDate targetDate = (date != null) ? date : LocalDate.now().minusMonths(1);
         KeywordAnalysisResponse response = monthlyReportService.getMonthlyKeywordAnalysis(targetDate);
+
+        if (response == null) {
+            return ResponseEntity.noContent().build();
+        }
+        return ResponseEntity.ok(response);
+    }
+
+    @Operation(
+            summary = "월별 해지방어 패턴 분석 조회",
+            description = "monthly_report_snapshot의 churnDefenseAnalysis 섹션을 조회합니다. "
+                    + "해지방어 시도/성공률, 불만 사유, 고객 등급별 방어율, 방어 액션별 성공률을 제공합니다. "
+                    + "date에 해당 월의 아무 날짜를 넣으면 해당 월 스냅샷을 반환합니다."
+    )
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "조회 성공"),
+            @ApiResponse(responseCode = "204", description = "해당 월 스냅샷 없음 (배치 미실행 또는 데이터 없음)",
+                    content = @Content),
+            @ApiResponse(responseCode = "401", description = "인증 실패 (JWT 토큰 없음/만료)",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+            @ApiResponse(responseCode = "403", description = "권한 없음 (ADMIN 전용)",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+    })
+    @GetMapping("/churn-defense")
+    public ResponseEntity<ChurnDefenseResponse> getMonthlyChurnDefenseAnalysis(
+            @Parameter(description = "조회 대상 날짜 (yyyy-MM-dd). 해당 월의 아무 날짜", example = "2025-01-15")
+            @RequestParam(required = false)
+            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
+            LocalDate date) {
+
+        LocalDate targetDate = (date != null) ? date : LocalDate.now().minusMonths(1);
+        ChurnDefenseResponse response = monthlyReportService.getMonthlyChurnDefenseAnalysis(targetDate);
 
         if (response == null) {
             return ResponseEntity.noContent().build();
