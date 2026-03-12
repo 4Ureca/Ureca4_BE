@@ -5,6 +5,7 @@ import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.ZoneOffset;
 import java.util.List;
+import java.util.Map;
 import lombok.Builder;
 import lombok.Getter;
 
@@ -28,10 +29,11 @@ public class ConsultationSummaryDetailResponse {
   private SummaryInfo summary;
   private List<RiskFlagInfo> riskFlags;
   private CancellationInfo cancellation;
-  private List<ProductInfo> resultProducts;
-  private List<ProductInfo> products;
 
-  @Getter @Builder
+  private List<ResultProductInfo> resultProducts;
+
+  @Getter
+  @Builder
   public static class CategoryInfo {
     private String code;
     private String large;
@@ -39,13 +41,15 @@ public class ConsultationSummaryDetailResponse {
     private String small;
   }
 
-  @Getter @Builder
+  @Getter
+  @Builder
   public static class AgentInfo {
     private Long id;
     private String name;
   }
 
-  @Getter @Builder
+  @Getter
+  @Builder
   public static class CustomerInfo {
     private Long id;
     private String grade;
@@ -56,7 +60,8 @@ public class ConsultationSummaryDetailResponse {
     private Double satisfiedScore;
   }
 
-  @Getter @Builder
+  @Getter
+  @Builder
   public static class IamInfo {
     private String memo;
     private String action;
@@ -65,20 +70,22 @@ public class ConsultationSummaryDetailResponse {
     private Double matchRate;
   }
 
-  @Getter @Builder
+  @Getter
+  @Builder
   public static class SummaryInfo {
-    private String status;
     private String content;
     private List<String> keywords;
   }
 
-  @Getter @Builder
+  @Getter
+  @Builder
   public static class RiskFlagInfo {
     private String riskType;
     private String riskLevel;
   }
 
-  @Getter @Builder
+  @Getter
+  @Builder
   public static class CancellationInfo {
     private Boolean intent;
     private Boolean defenseAttempted;
@@ -87,17 +94,30 @@ public class ConsultationSummaryDetailResponse {
     private String complaintReasons;
   }
 
-  @Getter @Builder
-  public static class ProductInfo {
-    private List<String> subscribed;
-    private List<String> canceled;
-    private List<ConsultationSummary.ResultProducts.Conversion> conversion;
-    private List<String> recommitment;
+  @Getter
+  @Builder
+  public static class ResultProductInfo {
     private String changeType;
+    private List<ProductAction> products;
+  }
+
+  @Getter
+  @Builder
+  public static class ProductAction {
+    private ProductInfo before;
+    private ProductInfo after;
+  }
+
+  @Getter
+  @Builder
+  public static class ProductInfo {
+    private String code;
+    private String name;
   }
 
   public static ConsultationSummaryDetailResponse from(
-      ConsultationSummary e) {
+      ConsultationSummary e,
+      Map<String, String> productNameMap) {
 
     return ConsultationSummaryDetailResponse.builder()
         .id(e.getId())
@@ -143,7 +163,6 @@ public class ConsultationSummaryDetailResponse {
 
         .summary(e.getSummary() == null ? null :
             SummaryInfo.builder()
-                .status(e.getSummary().getStatus())
                 .content(e.getSummary().getContent())
                 .keywords(e.getSummary().getKeywords())
                 .build())
@@ -165,26 +184,81 @@ public class ConsultationSummaryDetailResponse {
                 .complaintReasons(e.getCancellation().getComplaintReasons())
                 .build())
 
-        .resultProducts(buildProductInfo(e))
-        .products(buildProductInfo(e))
-
+        .resultProducts(buildProductInfo(e, productNameMap))
         .build();
   }
 
-  private static List<ProductInfo> buildProductInfo(ConsultationSummary summary) {
+  private static List<ResultProductInfo> buildProductInfo(
+      ConsultationSummary summary,
+      Map<String, String> productNameMap) {
+
     if (summary.getResultProducts() == null) {
       return null;
     }
 
     return summary.getResultProducts().stream()
-        .map(p -> ProductInfo.builder()
-            .subscribed(p.getSubscribed())
-            .canceled(p.getCanceled())
-            .conversion(p.getConversion())
-            .recommitment(p.getRecommitment())
+        .map(p -> ResultProductInfo.builder()
             .changeType(p.getChangeType())
+            .products(buildActions(p, productNameMap))
             .build())
         .toList();
+  }
+
+  private static List<ProductAction> buildActions(
+      ConsultationSummary.ResultProducts p,
+      Map<String, String> productNameMap) {
+
+    if ("CHANGE".equals(p.getChangeType()) && p.getConversion() != null) {
+      return p.getConversion().stream()
+          .map(c -> ProductAction.builder()
+              .before(productInfo(c.getCanceled(), productNameMap))
+              .after(productInfo(c.getSubscribed(), productNameMap))
+              .build())
+          .toList();
+    }
+
+    if (p.getSubscribed() != null) {
+      return p.getSubscribed().stream()
+          .map(code -> ProductAction.builder()
+              .before(null)
+              .after(productInfo(code, productNameMap))
+              .build())
+          .toList();
+    }
+
+    if (p.getCanceled() != null) {
+      return p.getCanceled().stream()
+          .map(code -> ProductAction.builder()
+              .before(productInfo(code, productNameMap))
+              .after(null)
+              .build())
+          .toList();
+    }
+
+    if (p.getRecommitment() != null) {
+      return p.getRecommitment().stream()
+          .map(code -> ProductAction.builder()
+              .before(null)
+              .after(productInfo(code, productNameMap))
+              .build())
+          .toList();
+    }
+
+    return List.of();
+  }
+
+  private static ProductInfo productInfo(
+      String code,
+      Map<String, String> productNameMap) {
+
+    if (code == null) {
+      return null;
+    }
+
+    return ProductInfo.builder()
+        .code(code)
+        .name(productNameMap.get(code))
+        .build();
   }
 
   private static LocalDateTime convertUtcToKst(LocalDateTime utcDateTime) {

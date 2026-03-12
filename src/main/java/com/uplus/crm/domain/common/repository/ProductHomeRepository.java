@@ -6,4 +6,5 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface ProductHomeRepository extends JpaRepository<ProductHome, String> {
   List<ProductHome> findTop20ByProductNameContainingOrHomeCodeContaining(String name, String code);
+  List<ProductHome> findByHomeCodeIn(List<String> productCodes);
 }

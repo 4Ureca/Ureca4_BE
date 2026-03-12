@@ -6,4 +6,5 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface ProductMobileRepository extends JpaRepository<ProductMobile, String> {
   List<ProductMobile> findTop20ByPlanNameContainingOrMobileCodeContaining(String name, String code);
+  List<ProductMobile> findByMobileCodeIn(List<String> productCodes);
 }
