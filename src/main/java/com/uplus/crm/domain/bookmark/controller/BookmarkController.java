@@ -13,7 +13,9 @@ import org.springframework.web.bind.annotation.RestController;
 import com.uplus.crm.common.response.ApiResponse;
 import com.uplus.crm.common.security.CustomUserDetails;
 import com.uplus.crm.domain.bookmark.dto.BookmarkToggleResponseDto;
+import com.uplus.crm.domain.bookmark.dto.ConsultationBookmarkDetailResponseDto;
 import com.uplus.crm.domain.bookmark.dto.ConsultationBookmarkResponseDto;
+import com.uplus.crm.domain.bookmark.dto.ManualBookmarkDetailResponseDto;
 import com.uplus.crm.domain.bookmark.dto.ManualBookmarkResponseDto;
 import com.uplus.crm.domain.bookmark.service.BookmarkService;
 
@@ -144,5 +146,42 @@ public class BookmarkController {
 
         int empId = userDetails.getEmpId();
         return ApiResponse.ok(bookmarkService.getConsultationBookmarks(empId));
+    }
+    
+    /**
+     * [매뉴얼 북마크 상세 조회]
+     * GET /bookmarks/manuals/{manualId}/detail
+     */
+    @Operation(
+        summary = "매뉴얼 북마크 상세 조회",
+        description = "로그인한 사용자가 북마크한 특정 운영정책 매뉴얼의 상세 정보를 조회합니다."
+    )
+    @GetMapping("/manuals/{manualId}/detail")
+    public ApiResponse<ManualBookmarkDetailResponseDto> getManualBookmarkDetail(
+            @Parameter(description = "조회할 매뉴얼 ID", example = "1")
+            @PathVariable("manualId") Integer manualId,
+            @AuthenticationPrincipal CustomUserDetails userDetails) {
+
+        int empId = userDetails.getEmpId();
+        return ApiResponse.ok(bookmarkService.getManualBookmarkDetail(empId, manualId));
+    }
+
+
+    /**
+     * [상담요약 북마크 상세 조회]
+     * GET /bookmarks/consultations/{consultId}/detail
+     */
+    @Operation(
+        summary = "상담요약 북마크 상세 조회",
+        description = "로그인한 사용자가 북마크한 특정 상담요약 결과의 상세 정보를 조회합니다."
+    )
+    @GetMapping("/consultations/{consultId}/detail")
+    public ApiResponse<ConsultationBookmarkDetailResponseDto> getConsultationBookmarkDetail(
+            @Parameter(description = "조회할 상담요약 ID", example = "1")
+            @PathVariable("consultId") Long consultId,
+            @AuthenticationPrincipal CustomUserDetails userDetails) {
+
+        int empId = userDetails.getEmpId();
+        return ApiResponse.ok(bookmarkService.getConsultationBookmarkDetail(empId, consultId));
     }
 }

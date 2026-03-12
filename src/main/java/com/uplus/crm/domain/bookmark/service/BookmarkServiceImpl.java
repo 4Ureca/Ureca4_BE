@@ -9,7 +9,9 @@ import com.uplus.crm.common.exception.BookmarkErrorCode;
 import com.uplus.crm.common.exception.BookmarkException;
 import com.uplus.crm.domain.account.repository.mysql.UserBookmarkRepository;
 import com.uplus.crm.domain.bookmark.dto.BookmarkToggleResponseDto;
+import com.uplus.crm.domain.bookmark.dto.ConsultationBookmarkDetailResponseDto;
 import com.uplus.crm.domain.bookmark.dto.ConsultationBookmarkResponseDto;
+import com.uplus.crm.domain.bookmark.dto.ManualBookmarkDetailResponseDto;
 import com.uplus.crm.domain.bookmark.dto.ManualBookmarkResponseDto;
 import com.uplus.crm.domain.bookmark.entity.UserBookmark;
 import com.uplus.crm.domain.consultation.repository.ConsultationResultRepository;
@@ -131,4 +133,16 @@ public class BookmarkServiceImpl implements BookmarkService {
                         .build())
                 .toList();
     }
+
+	@Override
+	public ManualBookmarkDetailResponseDto getManualBookmarkDetail(Integer empId, Integer manualId) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public ConsultationBookmarkDetailResponseDto getConsultationBookmarkDetail(Integer empId, Long consultId) {
+		// TODO Auto-generated method stub
+		return null;
+	}
 }
