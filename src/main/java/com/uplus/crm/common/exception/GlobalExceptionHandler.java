@@ -46,4 +46,6 @@ public class GlobalExceptionHandler {
                 .badRequest()
                 .body(ErrorResponse.of(ErrorCode.INVALID_INPUT, errors));
     }
+    
+    
 }
