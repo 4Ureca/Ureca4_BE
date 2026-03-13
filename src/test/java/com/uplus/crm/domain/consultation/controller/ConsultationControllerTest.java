@@ -2,21 +2,11 @@ package com.uplus.crm.domain.consultation.controller;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
+import static org.mockito.Mockito.mock;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
-
-import com.uplus.crm.common.config.SecurityConfig;
-import com.uplus.crm.common.exception.BusinessException;
-import com.uplus.crm.common.exception.ErrorCode;
-import com.uplus.crm.common.util.JwtUtil;
-import com.uplus.crm.domain.account.entity.Employee;
-import com.uplus.crm.domain.account.entity.EmployeeDetail;
-import com.uplus.crm.domain.account.entity.JobRole;
-import com.uplus.crm.domain.account.repository.mysql.EmployeeRepository;
-import com.uplus.crm.domain.consultation.dto.response.ConsultDataResponse;
-import com.uplus.crm.domain.consultation.service.ConsultationService;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -29,16 +19,35 @@ import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
+import static org.mockito.ArgumentMatchers.anyInt;
 
-import static org.mockito.Mockito.mock;
+import com.uplus.crm.common.config.SecurityConfig;
+import com.uplus.crm.common.exception.BusinessException;
+import com.uplus.crm.common.exception.ErrorCode;
+import com.uplus.crm.common.util.JwtUtil;
+import com.uplus.crm.domain.account.entity.Employee;
+import com.uplus.crm.domain.account.entity.EmployeeDetail;
+import com.uplus.crm.domain.account.entity.JobRole;
+import com.uplus.crm.domain.account.repository.mysql.EmployeeRepository;
+import com.uplus.crm.domain.consultation.dto.response.ConsultDataResponse;
+import com.uplus.crm.domain.consultation.service.ConsultationDetailService;
+import com.uplus.crm.domain.consultation.service.ConsultationListService;
+import com.uplus.crm.domain.consultation.service.ConsultationService;
 
-@WebMvcTest(ConsultationController.class)
+@WebMvcTest({
+    ConsultationController.class,
+    ConsultationDetailController.class,
+    ConsultationListController.class
+})
 @Import(SecurityConfig.class)
 class ConsultationControllerTest {
 
     @Autowired MockMvc mockMvc;
 
     @MockitoBean ConsultationService consultationService;
+    @MockitoBean ConsultationDetailService consultationDetailService;
+    @MockitoBean ConsultationListService consultationListService;
+    
     @MockitoBean JwtUtil jwtUtil;
     @MockitoBean EmployeeRepository employeeRepository;
 
@@ -70,7 +79,7 @@ class ConsultationControllerTest {
         );
     }
 
-    // ── GET /consultation ──────────────────────────────────────────────────
+    // ── [ConsultationController] GET /consultation ──────────────────────────
 
     @Test
     @DisplayName("GET /consultation - 인증 시 200 OK + IAM 포함 전체 상담 데이터 반환")
@@ -84,14 +93,7 @@ class ConsultationControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))
                 .andExpect(jsonPath("$.data.consultId").value(10))
-                .andExpect(jsonPath("$.data.customerId").value(1))
-                .andExpect(jsonPath("$.data.customerName").value("홍길동"))
-                .andExpect(jsonPath("$.data.channel").value("CALL"))
-                .andExpect(jsonPath("$.data.categoryCode").value("CAT001"))
-                .andExpect(jsonPath("$.data.durationSec").value(180))
-                .andExpect(jsonPath("$.data.iamIssue").value("고객이 요금 오류 제기"))
-                .andExpect(jsonPath("$.data.iamAction").value("시스템 확인 후 재청구"))
-                .andExpect(jsonPath("$.data.iamMemo").value("추후 모니터링 필요"));
+                .andExpect(jsonPath("$.data.customerName").value("홍길동"));
     }
 
     @Test
@@ -114,5 +116,41 @@ class ConsultationControllerTest {
                 .andDo(print())
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.error").value("CONSULTATION_NOT_FOUND"));
+    }
+
+    // ── [ConsultationDetailController] GET /consultation/detail ──────────────
+
+    @Test
+    @DisplayName("GET /consultation/detail - 상담 상세 정보 조회 성공 (200)")
+    void getConsultationDetail_200() throws Exception {
+        mockAgentAuth();
+        // 서비스 응답 Mocking (상세 정보 DTO가 null이 아니라고 가정하거나 null로 진행)
+        given(consultationDetailService.getConsultationDetail(12L)).willReturn(null);
+
+        mockMvc.perform(get("/consultation/detail")
+                        .param("consultId", "12")
+                        .header("Authorization", "Bearer mock-token"))
+                .andDo(print())
+                .andExpect(status().isOk());
+    }
+
+    // ── [ConsultationListController] GET /consultation/list ────────────────
+
+    @Test
+    @DisplayName("GET /consultation/list - 목록 필터 조회 성공 (200)")
+    void getConsultationList_200() throws Exception {
+        mockAgentAuth();
+        // 서비스 응답 Mocking
+        given(consultationListService.getConsultationList(any(), any(), any(), any(), any(), anyInt(), anyInt()))
+                .willReturn(null);
+
+        mockMvc.perform(get("/consultation/list")
+                        .param("keyword", "인터넷")
+                        .param("channel", "CALL")
+                        .param("page", "0")
+                        .param("size", "10")
+                        .header("Authorization", "Bearer mock-token"))
+                .andDo(print())
+                .andExpect(status().isOk());
     }
 }

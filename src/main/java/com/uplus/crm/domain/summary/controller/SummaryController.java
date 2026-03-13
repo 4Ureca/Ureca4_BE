@@ -46,13 +46,14 @@ public class SummaryController {
           - `size` : 반환 개수 (기본 10, 최대 30)
 
           **사용 순서**: Step 1 → Step 2(목록) → Step 3(상세)
-          """)
+          """
+  )
   @GetMapping("/suggest")
   public List<String> suggest(
       @Parameter(description = "검색어 prefix (미입력 시 인기 키워드 반환)", example = "해지")
-      @RequestParam(required = false) String q,
+      @RequestParam(name = "q", required = false) String q, // 수정: name 명시
       @Parameter(description = "반환 개수 (최대 30)", example = "10")
-      @RequestParam(defaultValue = "10") int size) {
+      @RequestParam(name = "size", defaultValue = "10") int size) { // 수정: name 명시
 
     return service.suggestKeywords(q, Math.min(size, 30));
   }
@@ -86,7 +87,8 @@ public class SummaryController {
           - `satisfactionScore` : 고객만족도 최소값 1~5
 
           **사용 순서**: Step 1(자동완성) → Step 2 → Step 3(상세)
-          """)
+          """
+  )
   @GetMapping
   public Page<ConsultationSummaryListResponse> list(
       @ParameterObject @ModelAttribute SummarySearchRequest searchRequest,
@@ -120,11 +122,12 @@ public class SummaryController {
           MongoDB 데이터가 없어도 404 없이 RDB 기반 부분 응답 반환.
 
           **사용 순서**: Step 1(자동완성) → Step 2(목록) → Step 3
-          """)
+          """
+  )
   @GetMapping("/{consultId}")
   public ConsultationSummaryDetailResponse detail(
       @Parameter(description = "상담 결과서 ID (consultation_results.consult_id)")
-      @PathVariable Long consultId) {
+      @PathVariable("consultId") Long consultId) { // 수정: name 명시
 
     return service.getDetail(consultId);
   }
