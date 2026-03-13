@@ -28,7 +28,7 @@ import lombok.ToString;
 })
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-@EntityListeners(AuditingEntityListener.class) // 생성일 자동 기록을 위해 필요
+@EntityListeners(AuditingEntityListener.class)
 @ToString
 public class ConsultationEvaluation {
 

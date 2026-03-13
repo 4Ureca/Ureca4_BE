@@ -44,8 +44,6 @@ public class WeeklyExcellentCaseController {
     public ResponseEntity<EvaluationDetailResponse> getBoardDetail(
             @Parameter(description = "상담 ID", example = "16")
             @PathVariable("consultId") Long consultId) {
-        
-        // 관리자용으로 만든 상세 조회 로직을 그대로 호출합니다.
         return ResponseEntity.ok(adminService.getDetail(consultId));
     }
 
