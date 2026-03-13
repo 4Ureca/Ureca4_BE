@@ -39,7 +39,7 @@ public class ExcellentCaseAdminController {
         return ResponseEntity.ok(adminService.getCandidatePage(searchRequest, page, size));
     }
     
-    @Operation(summary = "우수 사례 상세 조회", description = "특정 상담의 AI 평가 사유와 대화 원문을 조회합니다.")
+    @Operation(summary = "우수 사례 후보군 상세 조회", description = "특정 상담의 AI 평가 사유와 대화 원문을 조회합니다.")
     @GetMapping("/{consultId}")
     public ResponseEntity<EvaluationDetailResponse> getDetail(
             @Parameter(description = "상담 ID", example = "16")
@@ -60,7 +60,6 @@ public class ExcellentCaseAdminController {
         if (isNew) {
             return ResponseEntity.ok("우수 사례로 성공적으로 등록되었습니다.");
         } else {
-            // 중복 요청 시에도 200 OK를 주되, 메시지로 상태를 알려줌
             return ResponseEntity.ok("이미 등록된 우수 사례입니다.");
         }
     }

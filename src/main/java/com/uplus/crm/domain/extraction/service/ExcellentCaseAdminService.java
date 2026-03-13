@@ -69,41 +69,44 @@ public class ExcellentCaseAdminService {
     /** 3. 우수 사례 최종 선정 (Register)*/
     @Transactional
     public boolean registerExcellentCase(Long consultId, ExcellentCaseRegisterRequest request) {
+        // 1. 엔티티 조회
         ConsultationEvaluation evaluation = evaluationRepository.findByConsultId(consultId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.EVALUATION_NOT_FOUND));
-
-        if (evaluation.getSelectionStatus() == SelectionStatus.SELECTED) {
-            if (weeklyRepository.existsByConsultId(consultId)) {
-                return false;
-            }
-            // 만약 상태는 SELECTED인데 이력이 없다면(데이터 불일치), 아래 로직을 수행하여 이력을 생성함
+        
+        if (!evaluation.isCandidate()) {
+            throw new BusinessException(ErrorCode.NOT_A_CANDIDATE);
         }
 
-        // 시간 기준점 생성
+        // 2. 멱등성 체크
+        if (evaluation.getSelectionStatus() == SelectionStatus.SELECTED) {
+            if (weeklyRepository.existsByConsultId(consultId)) {
+                return false; 
+            }
+        }
+
+        // 3. 상태 변경 및 이력 저장
         LocalDateTime now = LocalDateTime.now();
-
-        // 1. 평가 엔티티 상태 변경
         evaluation.updateSelectionStatus(SelectionStatus.SELECTED);
-
-        // 2. 주간 우수 사례 이력 생성 및 저장 
-        int year = now.getYear();
-        int week = now.get(WeekFields.of(Locale.getDefault()).weekOfWeekBasedYear());
 
         WeeklyExcellentCase weeklyCase = WeeklyExcellentCase.builder()
                 .consultId(evaluation.getConsultId())
                 .evaluationId(evaluation.getEvaluationId())
-                .yearVal(year)
-                .weekVal(week)
+                .yearVal(now.getYear())
+                .weekVal(now.get(WeekFields.of(Locale.getDefault()).weekOfWeekBasedYear()))
                 .adminReason(request.adminReason())
                 .selectedAt(now)
-                .updatedAt(now) 
+                .updatedAt(now)
                 .build();
 
-        weeklyRepository.save(weeklyCase);
+        try {
+            weeklyRepository.save(weeklyCase);
+        } catch (Exception e) {
+            throw new BusinessException(ErrorCode.DATA_INTEGRITY_ERROR);
+        }
+        
         return true;
     }
-    
-    /** 4. 우수 사례 제외 (Reject)*/
+
     @Transactional
     public boolean rejectExcellentCase(Long consultId) {
         ConsultationEvaluation evaluation = evaluationRepository.findByConsultId(consultId)
@@ -111,6 +114,14 @@ public class ExcellentCaseAdminService {
 
         if (evaluation.getSelectionStatus() == SelectionStatus.REJECTED) {
             return false;
+        }
+
+        if (evaluation.getSelectionStatus() == SelectionStatus.SELECTED) {
+            try {
+                weeklyRepository.deleteByConsultId(consultId);
+            } catch (Exception e) {
+                throw new BusinessException(ErrorCode.DATA_INTEGRITY_ERROR, "게시판 데이터 삭제 중 오류가 발생했습니다.");
+            }
         }
 
         evaluation.updateSelectionStatus(SelectionStatus.REJECTED);
