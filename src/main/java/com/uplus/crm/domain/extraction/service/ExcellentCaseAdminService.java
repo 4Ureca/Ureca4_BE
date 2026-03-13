@@ -8,6 +8,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.uplus.crm.domain.extraction.dto.request.ExcellentCaseSearchRequest;
+import com.uplus.crm.domain.extraction.dto.response.EvaluationDetailResponse;
 import com.uplus.crm.domain.extraction.dto.response.EvaluationListResponse;
 import com.uplus.crm.domain.extraction.repository.ConsultationEvaluationRepository;
 
@@ -49,5 +50,10 @@ public class ExcellentCaseAdminService {
         Pageable pageable = PageRequest.of(page, size, Sort.by(direction, sortBy));
         
         return evaluationRepository.findCandidatePage(status, pageable);
+    }
+    @Transactional(readOnly = true)
+    public EvaluationDetailResponse getDetail(Long consultId) {
+        return evaluationRepository.findDetailByConsultId(consultId)
+                .orElseThrow(() -> new IllegalArgumentException("해당 상담의 분석 결과를 찾을 수 없습니다. ID: " + consultId));
     }
 }
