@@ -14,7 +14,8 @@ public enum ErrorCode {
     PASSWORD_MISMATCH(HttpStatus.BAD_REQUEST, "새 비밀번호와 확인 비밀번호가 일치하지 않습니다."),
     INVALID_PERMISSION_IDS(HttpStatus.BAD_REQUEST, "유효하지 않은 권한 ID가 포함되어 있습니다."),
     MISSING_TARGET_EMPID(HttpStatus.BAD_REQUEST, "조회할 상담사 ID가 누락되었습니다."), // 관리자용
-
+    INVALID_SELECTION_STATUS(HttpStatus.BAD_REQUEST, "유효하지 않은 선정 상태값입니다."),
+    INVALID_SORT_FIELD(HttpStatus.BAD_REQUEST, "정렬할 수 없는 필드명입니다. (createdAt, score 등 사용 가능)"),
     // 401 Unauthorized
     INVALID_CREDENTIALS(HttpStatus.UNAUTHORIZED, "아이디 또는 비밀번호가 올바르지 않습니다."),
     INVALID_CURRENT_PASSWORD(HttpStatus.UNAUTHORIZED, "현재 비밀번호가 일치하지 않습니다."),
@@ -47,8 +48,9 @@ public enum ErrorCode {
 
     AGENT_NOT_FOUND(HttpStatus.NOT_FOUND, "존재하지 않는 상담사입니다."),
     REPORT_DATA_NOT_FOUND(HttpStatus.NOT_FOUND, "요청한 날짜에 해당하는 리포트 데이터가 없습니다."),
-
-  // 409 Conflict
+    EVALUATION_NOT_FOUND(HttpStatus.NOT_FOUND, "해당 상담의 분석/평가 결과를 찾을 수 없습니다."),
+    
+    // 409 Conflict
     DUPLICATE_LOGIN_ID(HttpStatus.CONFLICT, "이미 사용 중인 로그인 아이디입니다."),
     DUPLICATE_EMAIL(HttpStatus.CONFLICT, "이미 사용 중인 이메일입니다."),
 

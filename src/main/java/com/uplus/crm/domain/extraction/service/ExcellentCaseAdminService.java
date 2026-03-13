@@ -7,34 +7,42 @@ import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.uplus.crm.common.exception.BusinessException;
+import com.uplus.crm.common.exception.ErrorCode;
 import com.uplus.crm.domain.extraction.dto.request.ExcellentCaseSearchRequest;
 import com.uplus.crm.domain.extraction.dto.response.EvaluationDetailResponse;
 import com.uplus.crm.domain.extraction.dto.response.EvaluationListResponse;
+import com.uplus.crm.domain.extraction.entity.SelectionStatus;
 import com.uplus.crm.domain.extraction.repository.ConsultationEvaluationRepository;
 
+import java.util.Set;
 import lombok.RequiredArgsConstructor;
 
 @Service
 @RequiredArgsConstructor
 public class ExcellentCaseAdminService {
     private final ConsultationEvaluationRepository evaluationRepository;
+    
+    private static final Set<String> ALLOWED_SORT_FIELDS = Set.of("createdAt", "score");
 
     @Transactional(readOnly = true)
     public Page<EvaluationListResponse> getCandidatePage(ExcellentCaseSearchRequest request, int page, int size) {
-        
-        // 1. 상태값(status) 처리: "ALL"이거나 값이 없으면 null (전체조회)
         String status = request.status();
         if (status == null || status.isBlank() || "string".equalsIgnoreCase(status) || "ALL".equalsIgnoreCase(status)) {
             status = null;
+        } else {
+            try {
+                SelectionStatus.valueOf(status.toUpperCase());
+            } catch (IllegalArgumentException e) {
+                throw new BusinessException(ErrorCode.INVALID_SELECTION_STATUS);
+            }
         }
-
-        // 2. 정렬 기준(sortBy) 처리: ★ 기본값을 createdAt으로 변경 ★
         String sortBy = request.sortBy();
         if (sortBy == null || sortBy.isBlank() || "string".equalsIgnoreCase(sortBy)) {
-            sortBy = "createdAt"; // 첫 진입 시 최신순
+            sortBy = "createdAt";
+        } else if (!ALLOWED_SORT_FIELDS.contains(sortBy)) {
+            throw new BusinessException(ErrorCode.INVALID_SORT_FIELD);
         }
-
-        // 3. 정렬 방향(direction) 처리: 기본값 DESC
         Sort.Direction direction = Sort.Direction.DESC;
         String dirInput = request.direction();
         
@@ -45,15 +53,13 @@ public class ExcellentCaseAdminService {
                 direction = Sort.Direction.DESC;
             }
         }
-
-        // 4. 최종 Pageable 조립 (예: sortBy가 "score"로 들어오면 점수 정렬 작동)
         Pageable pageable = PageRequest.of(page, size, Sort.by(direction, sortBy));
-        
         return evaluationRepository.findCandidatePage(status, pageable);
     }
+
     @Transactional(readOnly = true)
     public EvaluationDetailResponse getDetail(Long consultId) {
         return evaluationRepository.findDetailByConsultId(consultId)
-                .orElseThrow(() -> new IllegalArgumentException("해당 상담의 분석 결과를 찾을 수 없습니다. ID: " + consultId));
+                .orElseThrow(() -> new BusinessException(ErrorCode.EVALUATION_NOT_FOUND));
     }
 }
