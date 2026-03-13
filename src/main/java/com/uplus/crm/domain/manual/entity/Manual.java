@@ -46,14 +46,13 @@ public class Manual {
     @Column(insertable = false, updatable = false)
     private LocalDateTime createdAt;
 
-    private LocalDateTime updatedAt; // Service에서 업데이트하므로 updatable=false 제거
-
-    // V27 마이그레이션에 맞춘 연관관계 설정
+    private LocalDateTime updatedAt; 
+    
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "category_code")
-    private ConsultationCategoryPolicy categoryPolicy; // ManualResponse 에러 해결용
+    private ConsultationCategoryPolicy categoryPolicy; 
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "emp_id")
-    private Employee employee; // ManualResponse의 getEmployee 에러 해결용
+    private Employee employee; 
 }

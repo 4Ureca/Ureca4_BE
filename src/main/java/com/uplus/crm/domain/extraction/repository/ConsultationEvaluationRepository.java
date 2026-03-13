@@ -16,6 +16,10 @@ import com.uplus.crm.domain.extraction.entity.ConsultationEvaluation;
 @Repository
 public interface ConsultationEvaluationRepository extends JpaRepository<ConsultationEvaluation, Long> {
 
+    // ✅ 1. 엔티티 수정을 위해 엔티티 객체 자체를 찾아오는 메서드 (서비스의 registerExcellentCase에서 사용)
+    Optional<ConsultationEvaluation> findByConsultId(Long consultId);
+
+    // ✅ 2. 리스트 조회 (WHERE 절 추가 및 문법 수정)
     @Query("""
         SELECT new com.uplus.crm.domain.extraction.dto.response.EvaluationListResponse(
             e.consultId, 
@@ -31,29 +35,30 @@ public interface ConsultationEvaluationRepository extends JpaRepository<Consulta
         JOIN Employee emp ON r.empId = emp.empId
         JOIN ConsultationCategoryPolicy p ON r.categoryCode = p.categoryCode
         JOIN RetentionAnalysis a ON e.consultId = a.consultId
-        AND (:status IS NULL OR CAST(e.selectionStatus AS string) = :status)
+        WHERE (:status IS NULL OR CAST(e.selectionStatus AS string) = :status)
         """)
     Page<EvaluationListResponse> findCandidatePage(@Param("status") String status, Pageable pageable);
     
+    // ✅ 3. 상세 조회 (DTO 반환용)
     @Query("""
-	    SELECT new com.uplus.crm.domain.extraction.dto.response.EvaluationDetailResponse(
-	        e.consultId, 
-	        emp.name, 
-	        p.smallCategory, 
-	        e.score, 
-	        e.evaluationReason, 
-	        a.rawSummary, 
-	        e.selectionStatus, 
-	        e.createdAt,
-	        raw.rawTextJson
-	    )
-	    FROM ConsultationEvaluation e
-	    JOIN ConsultationResult r ON e.consultId = r.consultId
-	    JOIN Employee emp ON r.empId = emp.empId
-	    JOIN ConsultationCategoryPolicy p ON r.categoryCode = p.categoryCode
-	    JOIN RetentionAnalysis a ON e.consultId = a.consultId
-	    JOIN ConsultationRawText raw ON e.consultId = raw.consultId
-	    WHERE e.consultId = :consultId
-    	""")
+        SELECT new com.uplus.crm.domain.extraction.dto.response.EvaluationDetailResponse(
+            e.consultId, 
+            emp.name, 
+            p.smallCategory, 
+            e.score, 
+            e.evaluationReason, 
+            a.rawSummary, 
+            e.selectionStatus, 
+            e.createdAt,
+            raw.rawTextJson
+        )
+        FROM ConsultationEvaluation e
+        JOIN ConsultationResult r ON e.consultId = r.consultId
+        JOIN Employee emp ON r.empId = emp.empId
+        JOIN ConsultationCategoryPolicy p ON r.categoryCode = p.categoryCode
+        JOIN RetentionAnalysis a ON e.consultId = a.consultId
+        JOIN ConsultationRawText raw ON e.consultId = raw.consultId
+        WHERE e.consultId = :consultId
+        """)
     Optional<EvaluationDetailResponse> findDetailByConsultId(@Param("consultId") Long consultId);
 }

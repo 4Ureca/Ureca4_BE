@@ -4,12 +4,9 @@ import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
+import com.uplus.crm.domain.extraction.dto.request.ExcellentCaseRegisterRequest;
 import com.uplus.crm.domain.extraction.dto.request.ExcellentCaseSearchRequest;
 import com.uplus.crm.domain.extraction.dto.response.EvaluationDetailResponse;
 import com.uplus.crm.domain.extraction.dto.response.EvaluationListResponse;
@@ -22,7 +19,7 @@ import lombok.RequiredArgsConstructor;
 
 @Tag(name = "Admin - Excellent Case", description = "관리자용 우수 사례 후보군 관리 API")
 @RestController
-@RequestMapping("/admin/excellent-cases")
+@RequestMapping("/api/admin/excellent-cases") 
 @RequiredArgsConstructor
 @PreAuthorize("hasRole('ADMIN')") 
 public class ExcellentCaseAdminController {
@@ -49,5 +46,36 @@ public class ExcellentCaseAdminController {
             @PathVariable("consultId") Long consultId) {
         
         return ResponseEntity.ok(adminService.getDetail(consultId));
+    }
+    
+    @Operation(summary = "우수 사례 최종 선정", description = "상담을 검토한 후 주간 우수 사례로 최종 등록합니다.")
+    @PostMapping("/{consultId}/select")
+    public ResponseEntity<String> selectExcellentCase(
+            @PathVariable("consultId") Long consultId,
+            @RequestBody ExcellentCaseRegisterRequest request) {
+        
+        //(true: 신규 등록, false: 이미 존재)
+        boolean isNew = adminService.registerExcellentCase(consultId, request);
+        
+        if (isNew) {
+            return ResponseEntity.ok("우수 사례로 성공적으로 등록되었습니다.");
+        } else {
+            // 중복 요청 시에도 200 OK를 주되, 메시지로 상태를 알려줌
+            return ResponseEntity.ok("이미 등록된 우수 사례입니다.");
+        }
+    }
+    
+    @Operation(summary = "우수 사례 후보 제외", description = "검토 결과 우수 사례로 부적합한 경우 제외 처리합니다.")
+    @PatchMapping("/{consultId}/reject")
+    public ResponseEntity<String> rejectExcellentCase(@PathVariable("consultId") Long consultId) {
+        
+        //(true: 신규 제외, false: 이미 제외됨)
+        boolean isChanged = adminService.rejectExcellentCase(consultId);
+        
+        if (isChanged) {
+            return ResponseEntity.ok("해당 상담이 우수 사례 후보에서 제외되었습니다.");
+        } else {
+            return ResponseEntity.ok("이미 제외 처리된 상담입니다.");
+        }
     }
 }

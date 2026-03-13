@@ -1,10 +1,26 @@
 package com.uplus.crm.domain.extraction.entity;
 
 import java.time.LocalDateTime;
-import jakarta.persistence.*;
-import lombok.*;
+
 import org.springframework.data.annotation.CreatedDate;
+import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
+
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EntityListeners;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.Index;
+import jakarta.persistence.Table;
+import lombok.AccessLevel;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.ToString;
 
 @Entity
 @Table(name = "consultation_evaluations", indexes = {
@@ -48,9 +64,12 @@ public class ConsultationEvaluation {
         this.isCandidate = isCandidate;
         this.selectionStatus = SelectionStatus.PENDING; // 기본값은 항상 '검토 대기'
     }
+    
+    @LastModifiedDate
+    private LocalDateTime updatedAt;
 
-    // 관리자가 우수 사례 선정/제외를 결정할 때 호출할 상태 변경 메서드
     public void updateSelectionStatus(SelectionStatus status) {
         this.selectionStatus = status;
+        this.updatedAt = LocalDateTime.now(); 
     }
 }
