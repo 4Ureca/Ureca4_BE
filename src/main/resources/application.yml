@@ -31,3 +31,8 @@ server:
 jwt:
   access-token-expire-ms: 3600000
   refresh-token-expire-ms: 604800000
+
+app:
+  cookie:
+    secure: false
+    same-site: Lax

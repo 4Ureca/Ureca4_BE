@@ -54,10 +54,11 @@ public class EmployeeController {
         return ResponseEntity.ok(employeeAdminService.updateEmployee(id, request));
     }
 
+    // [수정된 부분] @PathVariable 뒤에 ("empId")를 명시했습니다.
     @Operation(summary = "직원 계정 활성화/비활성화", description = "직원 계정을 활성화/비활성화한다.")
     @PatchMapping("/{empId}/status")
     public ResponseEntity<EmployeeStatusUpdateResponseDto> updateEmployeeStatus(
-            @PathVariable Integer empId,
+            @PathVariable("empId") Integer empId, 
             @RequestBody EmployeeStatusUpdateRequestDto request
     ) {
         return ResponseEntity.ok(employeeAdminService.updateEmployeeStatus(empId, request));

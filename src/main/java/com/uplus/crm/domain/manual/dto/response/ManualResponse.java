@@ -1,7 +1,9 @@
 package com.uplus.crm.domain.manual.dto.response;
 
 import java.time.LocalDateTime;
+
 import com.uplus.crm.domain.manual.entity.Manual;
+
 import io.swagger.v3.oas.annotations.media.Schema;
 
 @Schema(description = "매뉴얼 상세 및 이력 조회 응답 데이터")

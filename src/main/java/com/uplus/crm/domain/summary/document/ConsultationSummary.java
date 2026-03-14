@@ -38,7 +38,7 @@ public class ConsultationSummary {
   private Category category;
   private Iam iam;
   private Summary summary;
-  private List<String> riskFlags;
+  private List<RiskFlag> riskFlags;
   private Customer customer;
   private Cancellation cancellation;
   private List<ResultProducts> resultProducts;
@@ -99,6 +99,13 @@ public class ConsultationSummary {
     private Boolean defenseSuccess;
     private List<String> defenseActions;
     private String complaintReasons;
+  }
+
+  @Getter
+  @Builder
+  public static class RiskFlag {
+    private String riskType;
+    private String riskLevel;
   }
 
   @Getter @Setter @Builder @NoArgsConstructor @AllArgsConstructor

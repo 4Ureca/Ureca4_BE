@@ -8,12 +8,12 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import com.uplus.crm.domain.manual.entity.Manual;
 
 public interface ManualRepository extends JpaRepository<Manual, Integer> {
-    // 특정 카테고리에서 현재 사용 중인 매뉴얼 찾기 (교체 및 활성화 로직용)
+	// Service 40번 라인 해결
     Optional<Manual> findByCategoryPolicy_CategoryCodeAndIsActiveTrue(String categoryCode);
 
-    // 카테고리별 전체 이력 조회
-    List<Manual> findAllByCategoryPolicy_CategoryCodeOrderByCreatedAtDesc(String categoryCode);
-   
-    //추가: 전체 조회 (날짜 최신순) ⭐
+    // Service 85번 라인 해결
     List<Manual> findAllByOrderByCreatedAtDesc();
+
+    // Service 88번 라인 해결
+    List<Manual> findAllByCategoryPolicy_CategoryCodeOrderByCreatedAtDesc(String categoryCode);
 }

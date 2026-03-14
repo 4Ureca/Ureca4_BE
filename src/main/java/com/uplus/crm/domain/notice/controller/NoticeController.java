@@ -71,7 +71,7 @@ public class NoticeController {
                description = "조회수 증가 + 읽음 이력 저장 + 해당 공지 알림 읽음 처리")
     @GetMapping("/{noticeId}")
     public ApiResponse<NoticeResponse> getNoticeDetail(
-            @PathVariable int noticeId,
+            @PathVariable("noticeId") int noticeId, // [수정] "noticeId" 명시
             @AuthenticationPrincipal CustomUserDetails userDetails
     ) {
         return ApiResponse.ok(noticeService.getNoticeDetail(noticeId, userDetails.getEmpId(), userDetails.getRoleName()));
@@ -84,7 +84,7 @@ public class NoticeController {
     @PreAuthorize("hasRole('ADMIN')")
     @PutMapping("/{noticeId}")
     public ApiResponse<NoticeResponse> updateNotice(
-            @PathVariable int noticeId,
+            @PathVariable("noticeId") int noticeId, // [수정] "noticeId" 명시
             @Valid @RequestBody NoticeUpdateRequest request
     ) {
         return ApiResponse.ok(noticeService.updateNotice(noticeId, request));
@@ -96,7 +96,7 @@ public class NoticeController {
     @PreAuthorize("hasRole('ADMIN')")
     @DeleteMapping("/{noticeId}")
     public ApiResponse<Void> deleteNotice(
-            @PathVariable int noticeId,
+            @PathVariable("noticeId") int noticeId, // [수정] "noticeId" 명시
             @AuthenticationPrincipal CustomUserDetails userDetails
     ) {
         noticeService.deleteNotice(noticeId, userDetails.getEmpId());
