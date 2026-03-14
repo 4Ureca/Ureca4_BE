@@ -91,6 +91,21 @@ public class ChurnDefenseResponse {
         private int attempts;
         @Schema(description = "성공률 (%)", example = "68.2")
         private double successRate;
+        @Schema(description = "순위")
+        private int rank;
+        @Schema(description = "불만 사유별 분석")
+        private List<ReasonBreakdown> byReason;
+    }
+
+    @Schema(description = "불만 사유별 분석")
+    @Getter @Builder @NoArgsConstructor @AllArgsConstructor
+    public static class ReasonBreakdown {
+        @Schema(description = "불만 사유", example = "요금불만")
+        private String reason;
+        @Schema(description = "시도 건수", example = "3")
+        private int attempts;
+        @Schema(description = "성공률 (%)", example = "100")
+        private double successRate;
     }
 
     // ==================== Factory ====================
@@ -128,11 +143,23 @@ public class ChurnDefenseResponse {
         // 방어 액션별
         List<Document> actionDocs = defense.getList("byAction", Document.class);
         List<ActionDefense> byAction = actionDocs == null ? List.of() :
-                actionDocs.stream().map(d -> ActionDefense.builder()
-                        .action(d.getString("action"))
-                        .attempts(getInt(d, "attempts"))
-                        .successRate(getDouble(d, "successRate"))
-                        .build()).collect(Collectors.toList());
+                actionDocs.stream().map(d -> {
+                    List<Document> brDocs = d.getList("byReason", Document.class);
+                    List<ReasonBreakdown> byReason = brDocs == null ? List.of() :
+                            brDocs.stream().map(r -> ReasonBreakdown.builder()
+                                    .reason(r.getString("reason"))
+                                    .attempts(getInt(r, "attempts"))
+                                    .successRate(getDouble(r, "successRate"))
+                                    .build()).collect(Collectors.toList());
+
+                    return ActionDefense.builder()
+                            .action(d.getString("action"))
+                            .attempts(getInt(d, "attempts"))
+                            .successRate(getDouble(d, "successRate"))
+                            .rank(getInt(d, "rank"))
+                            .byReason(byReason)
+                            .build();
+                }).collect(Collectors.toList());
 
         return ChurnDefenseResponse.builder()
                 .startDate(startDate)

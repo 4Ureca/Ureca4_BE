@@ -61,7 +61,8 @@ public class KeywordRankingResponse {
             Document kwSummary = snapshot.get("keywordSummary", Document.class);
             topDocs = kwSummary != null
                     ? kwSummary.getList("topKeywords", Document.class) : List.of();
-            newDocs = List.of();
+            newDocs = kwSummary != null
+                    ? kwSummary.getList("newKeywords", Document.class) : List.of();
         }
 
         List<TopKeyword> topKeywords = topDocs == null ? List.of() :
