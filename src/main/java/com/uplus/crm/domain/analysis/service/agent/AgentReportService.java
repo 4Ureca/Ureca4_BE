@@ -64,11 +64,11 @@ public class AgentReportService {
         .startedAt(mySnap != null ? mySnap.getStartAt().toLocalDate() : adjustedDate.toLocalDate())
         .endedAt(mySnap != null ? mySnap.getEndAt().toLocalDate() : null)
         .myConsultCount(mySnap != null ? mySnap.getConsultCount() : 0)
-        .teamAvgConsultCount(teamSnap != null && teamSnap.getAvgConsultCountPerAgent() != null ? teamSnap.getAvgConsultCountPerAgent() : 0.0)
+        .teamAvgConsultCount(teamSnap != null && teamSnap.getAvgConsultPerAgent() != null ? teamSnap.getAvgConsultPerAgent() : 0.0)
         .myAvgDuration(mySnap != null ? formatDuration(mySnap.getAvgDurationMinutes()) : "0:00")
         .teamAvgDuration(teamSnap != null ? formatDuration(teamSnap.getAvgDurationMinutes()) : "0:00")
         .myQualityScore(mySnap != null && mySnap.getQualityAnalysis() != null && mySnap.getQualityAnalysis().getTotalScore() != null ? mySnap.getQualityAnalysis().getTotalScore() : 0.0)
-        .teamAvgQualityScore(teamSnap != null && teamSnap.getQualityScore() != null ? teamSnap.getQualityScore() : 0.0)
+        .teamAvgQualityScore(teamSnap != null && teamSnap.getAvgQualityScore() != null ? teamSnap.getAvgQualityScore() : 0.0)
         .mySatisfactionScore(mySnap != null && mySnap.getCustomerSatisfactionAnalysis() != null ? mySnap.getCustomerSatisfactionAnalysis().getSatisfactionScore() : 0.0)
         .teamAvgSatisfactionScore(teamSnap != null && teamSnap.getAvgSatisfiedScore() != null ? teamSnap.getAvgSatisfiedScore() : 0.0)
         .iamMatchRate(mySnap != null && mySnap.getIamKeywordMatchAnalysis() != null
