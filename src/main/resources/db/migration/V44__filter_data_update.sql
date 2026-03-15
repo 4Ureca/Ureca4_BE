@@ -1,4 +1,4 @@
--- V36__filter_data_updates.sql
+-- V44__filter_data_updates.sql
 
 DELETE FROM filter_custom;
 DELETE FROM filter;
