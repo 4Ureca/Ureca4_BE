@@ -1,6 +1,7 @@
 package com.uplus.crm.domain.analysis.controller;
 
 import com.uplus.crm.common.exception.ErrorResponse;
+import com.uplus.crm.common.security.CustomUserDetails;
 import com.uplus.crm.domain.analysis.dto.QualityAnalysisResponse;
 import com.uplus.crm.domain.analysis.service.QualityAnalysisService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -14,6 +15,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -75,15 +77,30 @@ public class QualityAnalysisController {
             @RequestParam(required = false) Long agentId,
             @Parameter(description = "조회 날짜 (yyyy-MM-dd). 미지정 시 전일", example = "2025-01-18")
             @RequestParam(required = false)
-            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date) {
+            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date,
+            @AuthenticationPrincipal CustomUserDetails userDetails) {
 
         LocalDate targetDate = (date != null) ? date : LocalDate.now().minusDays(1);
 
-        if (agentId != null) {
-            return qualityAnalysisService.getDailyByAgent(agentId, targetDate)
-                    .map(ResponseEntity::ok)
-                    .orElse(ResponseEntity.noContent().build());
+        // 1. 권한에 따른 조회 대상(finalAgentId) 결정
+        Long finalAgentId;
+
+        if (userDetails.isAdmin()) {
+            // 관리자는 파라미터로 넘어온 agentId를 사용 (없으면 전체 조회용 null)
+            finalAgentId = agentId;
+        } else {
+            // 상담사는 파라미터와 상관없이 본인의 ID만 사용
+            finalAgentId = (long) userDetails.getEmpId();
         }
+
+        // 2. 결정된 ID로 서비스 호출
+        if (finalAgentId != null) {
+            return qualityAnalysisService.getDailyByAgent(finalAgentId, targetDate)
+                .map(ResponseEntity::ok)
+                .orElse(ResponseEntity.noContent().build());
+        }
+
+        // finalAgentId가 null인 경우는 관리자가 agentId를 안 보냈을 때(전체 조회)만 발생
         List<QualityAnalysisResponse> result = qualityAnalysisService.getDailyAll(targetDate);
         return ResponseEntity.ok(result);
     }
@@ -113,15 +130,28 @@ public class QualityAnalysisController {
             @RequestParam(required = false) Long agentId,
             @Parameter(description = "기준 날짜 (yyyy-MM-dd). 해당 주간 스냅샷 조회", example = "2025-01-18")
             @RequestParam(required = false)
-            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date) {
+            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date,
+            @AuthenticationPrincipal CustomUserDetails userDetails) {
 
         LocalDate targetDate = (date != null) ? date : LocalDate.now();
 
-        if (agentId != null) {
-            return qualityAnalysisService.getWeeklyByAgent(agentId, targetDate)
-                    .map(ResponseEntity::ok)
-                    .orElse(ResponseEntity.noContent().build());
+        // 1. 권한에 따른 최종 조회 대상 ID 결정
+        Long finalAgentId;
+        if (userDetails.isAdmin()) {
+            // 관리자는 파라미터 값을 따름 (null이면 전체 조회)
+            finalAgentId = agentId;
+        } else {
+            // 상담사는 파라미터가 무엇이든 본인 ID로 고정
+            finalAgentId = (long) userDetails.getEmpId();
         }
+
+        // 2. 결정된 finalAgentId로 서비스 호출
+        if (finalAgentId != null) {
+            return qualityAnalysisService.getWeeklyByAgent(finalAgentId, targetDate)
+                .map(ResponseEntity::ok)
+                .orElse(ResponseEntity.noContent().build());
+        }
+
         List<QualityAnalysisResponse> result = qualityAnalysisService.getWeeklyAll(targetDate);
         return ResponseEntity.ok(result);
     }
@@ -151,15 +181,26 @@ public class QualityAnalysisController {
             @RequestParam(required = false) Long agentId,
             @Parameter(description = "기준 날짜 (yyyy-MM-dd). 해당 월간 스냅샷 조회", example = "2025-01-15")
             @RequestParam(required = false)
-            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date) {
+            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date,
+            @AuthenticationPrincipal CustomUserDetails userDetails) {
 
         LocalDate targetDate = (date != null) ? date : LocalDate.now();
 
-        if (agentId != null) {
-            return qualityAnalysisService.getMonthlyByAgent(agentId, targetDate)
-                    .map(ResponseEntity::ok)
-                    .orElse(ResponseEntity.noContent().build());
+        // 1. 권한에 따른 최종 조회 ID 결정
+        Long finalAgentId;
+        if (userDetails.isAdmin()) {
+            finalAgentId = agentId; // 관리자는 입력한 ID 그대로 사용
+        } else {
+            finalAgentId = (long) userDetails.getEmpId(); // 상담사는 본인 ID로 강제 고정
         }
+
+        // 2. 결정된 ID에 따라 서비스 호출
+        if (finalAgentId != null) {
+            return qualityAnalysisService.getMonthlyByAgent(finalAgentId, targetDate)
+                .map(ResponseEntity::ok)
+                .orElse(ResponseEntity.noContent().build());
+        }
+
         List<QualityAnalysisResponse> result = qualityAnalysisService.getMonthlyAll(targetDate);
         return ResponseEntity.ok(result);
     }
