@@ -2,7 +2,7 @@ package com.uplus.crm.domain.analysis.service;
 
 import com.uplus.crm.domain.analysis.dto.ChurnDefenseResponse;
 import com.uplus.crm.domain.analysis.dto.CustomerRiskResponse;
-import com.uplus.crm.domain.analysis.repository.AnalysisCodeRepository;
+import com.uplus.crm.domain.common.repository.AnalysisCodeRepository;
 import org.bson.Document;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
