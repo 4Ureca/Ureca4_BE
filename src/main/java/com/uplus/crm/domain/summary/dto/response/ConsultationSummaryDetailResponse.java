@@ -29,6 +29,7 @@ public class ConsultationSummaryDetailResponse {
   private SummaryInfo summary;
   private List<RiskFlagInfo> riskFlags;
   private CancellationInfo cancellation;
+  private OutboundInfo outbound;
 
   private List<ResultProductInfo> resultProducts;
 
@@ -57,6 +58,7 @@ public class ConsultationSummaryDetailResponse {
     private String phone;
     private String type;
     private String ageGroup;
+    private String gender;
     private Double satisfiedScore;
   }
 
@@ -91,7 +93,17 @@ public class ConsultationSummaryDetailResponse {
     private Boolean defenseAttempted;
     private Boolean defenseSuccess;
     private List<String> defenseActions;
+    private String defenseCategory;
     private String complaintReasons;
+    private String complaintCategory;
+  }
+
+  @Getter
+  @Builder
+  public static class OutboundInfo {
+    private String callResult;
+    private String rejectReason;
+    private String outboundReport;
   }
 
   @Getter
@@ -149,6 +161,7 @@ public class ConsultationSummaryDetailResponse {
                 .phone(e.getCustomer().getPhone())
                 .type(e.getCustomer().getType())
                 .ageGroup(e.getCustomer().getAgeGroup())
+                .gender(e.getCustomer().getGender())
                 .satisfiedScore(e.getCustomer().getSatisfiedScore())
                 .build())
 
@@ -181,9 +194,17 @@ public class ConsultationSummaryDetailResponse {
                 .defenseAttempted(e.getCancellation().getDefenseAttempted())
                 .defenseSuccess(e.getCancellation().getDefenseSuccess())
                 .defenseActions(e.getCancellation().getDefenseActions())
+                .defenseCategory(e.getCancellation().getDefenseCategory())
                 .complaintReasons(e.getCancellation().getComplaintReasons())
+                .complaintCategory(e.getCancellation().getComplaintCategory())
                 .build())
 
+        .outbound(e.getOutbound() == null ? null :
+            OutboundInfo.builder()
+                .callResult(e.getOutbound().getCallResult())
+                .rejectReason(e.getOutbound().getRejectReason())
+                .outboundReport(e.getOutbound().getOutboundReport())
+                .build())
         .resultProducts(buildProductInfo(e, productNameMap))
         .build();
   }

@@ -30,6 +30,7 @@ public class ConsultationSummaryDto {
   private Boolean intent;
   private Boolean defenseSuccess;
   private List<RiskFlagDto> riskFlags;
+  private String outboundResult;
 
   @Getter
   @Builder
@@ -65,6 +66,9 @@ public class ConsultationSummaryDto {
                     .riskLevel(riskFlag.getRiskLevel())
                     .build())
                 .toList())
+        .outboundResult(summary.getOutbound() != null
+            ? summary.getOutbound().getCallResult()
+            : null)
         .build();
   }
 

@@ -31,6 +31,10 @@ public class ConsultationSearchRequest {
   private List<String> riskType;
   private List<String> riskLevel;
   private List<String> productCode;
+  private String complaintCategory;
+  private String defenseCategory;
+  private String outboundCategory;
+  private String outboundResult;
 
   @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
   private LocalDate fromDate;

@@ -1,29 +1,40 @@
 package com.uplus.crm.domain.common.entity;
 
 import jakarta.persistence.*;
-import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 @Entity
-@Table(name = "analysis_code")
+@Table(
+    name = "analysis_code",
+    uniqueConstraints = {
+        @UniqueConstraint(
+            name = "uq_analysis_code_full",
+            columnNames = {"code_name", "classification"}
+        )
+    }
+)
 @Getter
-@NoArgsConstructor(access = AccessLevel.PROTECTED)
+@NoArgsConstructor
 public class AnalysisCode {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+  @Id
+  @GeneratedValue(strategy = GenerationType.IDENTITY)
+  private Long id;
 
-    @Column(name = "code_name", length = 20, nullable = false)
-    private String codeName;
+  @Column(name = "code_name", length = 20, nullable = false)
+  private String codeName;
 
-    @Column(name = "display_name", length = 30)
-    private String displayName;
+  @Column(name = "display_name", length = 30)
+  private String displayName;
 
-    @Column(name = "classification", nullable = false, columnDefinition = "enum('complaint_category','defense_category','outbound_category')")
-    private String classification;
+  @Column(
+      name = "classification",
+      nullable = false,
+      columnDefinition = "enum('complaint_category','defense_category','outbound_category')"
+  )
+  private String classification;
 
-    @Column(name = "description", columnDefinition = "TEXT")
-    private String description;
+  @Column(name = "description", columnDefinition = "text")
+  private String description;
 }

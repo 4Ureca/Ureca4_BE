@@ -39,16 +39,22 @@ class QualityAnalysisControllerTest {
 
     private static final String AUTH = "Bearer mock-token";
 
-    private void mockAuth() {
+    // 파라미터로 roleName을 받도록 수정
+    private void mockAuth(String roleName) {
         given(jwtUtil.isValid(any())).willReturn(true);
         given(jwtUtil.getEmpId(any())).willReturn(1);
         JobRole role = mock(JobRole.class);
-        given(role.getRoleName()).willReturn("상담사");
+        // 고정된 "상담사" 대신 파라미터로 받은 값을 반환
+        given(role.getRoleName()).willReturn(roleName);
         EmployeeDetail detail = mock(EmployeeDetail.class);
         given(detail.getJobRole()).willReturn(role);
         Employee employee = mock(Employee.class);
         given(employee.getEmployeeDetail()).willReturn(detail);
         given(employeeRepository.findByIdWithDetails(1)).willReturn(Optional.of(employee));
+    }
+
+    private void mockAuth() {
+        mockAuth("상담사");
     }
 
     // ── 일별 ─────────────────────────────────────────────
@@ -73,7 +79,7 @@ class QualityAnalysisControllerTest {
     @Test
     @DisplayName("일별 응대품질 전체 목록 조회 성공")
     void getDailyQuality_all_200() throws Exception {
-        mockAuth();
+        mockAuth("관리자");
         given(qualityAnalysisService.getDailyAll(eq(LocalDate.of(2025, 1, 18)))).willReturn(
                 List.of(
                         QualityAnalysisResponse.builder().agentId(1L).totalScore(3.5).build(),

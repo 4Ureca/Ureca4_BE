@@ -1,6 +1,7 @@
 package com.uplus.crm.domain.common.controller;
 
 import com.uplus.crm.domain.common.dto.MetaDto.AgentDto;
+import com.uplus.crm.domain.common.dto.MetaDto.AnalysisCodeDto;
 import com.uplus.crm.domain.common.dto.MetaDto.CategoryDto;
 import com.uplus.crm.domain.common.dto.MetaDto.GradeDto;
 import com.uplus.crm.domain.common.dto.MetaDto.ProductDto;
@@ -49,5 +50,11 @@ public class MetaController {
   @GetMapping("/risk-levels")
   public List<RiskLevelDto> getRiskLevels() {
     return metaService.getRiskLevels();
+  }
+
+  @GetMapping("/analysis-codes")
+  public List<AnalysisCodeDto> getAnalysisCodes(
+      @RequestParam(required = false) String classification) {
+    return metaService.getAnalysisCodes(classification);
   }
 }

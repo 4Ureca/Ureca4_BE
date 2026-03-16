@@ -41,6 +41,7 @@ public class ConsultationSummary {
   private List<RiskFlag> riskFlags;
   private Customer customer;
   private Cancellation cancellation;
+  private Outbound outbound;
   private List<ResultProducts> resultProducts;
 
   private LocalDateTime createdAt;
@@ -87,6 +88,7 @@ public class ConsultationSummary {
     private String phone;
     private String name;
     private String ageGroup;
+    private String gender;
     private String grade;
     private Double satisfiedScore;
   }
@@ -98,7 +100,19 @@ public class ConsultationSummary {
     private Boolean defenseAttempted;
     private Boolean defenseSuccess;
     private List<String> defenseActions;
+    private String defenseCategory;
     private String complaintReasons;
+    private String complaintCategory;
+  }
+
+  @Getter
+  @Builder
+  @NoArgsConstructor
+  @AllArgsConstructor
+  public static class Outbound {
+    private String callResult;
+    private String rejectReason;
+    private String outboundReport;
   }
 
   @Getter

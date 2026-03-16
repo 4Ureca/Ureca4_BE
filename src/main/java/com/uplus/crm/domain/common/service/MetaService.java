@@ -1,11 +1,14 @@
 package com.uplus.crm.domain.common.service;
 
+import com.uplus.crm.domain.common.dto.MetaDto;
 import com.uplus.crm.domain.common.dto.MetaDto.AgentDto;
+import com.uplus.crm.domain.common.dto.MetaDto.AnalysisCodeDto;
 import com.uplus.crm.domain.common.dto.MetaDto.CategoryDto;
 import com.uplus.crm.domain.common.dto.MetaDto.GradeDto;
 import com.uplus.crm.domain.common.dto.MetaDto.ProductDto;
 import com.uplus.crm.domain.common.dto.MetaDto.RiskLevelDto;
 import com.uplus.crm.domain.common.dto.MetaDto.RiskTypeDto;
+import com.uplus.crm.domain.common.repository.AnalysisCodeRepository;
 import com.uplus.crm.domain.common.repository.ConsultationCategoryPolicyRepository;
 import com.uplus.crm.domain.common.repository.CustomerGradeRepository;
 import com.uplus.crm.domain.common.repository.EmployeeMetaRepository;
@@ -33,6 +36,7 @@ public class MetaService {
   private final CustomerGradeRepository gradeRepository;
   private final RiskTypePolicyRepository riskTypeRepository;
   private final RiskLevelPolicyRepository riskLevelRepository;
+  private final AnalysisCodeRepository analysisCodeRepository;
 
   public List<AgentDto> searchAgents(String name) {
     return employeeRepository.searchAgents(name)
@@ -75,5 +79,20 @@ public class MetaService {
   public List<RiskLevelDto> getRiskLevels() {
     return riskLevelRepository.findAllByOrderBySortOrder()
         .stream().map(RiskLevelDto::from).toList();
+  }
+
+  public List<AnalysisCodeDto> getAnalysisCodes(String classification) {
+
+    if (classification == null || classification.isBlank()) {
+      return analysisCodeRepository.findAll()
+          .stream()
+          .map(MetaDto.AnalysisCodeDto::from)
+          .toList();
+    }
+
+    return analysisCodeRepository.findByClassification(classification)
+        .stream()
+        .map(MetaDto.AnalysisCodeDto::from)
+        .toList();
   }
 }

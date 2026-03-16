@@ -148,15 +148,30 @@ public class BookmarkServiceImpl implements BookmarkService {
         Manual manual = manualRepository.findById(manualId)
                 .orElseThrow(() -> new BookmarkException(BookmarkErrorCode.MANUAL_BOOKMARK_NOT_FOUND));
 
-        // 3. DTO로 변환해서 리턴
+        // 3. DTO로 변환해서 리턴 (엔티티에 있는 모든 데이터를 매핑)
         return ManualBookmarkDetailResponseDto.builder()
                 .bookmarkId(bookmark.getBookmarkId())
                 .manualId(manual.getManualId())
                 .title(manual.getTitle())
                 .content(manual.getContent())
                 .isActive(manual.getIsActive())
-                // ... 나머지 필드들도 manual 객체에서 꺼내서 채워주세요
+                // 카테고리 정보 매핑
+                .category(manual.getCategoryPolicy() != null ? 
+                         String.format("[%s > %s > %s]", 
+                             manual.getCategoryPolicy().getLargeCategory(),
+                             manual.getCategoryPolicy().getMediumCategory(),
+                             manual.getCategoryPolicy().getSmallCategory()) : null)
+                // 작성자 및 상태 정보
+                .createdBy(manual.getEmployee() != null ? manual.getEmployee().getEmpId() : null)
+                .status(manual.getIsActive() != null && manual.getIsActive() ? "ACTIVE" : "INACTIVE")
+                // 시간 정보
+                .manualCreatedAt(manual.getCreatedAt())
+                .manualUpdatedAt(manual.getUpdatedAt())
                 .bookmarkedAt(bookmark.getCreatedAt())
+                // 엔티티에 없는 필드들은 기획에 따라 null 유지 혹은 기본값 세팅
+                .tags(null) 
+                .targetCustomerType(null)
+                .relatedManualIds(null)
                 .build();
     }
 

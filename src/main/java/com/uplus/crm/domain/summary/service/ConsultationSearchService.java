@@ -88,6 +88,10 @@ public class ConsultationSearchService {
     addTermFilter(filters, "intent", request.getIntent());
     addTermFilter(filters, "defenseAttempted", request.getDefenseAttempted());
     addTermFilter(filters, "defenseSuccess", request.getDefenseSuccess());
+    addTermFilter(filters, "complaintCategory", request.getComplaintCategory());
+    addTermFilter(filters, "defenseCategory", request.getDefenseCategory());
+    addTermFilter(filters, "outboundCategory", request.getOutboundCategory());
+    addTermFilter(filters, "outboundResult", request.getOutboundResult());
     addPartialMatchFilter(filters, "agentName", request.getAgentName());
     addPartialMatchFilter(filters, "customerName", request.getCustomerName());
     addPartialMatchFilter(filters, "phone", request.getCustomerPhone());
