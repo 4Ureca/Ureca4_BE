@@ -19,6 +19,9 @@ public class AnalysisCode {
   @Column(name = "code_name")
   private String codeName;
 
+  @Column(name = "display_name")
+  private String displayName;
+
   @Column(name = "classification", columnDefinition = "ENUM('complaint_category', 'defense_category')")
   private String classification;
   private String description;

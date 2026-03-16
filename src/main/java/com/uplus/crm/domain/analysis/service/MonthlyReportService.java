@@ -119,40 +119,39 @@ public class MonthlyReportService {
         ChurnDefenseResponse response = ChurnDefenseResponse.from(snapshot);
 
         if (response != null) {
-            // 1. DB에서 전체 코드 가져옴
             List<AnalysisCode> allCodes = analysisCodeRepository.findAll();
 
-            // 2. 불만 사유용 맵 (classification = complaint_category)
+            // 1. 불만 사유용 맵 (displayName 사용)
             Map<String, String> complaintMap = allCodes.stream()
                 .filter(c -> "complaint_category".equals(c.getClassification()))
-                .collect(Collectors.toMap(AnalysisCode::getCodeName, AnalysisCode::getDescription, (a, b) -> b));
+                .collect(Collectors.toMap(AnalysisCode::getCodeName, AnalysisCode::getDisplayName, (a, b) -> b));
 
-            // 3. 방어 액션용 맵 (classification = defense_category)
+            // 2. 방어 액션용 맵 (displayName 사용)
             Map<String, String> defenseMap = allCodes.stream()
                 .filter(c -> "defense_category".equals(c.getClassification()))
-                .collect(Collectors.toMap(AnalysisCode::getCodeName, AnalysisCode::getDescription, (a, b) -> b));
+                .collect(Collectors.toMap(AnalysisCode::getCodeName, AnalysisCode::getDisplayName, (a, b) -> b));
 
-            // --- 매핑 시작 ---
+            // --- DTO 치환 로직 ---
 
-            // A. 불만 사유 리스트 (complaintMap 사용)
+            // A. 불만 사유
             if (response.getComplaintReasons() != null) {
                 response.getComplaintReasons().forEach(dto ->
                     dto.setReason(complaintMap.getOrDefault(dto.getReason(), dto.getReason())));
             }
 
-            // B. 고객 유형별 - 주요 불만 사유 (complaintMap 사용)
+            // B. 고객 유형별 주요 불만 사유
             if (response.getByCustomerType() != null) {
                 response.getByCustomerType().forEach(dto ->
                     dto.setMainComplaintReason(complaintMap.getOrDefault(dto.getMainComplaintReason(), dto.getMainComplaintReason())));
             }
 
-            // C. 방어 액션 리스트
+            // C. 방어 액션
             if (response.getByAction() != null) {
                 response.getByAction().forEach(actionDto -> {
-                    // 액션 이름은 defenseMap 사용
+                    // 방어 액션명 매핑
                     actionDto.setAction(defenseMap.getOrDefault(actionDto.getAction(), actionDto.getAction()));
 
-                    // 액션 하위의 불만 사유는 다시 complaintMap 사용
+                    // 액션 하위 상세 사유 매핑
                     if (actionDto.getByReason() != null) {
                         actionDto.getByReason().forEach(reasonDto ->
                             reasonDto.setReason(complaintMap.getOrDefault(reasonDto.getReason(), reasonDto.getReason())));
