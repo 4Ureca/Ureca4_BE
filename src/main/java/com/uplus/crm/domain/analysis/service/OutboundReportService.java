@@ -3,6 +3,8 @@ package com.uplus.crm.domain.analysis.service;
 import com.uplus.crm.common.exception.BusinessException;
 import com.uplus.crm.common.exception.ErrorCode;
 import com.uplus.crm.domain.analysis.dto.outbound.*;
+import com.uplus.crm.domain.common.entity.AnalysisCode;
+import com.uplus.crm.domain.common.repository.AnalysisCodeRepository;
 import com.uplus.crm.domain.common.repository.ConsultationCategoryPolicyRepository;
 import com.uplus.crm.domain.consultation.entity.ConsultationCategoryPolicy;
 import lombok.RequiredArgsConstructor;
@@ -17,6 +19,7 @@ import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
+import java.util.Date;
 import java.util.stream.Collectors;
 
 /**
@@ -32,12 +35,23 @@ public class OutboundReportService {
 
     private final MongoTemplate mongoTemplate;
     private final ConsultationCategoryPolicyRepository categoryPolicyRepository;
+    private final AnalysisCodeRepository analysisCodeRepository;
 
     private static final Map<String, String> COLLECTION_MAP = Map.of(
             "daily", "daily_report_snapshot",
             "weekly", "weekly_report_snapshot",
             "monthly", "monthly_report_snapshot"
     );
+
+    /** outbound_category 코드 → AnalysisCode 매핑 (DB에서 로딩) */
+    private Map<String, AnalysisCode> getRejectReasonCodeMap() {
+        return analysisCodeRepository.findByClassification("outbound_category")
+                .stream()
+                .collect(Collectors.toMap(
+                        AnalysisCode::getCodeName,
+                        ac -> ac,
+                        (a, b) -> a));
+    }
 
     // ==================== API 1: KPI ====================
 
@@ -49,6 +63,8 @@ public class OutboundReportService {
         if (kpi == null) return Optional.empty();
 
         return Optional.of(OutboundKpiResponse.builder()
+                .startAt(toLocalDateTime(snapshot.get("_startAt")))
+                .endAt(toLocalDateTime(snapshot.get("_endAt")))
                 .totalCount(kpi.getInteger("totalCount", 0))
                 .convertedCount(kpi.getInteger("convertedCount", 0))
                 .rejectedCount(kpi.getInteger("rejectedCount", 0))
@@ -120,6 +136,8 @@ public class OutboundReportService {
                 .build();
 
         return Optional.of(OutboundCampaignResponse.builder()
+                .startAt(toLocalDateTime(snapshot.get("_startAt")))
+                .endAt(toLocalDateTime(snapshot.get("_endAt")))
                 .campaigns(details)
                 .total(total)
                 .build());
@@ -159,11 +177,16 @@ public class OutboundReportService {
         int totalReject = rejected;
         List<OutboundCallResultResponse.RejectReason> rejectReasons = new ArrayList<>();
         if (reasons != null) {
+            Map<String, AnalysisCode> codeMap = getRejectReasonCodeMap();
             int rank = 1;
             for (Document r : reasons) {
                 int count = r.getInteger("count", 0);
+                String code = r.getString("code");
+                AnalysisCode ac = codeMap.get(code);
                 rejectReasons.add(OutboundCallResultResponse.RejectReason.builder()
-                        .code(r.getString("code"))
+                        .code(code)
+                        .name(ac != null && ac.getDisplayName() != null ? ac.getDisplayName() : code)
+                        .description(ac != null ? ac.getDescription() : null)
                         .count(count)
                         .rate(totalReject > 0 ? Math.round((double) count / totalReject * 1000.0) / 10.0 : 0)
                         .rank(rank++)
@@ -172,6 +195,8 @@ public class OutboundReportService {
         }
 
         return Optional.of(OutboundCallResultResponse.builder()
+                .startAt(toLocalDateTime(snapshot.get("_startAt")))
+                .endAt(toLocalDateTime(snapshot.get("_endAt")))
                 .distribution(dist)
                 .rejectReasons(rejectReasons)
                 .build());
@@ -197,6 +222,8 @@ public class OutboundReportService {
                 .collect(Collectors.toList());
 
         return Optional.of(OutboundHeatmapResponse.builder()
+                .startAt(toLocalDateTime(snapshot.get("_startAt")))
+                .endAt(toLocalDateTime(snapshot.get("_endAt")))
                 .metric("conversionRate")
                 .rows(heatmapRows)
                 .build());
@@ -224,6 +251,8 @@ public class OutboundReportService {
                 .collect(Collectors.toList());
 
         return Optional.of(OutboundAgentResponse.builder()
+                .startAt(toLocalDateTime(snapshot.get("_startAt")))
+                .endAt(toLocalDateTime(snapshot.get("_endAt")))
                 .agents(details)
                 .build());
     }
@@ -248,6 +277,8 @@ public class OutboundReportService {
                 .collect(Collectors.toList());
 
         return Optional.of(OutboundOptimalTimeResponse.builder()
+                .startAt(toLocalDateTime(snapshot.get("_startAt")))
+                .endAt(toLocalDateTime(snapshot.get("_endAt")))
                 .recommendations(recommendations)
                 .build());
     }
@@ -272,19 +303,23 @@ public class OutboundReportService {
                 .collect(Collectors.toList());
 
         return Optional.of(OutboundConversionResponse.builder()
+                .startAt(toLocalDateTime(snapshot.get("_startAt")))
+                .endAt(toLocalDateTime(snapshot.get("_endAt")))
                 .categories(categories)
                 .build());
     }
 
     // ==================== snapshot 조회 ====================
 
+    /**
+     * 스냅샷 조회 — outboundAnalysis에 startAt/endAt을 포함시켜 반환
+     */
     private Document findSnapshot(String period, LocalDate date) {
         String collection = COLLECTION_MAP.get(period.toLowerCase());
         if (collection == null) throw new BusinessException(ErrorCode.INVALID_PERIOD);
 
         Document snapshot;
         if (date == null) {
-            // 날짜 미지정 → 최신 스냅샷 조회
             Query query = new Query()
                     .with(org.springframework.data.domain.Sort.by(
                             org.springframework.data.domain.Sort.Direction.DESC, "startAt"))
@@ -298,7 +333,13 @@ public class OutboundReportService {
         }
         if (snapshot == null) return null;
 
-        return snapshot.get("outboundAnalysis", Document.class);
+        Document outbound = snapshot.get("outboundAnalysis", Document.class);
+        if (outbound == null) return null;
+
+        // 상위 스냅샷의 startAt/endAt을 outbound에 첨부
+        outbound.put("_startAt", snapshot.get("startAt"));
+        outbound.put("_endAt", snapshot.get("endAt"));
+        return outbound;
     }
 
     private LocalDateTime[] resolveDateRange(String period, LocalDate date) {
@@ -322,6 +363,12 @@ public class OutboundReportService {
     }
 
     // ==================== 유틸 ====================
+
+    private LocalDateTime toLocalDateTime(Object value) {
+        if (value instanceof Date) return ((Date) value).toInstant().atZone(java.time.ZoneId.of("Asia/Seoul")).toLocalDateTime();
+        if (value instanceof LocalDateTime) return (LocalDateTime) value;
+        return null;
+    }
 
     private double getDoubleOrZero(Document doc, String field) {
         Object val = doc.get(field);

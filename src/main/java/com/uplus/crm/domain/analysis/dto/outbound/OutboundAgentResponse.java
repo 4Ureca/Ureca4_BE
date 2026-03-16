@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.*;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Getter
@@ -13,6 +14,12 @@ import java.util.List;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @Schema(description = "아웃바운드 상담사별 실적")
 public class OutboundAgentResponse {
+
+    @Schema(description = "조회 시작일시")
+    private LocalDateTime startAt;
+
+    @Schema(description = "조회 종료일시")
+    private LocalDateTime endAt;
 
     @Schema(description = "상담사별 실적 목록 (전환 건수 내림차순)")
     private List<AgentDetail> agents;

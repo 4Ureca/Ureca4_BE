@@ -4,6 +4,8 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.*;
 
+import java.time.LocalDateTime;
+
 @Getter
 @Builder
 @NoArgsConstructor
@@ -11,6 +13,12 @@ import lombok.*;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @Schema(description = "아웃바운드 KPI 요약")
 public class OutboundKpiResponse {
+
+    @Schema(description = "조회 시작일시")
+    private LocalDateTime startAt;
+
+    @Schema(description = "조회 종료일시")
+    private LocalDateTime endAt;
 
     @Schema(description = "총 발신 건수", example = "50")
     private Integer totalCount;
