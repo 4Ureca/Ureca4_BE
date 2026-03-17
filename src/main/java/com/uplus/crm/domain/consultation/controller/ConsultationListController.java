@@ -28,7 +28,7 @@ public class ConsultationListController {
     @Parameters({
         @Parameter(name = "keyword", description = "고객명, 전화번호, 상담 ID", example = "홍길동"),
         @Parameter(name = "channel", description = "상담 채널 (입력 가능 값: 전화, 채팅)", example = "전화"),
-        @Parameter(name = "categoryCode", description = "상담 카테고리 코드", example = "C001"),
+        @Parameter(name = "categoryCode", description = "상담 카테고리 코드"),
         @Parameter(name = "summaryStatus", description = "AI 요약 상태 (입력 가능 값: 요약완료, 요청중, 실패)", example = "요약완료"),
         @Parameter(name = "resultStatus", description = "처리 상태 (입력 가능 값: 처리중, 완료, 미완료, 요청중)", example = "완료"),
         @Parameter(name = "page", description = "페이지 번호 (0부터 시작)", example = "0"),

@@ -75,15 +75,19 @@ public class ConsultationDetailService {
                 .map(ConsultationRawText::getRawTextJson)
                 .orElse(null);
 
+        // AI 분석 및 아웃바운드 결과 정보 매핑
         ConsultationAiAnalysisDto aiAnalysis = ConsultationAiAnalysisDto.builder()
                 .categoryCode(basicRow.categoryCode())
                 .categoryName(buildCategoryName(basicRow.largeCategory(), basicRow.mediumCategory(), basicRow.smallCategory()))
-                .hasIntent(aiRow == null ? null : aiRow.hasIntent())
                 .complaintReason(aiRow == null ? null : aiRow.complaintReason())
                 .defenseAttempted(aiRow == null ? null : aiRow.defenseAttempted())
                 .defenseSuccess(aiRow == null ? null : aiRow.defenseSuccess())
                 .defenseActions(aiRow == null ? null : aiRow.defenseActions())
                 .rawSummary(aiRow == null ? null : aiRow.rawSummary())
+                // 추가 필드 매핑
+                .outboundCallResult(aiRow == null ? null : aiRow.outboundCallResult())
+                .outboundReport(aiRow == null ? null : aiRow.outboundReport())
+                .evaluationReason(aiRow == null ? null : aiRow.evaluationReason()) // ★ 이 줄이 누락되어 있었습니다!
                 .build();
 
         List<ConsultationHistoryItemDto> history = consultationDetailQueryRepository.findHistory(consultId)
