@@ -20,6 +20,9 @@ import com.uplus.crm.domain.consultation.repository.ConsultationRawTextRepositor
 import com.uplus.crm.domain.demo.repository.DemoConsultationCategoryRepository;
 import com.uplus.crm.domain.demo.repository.DemoConsultationResultRepository;
 import com.uplus.crm.domain.demo.repository.DemoCustomerRepository;
+import com.uplus.crm.domain.extraction.repository.ExcellentEventStatusRepository;
+import com.uplus.crm.domain.extraction.repository.ResultEventStatusRepository;
+import com.uplus.crm.domain.extraction.repository.SummaryEventStatusRepository;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -44,6 +47,9 @@ class DemoConsultationServiceTest {
     @Mock private DemoCustomerRepository customerRepository;
     @Mock private DemoConsultationCategoryRepository categoryRepository;
     @Mock private ConsultationRawTextRepository rawTextRepository;
+    @Mock private ResultEventStatusRepository resultEventStatusRepository;
+    @Mock private ExcellentEventStatusRepository excellentEventStatusRepository;
+    @Mock private SummaryEventStatusRepository summaryEventStatusRepository;
 
     // ── 픽스처 헬퍼 ─────────────────────────────────────────────────────────
 

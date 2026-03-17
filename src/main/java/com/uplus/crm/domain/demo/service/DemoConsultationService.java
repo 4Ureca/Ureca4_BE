@@ -13,8 +13,10 @@ import com.uplus.crm.domain.consultation.entity.Customer;
 import com.uplus.crm.domain.consultation.repository.ConsultationRawTextRepository;
 import com.uplus.crm.domain.extraction.entity.ExcellentEventStatus;
 import com.uplus.crm.domain.extraction.entity.ResultEventStatus;
+import com.uplus.crm.domain.extraction.entity.SummaryEventStatus;
 import com.uplus.crm.domain.extraction.repository.ExcellentEventStatusRepository;
 import com.uplus.crm.domain.extraction.repository.ResultEventStatusRepository;
+import com.uplus.crm.domain.extraction.repository.SummaryEventStatusRepository;
 import org.springframework.util.StringUtils;
 import com.uplus.crm.domain.demo.repository.DemoConsultationCategoryRepository;
 import com.uplus.crm.domain.demo.repository.DemoConsultationResultRepository;
@@ -34,6 +36,7 @@ public class DemoConsultationService {
     private final ConsultationRawTextRepository rawTextRepository;
     private final ResultEventStatusRepository resultEventStatusRepository;
     private final ExcellentEventStatusRepository excellentEventStatusRepository;
+    private final SummaryEventStatusRepository summaryEventStatusRepository;
 
     /**
      * DB에서 랜덤 상담결과 1건 조회 → 고객정보 + 상담기본정보 반환 (IAM 필드는 null).
@@ -119,6 +122,12 @@ public class DemoConsultationService {
 
         excellentEventStatusRepository.save(
                 ExcellentEventStatus.builder()
+                        .consultId(saved.getConsultId())
+                        .build()
+        );
+
+        summaryEventStatusRepository.save(
+                SummaryEventStatus.builder()
                         .consultId(saved.getConsultId())
                         .build()
         );
