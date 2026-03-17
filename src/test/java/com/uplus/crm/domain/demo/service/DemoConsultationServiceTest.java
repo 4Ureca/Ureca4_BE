@@ -164,7 +164,7 @@ class DemoConsultationServiceTest {
     void submitConsult_success_returnsSavedIdAndCreatedAt() {
         DemoConsultSubmitRequest request = new DemoConsultSubmitRequest(
                 1L, "CALL", "CAT001", 240, null,
-                "고객이 요금 오류 제기", "시스템 확인 후 재청구", "추후 모니터링 필요"
+                "고객이 요금 오류 제기", "시스템 확인 후 재청구", "추후 모니터링 필요", null
         );
 
         LocalDateTime now = LocalDateTime.now();
@@ -193,7 +193,7 @@ class DemoConsultationServiceTest {
     @DisplayName("submitConsult - 저장 시 empId가 인증된 직원 ID로 설정된다")
     void submitConsult_setsEmpIdFromAuthentication() {
         DemoConsultSubmitRequest request = new DemoConsultSubmitRequest(
-                2L, "CHATTING", "CAT002", 300, null, null, null, null
+                2L, "CHATTING", "CAT002", 300, null, null, null, null, null
         );
 
         given(consultationResultRepository.save(any(ConsultationResult.class)))
