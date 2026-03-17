@@ -50,6 +50,9 @@ public class QualityAnalysisController {
                 관리자:
                 - **agentId 지정**: 해당 상담사의 품질 분석 (단건, 204 = 데이터 없음)
                 - **agentId 미지정**: 전체 상담사 품질 분석 (목록)
+                
+                date:
+                - 미지정 시 전일 조회
 
                 ### 품질 분석 기준
                 | 지표 | 측정 방식 | 가중치 |
@@ -83,7 +86,7 @@ public class QualityAnalysisController {
             @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date,
             @AuthenticationPrincipal CustomUserDetails userDetails) {
 
-        LocalDate targetDate = (date != null) ? date : LocalDate.now().minusDays(1);
+        LocalDate targetDate = getDefaultTargetDate("daily", date);
 
         // 1. 권한에 따른 조회 대상(finalAgentId) 결정
         Long finalAgentId;
@@ -120,6 +123,9 @@ public class QualityAnalysisController {
                 관리자:
                 - **agentId 지정**: 해당 상담사의 품질 분석 (단건, 일별 가중 평균)
                 - **agentId 미지정**: 전체 상담사 품질 분석 (목록)
+                
+                date:
+                - 미지정 시 전주 조회
                 """
     )
     @ApiResponses({
@@ -140,7 +146,7 @@ public class QualityAnalysisController {
             @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date,
             @AuthenticationPrincipal CustomUserDetails userDetails) {
 
-        LocalDate targetDate = (date != null) ? date : LocalDate.now();
+        LocalDate targetDate = getDefaultTargetDate("weekly", date);
 
         // 1. 권한에 따른 최종 조회 대상 ID 결정
         Long finalAgentId;
@@ -175,6 +181,9 @@ public class QualityAnalysisController {
                 관리자:
                 - **agentId 지정**: 해당 상담사의 품질 분석 (단건, 일별 가중 평균)
                 - **agentId 미지정**: 전체 상담사 품질 분석 (목록)
+                
+                date:
+                - 미지정 시 전일 조회
                 """
     )
     @ApiResponses({
@@ -195,7 +204,7 @@ public class QualityAnalysisController {
             @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date,
             @AuthenticationPrincipal CustomUserDetails userDetails) {
 
-        LocalDate targetDate = (date != null) ? date : LocalDate.now();
+        LocalDate targetDate = getDefaultTargetDate("monthly", date);
 
         // 1. 권한에 따른 최종 조회 ID 결정
         Long finalAgentId;
@@ -214,5 +223,16 @@ public class QualityAnalysisController {
 
         List<QualityAnalysisResponse> result = qualityAnalysisService.getMonthlyAll(targetDate);
         return ResponseEntity.ok(result);
+    }
+
+    // 공통 날짜 결정 로직
+    private LocalDate getDefaultTargetDate(String period, LocalDate date) {
+        if (date != null) return date;
+
+        return switch (period.toLowerCase()) {
+            case "weekly" -> LocalDate.now().minusWeeks(1);  // 지난주
+            case "monthly" -> LocalDate.now().minusMonths(1); // 지난달
+            default -> LocalDate.now().minusDays(1);         // 어제
+        };
     }
 }

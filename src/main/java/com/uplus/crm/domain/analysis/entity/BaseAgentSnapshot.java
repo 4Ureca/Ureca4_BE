@@ -1,5 +1,6 @@
 package com.uplus.crm.domain.analysis.entity;
 
+import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import org.springframework.data.annotation.Id;
@@ -34,6 +35,8 @@ public abstract class BaseAgentSnapshot {
 
   // --- 내부 객체 구조  ---
   @Getter
+  @NoArgsConstructor
+  @AllArgsConstructor
   public static class CategoryRanking {
     private String large;
     private String medium;
