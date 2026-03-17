@@ -52,12 +52,9 @@ public class ConsultationListQueryRepository {
                     COALESCE(rv.satisfaction, 0) AS satisfaction,
                     DATE_FORMAT(cr.created_at, '%Y.%m.%d %H:%i') AS consulted_at
                 FROM consultation_results cr
-                JOIN customers c
-                  ON cr.customer_id = c.customer_id
-                JOIN employees e
-                  ON cr.emp_id = e.emp_id
-                LEFT JOIN consultation_category_policy ccp
-                  ON cr.category_code = ccp.category_code
+                JOIN customers c ON cr.customer_id = c.customer_id
+                JOIN employees e ON cr.emp_id = e.emp_id
+                LEFT JOIN consultation_category_policy ccp ON cr.category_code = ccp.category_code
                 LEFT JOIN (
                     SELECT t1.consult_id, t1.status
                     FROM summary_event_status t1
@@ -65,11 +62,8 @@ public class ConsultationListQueryRepository {
                         SELECT consult_id, MAX(created_at) AS max_created_at
                         FROM summary_event_status
                         GROUP BY consult_id
-                    ) t2
-                      ON t1.consult_id = t2.consult_id
-                     AND t1.created_at = t2.max_created_at
-                ) ses
-                  ON cr.consult_id = ses.consult_id
+                    ) t2 ON t1.consult_id = t2.consult_id AND t1.created_at = t2.max_created_at
+                ) ses ON cr.consult_id = ses.consult_id
                 LEFT JOIN (
                     SELECT t1.consult_id, t1.status
                     FROM result_event_status t1
@@ -77,85 +71,109 @@ public class ConsultationListQueryRepository {
                         SELECT consult_id, MAX(created_at) AS max_created_at
                         FROM result_event_status
                         GROUP BY consult_id
-                    ) t2
-                      ON t1.consult_id = t2.consult_id
-                     AND t1.created_at = t2.max_created_at
-                ) res
-                  ON cr.consult_id = res.consult_id
+                    ) t2 ON t1.consult_id = t2.consult_id AND t1.created_at = t2.max_created_at
+                ) res ON cr.consult_id = res.consult_id
                 LEFT JOIN (
-                    SELECT
-                        consult_id,
-                        ROUND((
-                            COALESCE(score_1, 0) +
-                            COALESCE(score_2, 0) +
-                            COALESCE(score_3, 0) +
-                            COALESCE(score_4, 0) +
-                            COALESCE(score_5, 0)
-                        ) / NULLIF(
-                            (CASE WHEN score_1 IS NOT NULL THEN 1 ELSE 0 END) +
-                            (CASE WHEN score_2 IS NOT NULL THEN 1 ELSE 0 END) +
-                            (CASE WHEN score_3 IS NOT NULL THEN 1 ELSE 0 END) +
-                            (CASE WHEN score_4 IS NOT NULL THEN 1 ELSE 0 END) +
-                            (CASE WHEN score_5 IS NOT NULL THEN 1 ELSE 0 END),
-                            0
-                        )) AS satisfaction
-                    FROM client_review
-                    WHERE deleted_at IS NULL
-                ) rv
-                  ON cr.consult_id = rv.consult_id
+                    SELECT consult_id, 
+                           ROUND(AVG(score)) AS satisfaction
+                    FROM (
+                        SELECT consult_id, score_1 AS score FROM client_review WHERE deleted_at IS NULL
+                        UNION ALL SELECT consult_id, score_2 FROM client_review WHERE deleted_at IS NULL
+                        UNION ALL SELECT consult_id, score_3 FROM client_review WHERE deleted_at IS NULL
+                        UNION ALL SELECT consult_id, score_4 FROM client_review WHERE deleted_at IS NULL
+                        UNION ALL SELECT consult_id, score_5 FROM client_review WHERE deleted_at IS NULL
+                    ) t WHERE score IS NOT NULL
+                    GROUP BY consult_id
+                ) rv ON cr.consult_id = rv.consult_id
                 WHERE 1=1
                 """;
 
         StringBuilder dynamicSql = new StringBuilder(sql);
         List<Object> params = new ArrayList<>();
 
-        if (keyword != null && !keyword.isBlank()) {
-            dynamicSql.append("""
-                     AND (
-                         c.name LIKE CONCAT('%', ?, '%')
-                         OR c.phone LIKE CONCAT('%', ?, '%')
-                         OR CAST(cr.consult_id AS CHAR) LIKE CONCAT('%', ?, '%')
-                     )
-                    """);
-            params.add(keyword);
-            params.add(keyword);
-            params.add(keyword);
-        }
+        applyFilters(dynamicSql, params, keyword, channel, categoryCode, summaryStatus, resultStatus);
 
-        if (channel != null && !channel.isBlank()) {
-            dynamicSql.append(" AND cr.channel = ? ");
-            params.add(channel);
-        }
-
-        if (categoryCode != null && !categoryCode.isBlank()) {
-            dynamicSql.append(" AND cr.category_code = ? ");
-            params.add(categoryCode);
-        }
-
-        if (summaryStatus != null && !summaryStatus.isBlank()) {
-            dynamicSql.append(" AND ses.status = ? ");
-            params.add(summaryStatus);
-        }
-
-        if (resultStatus != null && !resultStatus.isBlank()) {
-            dynamicSql.append(" AND res.status = ? ");
-            params.add(resultStatus);
-        }
-
-        dynamicSql.append(" ORDER BY cr.created_at DESC ");
-        dynamicSql.append(" LIMIT ? OFFSET ? ");
+        dynamicSql.append(" ORDER BY cr.created_at DESC LIMIT ? OFFSET ? ");
         params.add(size);
         params.add(offset);
 
         Query query = entityManager.createNativeQuery(dynamicSql.toString());
-
         for (int i = 0; i < params.size(); i++) {
             query.setParameter(i + 1, params.get(i));
         }
 
         @SuppressWarnings("unchecked")
         List<Object[]> rows = query.getResultList();
+        return mapToDto(rows);
+    }
 
+    public long countConsultationList(
+            String keyword, String channel, String categoryCode, String summaryStatus, String resultStatus
+    ) {
+        // COUNT 쿼리에서도 필터링을 위해 JOIN이 반드시 필요합니다.
+        String sql = """
+                SELECT COUNT(*)
+                FROM consultation_results cr
+                JOIN customers c ON cr.customer_id = c.customer_id
+                LEFT JOIN (
+                    SELECT t1.consult_id, t1.status
+                    FROM summary_event_status t1
+                    INNER JOIN (
+                        SELECT consult_id, MAX(created_at) AS max_created_at
+                        FROM summary_event_status
+                        GROUP BY consult_id
+                    ) t2 ON t1.consult_id = t2.consult_id AND t1.created_at = t2.max_created_at
+                ) ses ON cr.consult_id = ses.consult_id
+                LEFT JOIN (
+                    SELECT t1.consult_id, t1.status
+                    FROM result_event_status t1
+                    INNER JOIN (
+                        SELECT consult_id, MAX(created_at) AS max_created_at
+                        FROM result_event_status
+                        GROUP BY consult_id
+                    ) t2 ON t1.consult_id = t2.consult_id AND t1.created_at = t2.max_created_at
+                ) res ON cr.consult_id = res.consult_id
+                WHERE 1=1
+                """;
+
+        StringBuilder dynamicSql = new StringBuilder(sql);
+        List<Object> params = new ArrayList<>();
+
+        applyFilters(dynamicSql, params, keyword, channel, categoryCode, summaryStatus, resultStatus);
+
+        Query query = entityManager.createNativeQuery(dynamicSql.toString());
+        for (int i = 0; i < params.size(); i++) {
+            query.setParameter(i + 1, params.get(i));
+        }
+
+        return ((Number) query.getSingleResult()).longValue();
+    }
+
+    private void applyFilters(StringBuilder sql, List<Object> params, String keyword, String channel, String categoryCode, String summaryStatus, String resultStatus) {
+        if (keyword != null && !keyword.isBlank()) {
+            sql.append(" AND (c.name LIKE ? OR c.phone LIKE ? OR CAST(cr.consult_id AS CHAR) LIKE ?) ");
+            String k = "%" + keyword + "%";
+            params.add(k); params.add(k); params.add(k);
+        }
+        if (channel != null && !channel.isBlank()) {
+            sql.append(" AND cr.channel = ? ");
+            params.add(channel);
+        }
+        if (categoryCode != null && !categoryCode.isBlank()) {
+            sql.append(" AND cr.category_code = ? ");
+            params.add(categoryCode);
+        }
+        if (summaryStatus != null && !summaryStatus.isBlank()) {
+            sql.append(" AND ses.status = ? ");
+            params.add(summaryStatus);
+        }
+        if (resultStatus != null && !resultStatus.isBlank()) {
+            sql.append(" AND res.status = ? ");
+            params.add(resultStatus);
+        }
+    }
+
+    private List<ConsultationListItemDto> mapToDto(List<Object[]> rows) {
         List<ConsultationListItemDto> result = new ArrayList<>();
         for (Object[] row : rows) {
             result.add(ConsultationListItemDto.builder()
@@ -172,94 +190,6 @@ public class ConsultationListQueryRepository {
                     .consultedAt((String) row[10])
                     .build());
         }
-
         return result;
-    }
-
-    public long countConsultationList(
-            String keyword,
-            String channel,
-            String categoryCode,
-            String summaryStatus,
-            String resultStatus
-    ) {
-        String sql = """
-                SELECT COUNT(*)
-                FROM consultation_results cr
-                JOIN customers c
-                  ON cr.customer_id = c.customer_id
-                LEFT JOIN consultation_category_policy ccp
-                  ON cr.category_code = ccp.category_code
-                LEFT JOIN (
-                    SELECT t1.consult_id, t1.status
-                    FROM summary_event_status t1
-                    INNER JOIN (
-                        SELECT consult_id, MAX(created_at) AS max_created_at
-                        FROM summary_event_status
-                        GROUP BY consult_id
-                    ) t2
-                      ON t1.consult_id = t2.consult_id
-                     AND t1.created_at = t2.max_created_at
-                ) ses
-                  ON cr.consult_id = ses.consult_id
-                LEFT JOIN (
-                    SELECT t1.consult_id, t1.status
-                    FROM result_event_status t1
-                    INNER JOIN (
-                        SELECT consult_id, MAX(created_at) AS max_created_at
-                        FROM result_event_status
-                        GROUP BY consult_id
-                    ) t2
-                      ON t1.consult_id = t2.consult_id
-                     AND t1.created_at = t2.max_created_at
-                ) res
-                  ON cr.consult_id = res.consult_id
-                WHERE 1=1
-                """;
-
-        StringBuilder dynamicSql = new StringBuilder(sql);
-        List<Object> params = new ArrayList<>();
-
-        if (keyword != null && !keyword.isBlank()) {
-            dynamicSql.append("""
-                     AND (
-                         c.name LIKE CONCAT('%', ?, '%')
-                         OR c.phone LIKE CONCAT('%', ?, '%')
-                         OR CAST(cr.consult_id AS CHAR) LIKE CONCAT('%', ?, '%')
-                     )
-                    """);
-            params.add(keyword);
-            params.add(keyword);
-            params.add(keyword);
-        }
-
-        if (channel != null && !channel.isBlank()) {
-            dynamicSql.append(" AND cr.channel = ? ");
-            params.add(channel);
-        }
-
-        if (categoryCode != null && !categoryCode.isBlank()) {
-            dynamicSql.append(" AND cr.category_code = ? ");
-            params.add(categoryCode);
-        }
-
-        if (summaryStatus != null && !summaryStatus.isBlank()) {
-            dynamicSql.append(" AND ses.status = ? ");
-            params.add(summaryStatus);
-        }
-
-        if (resultStatus != null && !resultStatus.isBlank()) {
-            dynamicSql.append(" AND res.status = ? ");
-            params.add(resultStatus);
-        }
-
-        Query query = entityManager.createNativeQuery(dynamicSql.toString());
-
-        for (int i = 0; i < params.size(); i++) {
-            query.setParameter(i + 1, params.get(i));
-        }
-
-        Number count = (Number) query.getSingleResult();
-        return count.longValue();
     }
 }
