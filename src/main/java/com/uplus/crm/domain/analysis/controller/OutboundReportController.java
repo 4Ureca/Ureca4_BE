@@ -26,7 +26,12 @@ public class OutboundReportController {
 
     private final OutboundReportService outboundReportService;
 
-    @Operation(summary = "KPI 요약", description = "아웃바운드 KPI 5개 지표 (총 건수, 전환율, 평균 통화시간, 예상 매출 등)")
+    @Operation(summary = "KPI 요약", description = "아웃바운드 상담의 핵심 성과 지표를 조회합니다.\n"
+            + "- totalCount: 해당 기간 아웃바운드 상담 총 건수 (평일만 집계)\n"
+            + "- convertedCount / rejectedCount: 전환 성공 / 거절 건수\n"
+            + "- conversionRate: 전환율 (%) = convertedCount / totalCount × 100\n"
+            + "- avgDurationSec: 전체 아웃바운드 상담의 평균 통화 시간 (초)\n"
+            + "- estimatedRevenue: 전환 성공 상담에서 신규 가입(NEW)된 상품의 월정액 합산 예상 매출 (원)")
     @GetMapping("/kpi")
     public ResponseEntity<OutboundKpiResponse> getKpi(
             @Parameter(description = "기간: daily/weekly/monthly", example = "monthly")
@@ -38,7 +43,14 @@ public class OutboundReportController {
                 .orElse(ResponseEntity.noContent().build());
     }
 
-    @Operation(summary = "캠페인 성과 현황", description = "아웃바운드 카테고리별 캠페인 성과 테이블")
+    @Operation(summary = "캠페인 성과 현황", description = "아웃바운드 카테고리(M_OTB_01~06)별 캠페인 성과를 조회합니다.\n"
+            + "- categoryCode / categoryName: 아웃바운드 카테고리 코드 및 명칭\n"
+            + "- totalCount: 해당 카테고리 상담 건수\n"
+            + "- convertedCount / conversionRate: 전환 건수 및 전환율 (%)\n"
+            + "- avgDurationSec: 평균 통화 시간 (초)\n"
+            + "- avgSatisfiedScore: 고객 만족도 평균 (1~5점)\n"
+            + "- estimatedRevenue: 해당 카테고리의 전환 상담 예상 매출 (원)\n"
+            + "- isActive: 캠페인 활성 여부 (consultation_category_policy 기반)")
     @GetMapping("/campaigns")
     public ResponseEntity<OutboundCampaignResponse> getCampaigns(
             @Parameter(description = "기간: daily/weekly/monthly", example = "monthly")
@@ -50,7 +62,13 @@ public class OutboundReportController {
                 .orElse(ResponseEntity.noContent().build());
     }
 
-    @Operation(summary = "발신 결과 분포 + 거절 사유", description = "CONVERTED/REJECTED 분포 및 거절 사유별 건수")
+    @Operation(summary = "발신 결과 분포 + 거절 사유", description = "아웃바운드 상담의 발신 결과 분포와 거절 사유를 조회합니다.\n"
+            + "- distribution: CONVERTED / REJECTED 건수\n"
+            + "- rejectReasons: 거절 사유별 건수 (analysis_code 테이블에서 display_name 매핑)\n"
+            + "  - code: 거절 사유 코드 (예: CONSIDER, PRICE 등)\n"
+            + "  - name: 표시 명칭 (DB display_name)\n"
+            + "  - description: 상세 설명 (DB description)\n"
+            + "  - count: 건수")
     @GetMapping("/call-results")
     public ResponseEntity<OutboundCallResultResponse> getCallResults(
             @Parameter(description = "기간: daily/weekly/monthly", example = "monthly")
@@ -62,7 +80,11 @@ public class OutboundReportController {
                 .orElse(ResponseEntity.noContent().build());
     }
 
-    @Operation(summary = "시간대×요일 전환율 히트맵", description = "시간대별, 요일별 전환율 히트맵 데이터")
+    @Operation(summary = "시간대×요일 전환율 히트맵", description = "시간대(9~18시)와 요일(월~금)의 전환율 매트릭스를 조회합니다.\n"
+            + "- hour: 시간대 (9~18)\n"
+            + "- days: [월, 화, 수, 목, 금] 순서의 전환율 (%) 배열\n"
+            + "- 각 셀 값 = 해당 시간대·요일의 전환 건수 / 총 건수 × 100\n"
+            + "- 프론트엔드에서 히트맵 차트로 시각화하는 데 사용")
     @GetMapping("/heatmap")
     public ResponseEntity<OutboundHeatmapResponse> getHeatmap(
             @Parameter(description = "기간: daily/weekly/monthly", example = "monthly")
@@ -74,7 +96,12 @@ public class OutboundReportController {
                 .orElse(ResponseEntity.noContent().build());
     }
 
-    @Operation(summary = "상담사별 실적", description = "상담사별 전환 건수, 전환율, 평균 통화시간 순위")
+    @Operation(summary = "상담사별 실적", description = "아웃바운드 상담사별 실적 순위를 조회합니다.\n"
+            + "- rank: 전환 건수 기준 순위\n"
+            + "- agentId / agentName: 상담사 ID 및 이름\n"
+            + "- totalCount: 해당 상담사의 아웃바운드 상담 총 건수\n"
+            + "- convertedCount / conversionRate: 전환 건수 및 전환율 (%)\n"
+            + "- avgDurationSec: 평균 통화 시간 (초)")
     @GetMapping("/agents")
     public ResponseEntity<OutboundAgentResponse> getAgents(
             @Parameter(description = "기간: daily/weekly/monthly", example = "monthly")
@@ -86,7 +113,11 @@ public class OutboundReportController {
                 .orElse(ResponseEntity.noContent().build());
     }
 
-    @Operation(summary = "카테고리별 최적 연락 시간", description = "카테고리별 전환율이 가장 높은 시간대 및 요일 추천")
+    @Operation(summary = "카테고리별 최적 연락 시간", description = "카테고리별 전환율이 가장 높은 시간대와 요일을 추천합니다.\n"
+            + "- categoryCode / categoryName: 아웃바운드 카테고리\n"
+            + "- bestHourRange: 전환율이 가장 높은 시간대 (예: '14:00 ~ 15:00')\n"
+            + "- bestConversionRate: 해당 시간대의 전환율 (%)\n"
+            + "- bestDays: 전환율이 높은 요일 상위 2개 (예: ['화', '목'])")
     @GetMapping("/optimal-time")
     public ResponseEntity<OutboundOptimalTimeResponse> getOptimalTime(
             @Parameter(description = "기간: daily/weekly/monthly", example = "monthly")
@@ -98,7 +129,12 @@ public class OutboundReportController {
                 .orElse(ResponseEntity.noContent().build());
     }
 
-    @Operation(summary = "카테고리별 전환율", description = "아웃바운드 카테고리별 전환 성공/전체 건수 및 전환율")
+    @Operation(summary = "카테고리별 전환율", description = "아웃바운드 카테고리별 전환 성과를 조회합니다.\n"
+            + "- categoryCode / categoryName: 아웃바운드 카테고리\n"
+            + "- convertedCount: 전환 성공 건수\n"
+            + "- totalCount: 총 상담 건수\n"
+            + "- conversionRate: 전환율 (%) = convertedCount / totalCount × 100\n"
+            + "- 전환율 내림차순 정렬")
     @GetMapping("/conversion-by-category")
     public ResponseEntity<OutboundConversionResponse> getConversionByCategory(
             @Parameter(description = "기간: daily/weekly/monthly", example = "monthly")
