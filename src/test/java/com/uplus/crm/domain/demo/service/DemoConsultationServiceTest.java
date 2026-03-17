@@ -20,6 +20,9 @@ import com.uplus.crm.domain.consultation.repository.ConsultationRawTextRepositor
 import com.uplus.crm.domain.demo.repository.DemoConsultationCategoryRepository;
 import com.uplus.crm.domain.demo.repository.DemoConsultationResultRepository;
 import com.uplus.crm.domain.demo.repository.DemoCustomerRepository;
+import com.uplus.crm.domain.extraction.repository.ExcellentEventStatusRepository;
+import com.uplus.crm.domain.extraction.repository.ResultEventStatusRepository;
+import com.uplus.crm.domain.extraction.repository.SummaryEventStatusRepository;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -44,6 +47,9 @@ class DemoConsultationServiceTest {
     @Mock private DemoCustomerRepository customerRepository;
     @Mock private DemoConsultationCategoryRepository categoryRepository;
     @Mock private ConsultationRawTextRepository rawTextRepository;
+    @Mock private ResultEventStatusRepository resultEventStatusRepository;
+    @Mock private ExcellentEventStatusRepository excellentEventStatusRepository;
+    @Mock private SummaryEventStatusRepository summaryEventStatusRepository;
 
     // ── 픽스처 헬퍼 ─────────────────────────────────────────────────────────
 
@@ -164,7 +170,7 @@ class DemoConsultationServiceTest {
     void submitConsult_success_returnsSavedIdAndCreatedAt() {
         DemoConsultSubmitRequest request = new DemoConsultSubmitRequest(
                 1L, "CALL", "CAT001", 240, null,
-                "고객이 요금 오류 제기", "시스템 확인 후 재청구", "추후 모니터링 필요"
+                "고객이 요금 오류 제기", "시스템 확인 후 재청구", "추후 모니터링 필요", null
         );
 
         LocalDateTime now = LocalDateTime.now();
@@ -193,7 +199,7 @@ class DemoConsultationServiceTest {
     @DisplayName("submitConsult - 저장 시 empId가 인증된 직원 ID로 설정된다")
     void submitConsult_setsEmpIdFromAuthentication() {
         DemoConsultSubmitRequest request = new DemoConsultSubmitRequest(
-                2L, "CHATTING", "CAT002", 300, null, null, null, null
+                2L, "CHATTING", "CAT002", 300, null, null, null, null, null
         );
 
         given(consultationResultRepository.save(any(ConsultationResult.class)))

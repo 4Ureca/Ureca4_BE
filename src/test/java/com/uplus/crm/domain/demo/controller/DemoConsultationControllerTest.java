@@ -156,7 +156,7 @@ class DemoConsultationControllerTest {
 
         DemoConsultSubmitRequest request = new DemoConsultSubmitRequest(
                 1L, "CALL", "CAT001", 180, null,
-                "고객 요금 오류 제기", "시스템 확인", null
+                "고객 요금 오류 제기", "시스템 확인", null, null
         );
 
         DemoConsultSubmitResponse response = new DemoConsultSubmitResponse(

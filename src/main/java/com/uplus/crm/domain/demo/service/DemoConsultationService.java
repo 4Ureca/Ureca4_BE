@@ -11,6 +11,13 @@ import com.uplus.crm.domain.consultation.entity.ConsultationRawText;
 import com.uplus.crm.domain.consultation.entity.ConsultationResult;
 import com.uplus.crm.domain.consultation.entity.Customer;
 import com.uplus.crm.domain.consultation.repository.ConsultationRawTextRepository;
+import com.uplus.crm.domain.extraction.entity.ExcellentEventStatus;
+import com.uplus.crm.domain.extraction.entity.ResultEventStatus;
+import com.uplus.crm.domain.extraction.entity.SummaryEventStatus;
+import com.uplus.crm.domain.extraction.repository.ExcellentEventStatusRepository;
+import com.uplus.crm.domain.extraction.repository.ResultEventStatusRepository;
+import com.uplus.crm.domain.extraction.repository.SummaryEventStatusRepository;
+import org.springframework.util.StringUtils;
 import com.uplus.crm.domain.demo.repository.DemoConsultationCategoryRepository;
 import com.uplus.crm.domain.demo.repository.DemoConsultationResultRepository;
 import com.uplus.crm.domain.demo.repository.DemoCustomerRepository;
@@ -27,6 +34,9 @@ public class DemoConsultationService {
     private final DemoCustomerRepository customerRepository;
     private final DemoConsultationCategoryRepository categoryRepository;
     private final ConsultationRawTextRepository rawTextRepository;
+    private final ResultEventStatusRepository resultEventStatusRepository;
+    private final ExcellentEventStatusRepository excellentEventStatusRepository;
+    private final SummaryEventStatusRepository summaryEventStatusRepository;
 
     /**
      * DB에서 랜덤 상담결과 1건 조회 → 고객정보 + 상담기본정보 반환 (IAM 필드는 null).
@@ -91,6 +101,34 @@ public class DemoConsultationService {
                         .iamIssue(request.iamIssue())
                         .iamAction(request.iamAction())
                         .iamMemo(request.iamMemo())
+                        .build()
+        );
+
+        if (StringUtils.hasText(request.rawTextJson())) {
+            rawTextRepository.save(
+                    ConsultationRawText.builder()
+                            .consultId(saved.getConsultId())
+                            .rawTextJson(request.rawTextJson())
+                            .build()
+            );
+        }
+
+        resultEventStatusRepository.save(
+                ResultEventStatus.builder()
+                        .consultId(saved.getConsultId())
+                        .categoryCode(request.categoryCode())
+                        .build()
+        );
+
+        excellentEventStatusRepository.save(
+                ExcellentEventStatus.builder()
+                        .consultId(saved.getConsultId())
+                        .build()
+        );
+
+        summaryEventStatusRepository.save(
+                SummaryEventStatus.builder()
+                        .consultId(saved.getConsultId())
                         .build()
         );
 
