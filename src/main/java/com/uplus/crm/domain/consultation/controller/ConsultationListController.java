@@ -34,6 +34,7 @@ public class ConsultationListController {
         @Parameter(name = "page", description = "페이지 번호 (0부터 시작)", example = "0"),
         @Parameter(name = "size", description = "페이지당 데이터 개수", example = "10")
     })
+    
     @GetMapping("/list")
     public ApiResponse<ConsultationListResponseDto> getConsultationList(
             @RequestParam(name = "keyword", required = false, defaultValue = "") String keyword,
