@@ -95,7 +95,7 @@ public class ConsultationDetailQueryRepository {
     public AiAnalysisRow findAiAnalysis(Long consultId) {
         String sql = """
                 SELECT
-                    ce.consult_id,          -- [0]
+                    ra.consult_id,          -- [0]
                     ra.has_intent,          -- [1]
                     ra.complaint_reason,    -- [2]
                     ra.defense_attempted,   -- [3]
@@ -103,16 +103,16 @@ public class ConsultationDetailQueryRepository {
                     CAST(ra.defense_actions AS CHAR), -- [5]
                     ra.raw_summary,         -- [6]
                     ce.evaluation_reason,   -- [7]
-                    ce.outbound_call_result,-- [8]
-                    ce.outbound_report      -- [9]
-                FROM consultation_evaluations ce
-                LEFT JOIN retention_analysis ra 
-                  ON ce.consult_id = ra.consult_id 
-                 AND ra.deleted_at IS NULL
-                WHERE ce.consult_id = ?
-                ORDER BY 
-                    (CASE WHEN ce.evaluation_reason IS NOT NULL THEN 0 ELSE 1 END), -- 값이 있는 것을 최우선으로
-                    ce.created_at DESC 
+                    ra.outbound_call_result,-- [8]
+                    ra.outbound_report      -- [9]
+                FROM retention_analysis ra
+                LEFT JOIN consultation_evaluations ce
+                  ON ra.consult_id = ce.consult_id
+                WHERE ra.consult_id = ?
+                  AND ra.deleted_at IS NULL
+                ORDER BY
+                    (CASE WHEN ce.evaluation_reason IS NOT NULL THEN 0 ELSE 1 END),
+                    ce.created_at DESC
                 LIMIT 1
                 """;
 

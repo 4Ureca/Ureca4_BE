@@ -13,6 +13,5 @@ public class ConsultationIamInfoDto {
 
     private String title;
     private String content;
-    private String aiSummary;
     private String memo;
 }

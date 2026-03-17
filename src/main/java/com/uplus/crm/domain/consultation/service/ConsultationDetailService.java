@@ -67,7 +67,6 @@ public class ConsultationDetailService {
         ConsultationIamInfoDto iamInfo = ConsultationIamInfoDto.builder()
                 .title(buildIamTitle(basicRow.mediumCategory(), basicRow.smallCategory()))
                 .content(buildIamContent(basicRow.iamIssue(), basicRow.iamAction()))
-                .aiSummary(aiRow == null || aiRow.rawSummary() == null ? "-" : aiRow.rawSummary())
                 .memo(basicRow.iamMemo() == null ? "" : basicRow.iamMemo())
                 .build();
 
