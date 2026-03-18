@@ -45,8 +45,9 @@ public class AgentReportService {
   public AgentMetricsResponse getMetrics(String period, Integer empId, LocalDate date) {
     //  1. 상담사 존재 여부 체크 (MySQL 조회)
     if (!employeeRepository.existsById(empId)) {
-      throw new BusinessException(ErrorCode.AGENT_NOT_FOUND);
+      return null;
     }
+
     LocalDateTime adjustedDate = getAdjustedDate(period, date.atStartOfDay());
 
     // 보정된 날짜를 두 메서드에 똑같이 넘겨줍니다.
@@ -55,7 +56,7 @@ public class AgentReportService {
 
     // 2. 스냅샷 데이터 존재 여부 체크 (MongoDB 조회)
     if (mySnap == null) {
-      throw new BusinessException(ErrorCode.REPORT_DATA_NOT_FOUND);
+      return null;
     }
 
 
@@ -81,16 +82,15 @@ public class AgentReportService {
 
     //  1. 상담사 존재 여부 체크 (MySQL 조회)
     if (!employeeRepository.existsById(empId)) {
-      throw new BusinessException(ErrorCode.AGENT_NOT_FOUND);
+      return null;
     }
 
     LocalDateTime adjustedDate = getAdjustedDate(period, date.atStartOfDay());
     BaseAgentSnapshot mySnap = getAgentSnapshot(period, empId, adjustedDate);
 
-//    if (mySnap == null || mySnap.getCategoryRanking() == null) return Collections.emptyList();
     // 2. 스냅샷 데이터 존재 여부 체크 (MongoDB 조회)
     if (mySnap == null) {
-      throw new BusinessException(ErrorCode.REPORT_DATA_NOT_FOUND);
+      return null;
     }
 
     return groupCategories(mySnap.getCategoryRanking(), empId.toString(), mySnap.getStartAt(), mySnap.getEndAt());
@@ -101,7 +101,7 @@ public class AgentReportService {
 
     //  1. 상담사 존재 여부 체크 (MySQL 조회)
     if (!employeeRepository.existsById(empId)) {
-      throw new BusinessException(ErrorCode.AGENT_NOT_FOUND);
+      return null;
     }
 
     LocalDateTime adjustedDate = getAdjustedDate(period, date.atStartOfDay());
@@ -111,7 +111,7 @@ public class AgentReportService {
     var mySat = (mySnap != null) ? mySnap.getCustomerSatisfactionAnalysis() : null;
     // 2. 스냅샷 데이터 존재 여부 체크 (MongoDB 조회)
     if (mySnap == null) {
-      throw new BusinessException(ErrorCode.REPORT_DATA_NOT_FOUND);
+      return null;
     }
 
     return AgentSatisfactionResponse.builder()
