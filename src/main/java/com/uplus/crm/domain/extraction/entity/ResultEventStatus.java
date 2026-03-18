@@ -59,4 +59,12 @@ public class ResultEventStatus {
         this.status = EventStatus.REQUESTED;
         this.retryCount = 0;
     }
+    
+    public void retry() {
+        this.status = EventStatus.REQUESTED;
+        this.retryCount = 0;                
+        this.failReason = null;              
+        this.startedAt = null;             
+    }
+    
 }

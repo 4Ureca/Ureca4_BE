@@ -54,4 +54,11 @@ public class ExcellentEventStatus {
         this.consultId = consultId;
         this.status = EventStatus.REQUESTED;
     }
+    
+    public void retry() {
+        this.status = EventStatus.REQUESTED;
+        this.retryCount = 0;
+        this.failReason = null;
+        this.startedAt = null;
+    }
 }
