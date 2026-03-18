@@ -7,7 +7,6 @@ import java.util.Set;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -28,7 +27,7 @@ import lombok.RequiredArgsConstructor;
 
 @Service
 @RequiredArgsConstructor
-@Transactional(readOnly = true) // 기본은 읽기 전용으로 설정
+@Transactional(readOnly = true)
 public class ExcellentCaseAdminService {
 
     private final ConsultationEvaluationRepository evaluationRepository;
@@ -37,27 +36,26 @@ public class ExcellentCaseAdminService {
     // 허용된 정렬 필드 (화이트리스트 검증)
     private static final Set<String> ALLOWED_SORT_FIELDS = Set.of("createdAt", "score");
 
-    /** 1. 후보군 리스트 조회 */
+    /** * 1. 후보군 리스트 조회 
+     * 연도(year)와 주차(week) 필터링 조건이 추가되었습니다. 
+     */
     public Page<EvaluationListResponse> getCandidatePage(ExcellentCaseSearchRequest request, int page, int size) {
+        // [1] 상태값 처리
         String status = ("ALL".equalsIgnoreCase(request.status()) || "string".equalsIgnoreCase(request.status())) 
                         ? null : request.status();
-        if (status != null) {
-            try { 
-                SelectionStatus.valueOf(status.toUpperCase()); 
-            } catch (IllegalArgumentException e) { 
-                throw new BusinessException(ErrorCode.INVALID_INPUT, "유효하지 않은 선정 상태값입니다: " + status); 
-            }
-        }
-
+        
+        // [2] 정렬 처리
         String sortBy = (request.sortBy() == null || request.sortBy().isBlank() || "string".equalsIgnoreCase(request.sortBy())) 
                         ? "createdAt" : request.sortBy();
-        if (!ALLOWED_SORT_FIELDS.contains(sortBy)) {
-            throw new BusinessException(ErrorCode.INVALID_INPUT, "정렬할 수 없는 필드명입니다: " + sortBy);
-        }
-
         Sort.Direction direction = "asc".equalsIgnoreCase(request.direction()) ? Sort.Direction.ASC : Sort.Direction.DESC;
 
-        return evaluationRepository.findCandidatePage(status, PageRequest.of(page, size, Sort.by(direction, sortBy)));
+        // [3] 레포지토리 호출: 날짜 계산 없이 year, week 그대로 전달! 🥊
+        return evaluationRepository.findCandidatePage(
+                status, 
+                request.year(), 
+                request.week(), 
+                PageRequest.of(page, size, Sort.by(direction, sortBy))
+        );
     }
 
     /** 2. 상세 정보 조회 */
@@ -66,7 +64,7 @@ public class ExcellentCaseAdminService {
                 .orElseThrow(() -> new BusinessException(ErrorCode.EVALUATION_NOT_FOUND));
     }
 
-    /** 3. 우수 사례 최종 선정 (Register)*/
+    /** 3. 우수 사례 최종 선정 (Register) */
     @Transactional
     public boolean registerExcellentCase(Long consultId, ExcellentCaseRegisterRequest request) {
         // 1. 엔티티 조회
@@ -77,14 +75,14 @@ public class ExcellentCaseAdminService {
             throw new BusinessException(ErrorCode.NOT_A_CANDIDATE);
         }
 
-        // 2. 멱등성 체크
+        // 2. 멱등성 체크 (이미 선정된 건인지 확인)
         if (evaluation.getSelectionStatus() == SelectionStatus.SELECTED) {
             if (weeklyRepository.existsByConsultId(consultId)) {
                 return false; 
             }
         }
 
-        // 3. 상태 변경 및 이력 저장
+        // 3. 상태 변경 및 주간 우수사례 테이블 저장
         LocalDateTime now = LocalDateTime.now();
         evaluation.updateSelectionStatus(SelectionStatus.SELECTED);
 
@@ -107,6 +105,7 @@ public class ExcellentCaseAdminService {
         return true;
     }
 
+    /** 4. 우수 사례 후보 제외 또는 선정 취소 (Reject) */
     @Transactional
     public boolean rejectExcellentCase(Long consultId) {
         ConsultationEvaluation evaluation = evaluationRepository.findByConsultId(consultId)
@@ -116,6 +115,7 @@ public class ExcellentCaseAdminService {
             return false;
         }
 
+        // 이미 선정된 건을 제외할 경우 주간 우수사례 테이블에서도 삭제
         if (evaluation.getSelectionStatus() == SelectionStatus.SELECTED) {
             try {
                 weeklyRepository.deleteByConsultId(consultId);

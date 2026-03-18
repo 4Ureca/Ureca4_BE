@@ -19,25 +19,32 @@ public interface ConsultationEvaluationRepository extends JpaRepository<Consulta
     // ✅ 1. 엔티티 수정을 위해 엔티티 객체 자체를 찾아오는 메서드 (서비스의 registerExcellentCase에서 사용)
     Optional<ConsultationEvaluation> findByConsultId(Long consultId);
 
-    // ✅ 2. 리스트 조회 (WHERE 절 추가 및 문법 수정)
+    // ✅ 2. 리스트 조회
     @Query("""
-        SELECT new com.uplus.crm.domain.extraction.dto.response.EvaluationListResponse(
-            e.consultId, 
-            p.smallCategory, 
-            emp.name, 
-            e.score, 
-            a.rawSummary, 
-            e.selectionStatus, 
-            e.createdAt
-        )
-        FROM ConsultationEvaluation e
-        JOIN ConsultationResult r ON e.consultId = r.consultId
-        JOIN Employee emp ON r.empId = emp.empId
-        JOIN ConsultationCategoryPolicy p ON r.categoryCode = p.categoryCode
-        JOIN RetentionAnalysis a ON e.consultId = a.consultId
-        WHERE (:status IS NULL OR CAST(e.selectionStatus AS string) = :status)
-        """)
-    Page<EvaluationListResponse> findCandidatePage(@Param("status") String status, Pageable pageable);
+            SELECT new com.uplus.crm.domain.extraction.dto.response.EvaluationListResponse(
+                e.consultId, 
+                p.smallCategory, 
+                emp.name, 
+                e.score, 
+                a.rawSummary, 
+                e.selectionStatus, 
+                r.createdAt
+            )
+            FROM ConsultationEvaluation e
+            JOIN ConsultationResult r ON e.consultId = r.consultId
+            JOIN Employee emp ON r.empId = emp.empId
+            JOIN ConsultationCategoryPolicy p ON r.categoryCode = p.categoryCode
+            JOIN RetentionAnalysis a ON e.consultId = a.consultId
+            WHERE (:status IS NULL OR CAST(e.selectionStatus AS string) = :status)
+              AND (:year IS NULL OR year(r.createdAt) = :year)
+              AND (:week IS NULL OR week(r.createdAt) = :week)
+            """)
+        Page<EvaluationListResponse> findCandidatePage(
+                @Param("status") String status, 
+                @Param("year") Integer year,   
+                @Param("week") Integer week,   
+                Pageable pageable              
+        );
     
     // ✅ 3. 상세 조회 (DTO 반환용)
     @Query("""
