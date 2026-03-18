@@ -49,11 +49,10 @@ public class AgentReportController {
   @ApiResponses({
       @ApiResponse(responseCode = "200", description = "상담사 성과 조회 성공",
           content = @Content(schema = @Schema(implementation = AgentMetricsResponse.class))),
+      @ApiResponse(responseCode = "204", description = "해당 날짜에 대한 리포트 데이터가 존재하지 않음"),
       @ApiResponse(responseCode = "400", description = "상담사 ID 누락 (관리자 조회 시 필수)",
           content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
       @ApiResponse(responseCode = "401", description = "인증 실패 (JWT 토큰 없음/만료)",
-          content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
-      @ApiResponse(responseCode = "404", description = "존재하지 않는 상담사 또는 리포트 데이터 없음",
           content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
   })
   @GetMapping("/{period}/metrics")
@@ -78,8 +77,17 @@ public class AgentReportController {
     }
 
     LocalDate targetDate = getDefaultTargetDate(period, date);
-    
-    return ResponseEntity.ok(agentReportService.getMetrics(period, finalEmpId, targetDate));
+
+    // 3. 서비스 호출 및 결과 확인
+    AgentMetricsResponse result = agentReportService.getMetrics(period, finalEmpId, targetDate);
+
+    // [핵심 수정 부분] 결과가 null이면 204 No Content 반환
+    if (result == null) {
+      return ResponseEntity.noContent().build(); // HTTP 204 응답
+    }
+
+    // 데이터가 있으면 200 OK와 함께 데이터 반환
+    return ResponseEntity.ok(result);
   }
 
   /**
@@ -94,11 +102,10 @@ public class AgentReportController {
   @ApiResponses({
       @ApiResponse(responseCode = "200", description = "상담사 카테고리 순위 조회 성공",
           content = @Content(array = @ArraySchema(schema = @Schema(implementation = CategoryRankingDto.class)))),
+      @ApiResponse(responseCode = "204", description = "해당 날짜에 대한 리포트 데이터가 존재하지 않음"),
       @ApiResponse(responseCode = "400", description = "상담사 ID 누락 (관리자 조회 시 필수)",
           content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
       @ApiResponse(responseCode = "401", description = "인증 실패 (JWT 토큰 없음/만료)",
-          content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
-      @ApiResponse(responseCode = "404", description = "존재하지 않는 상담사 또는 리포트 데이터 없음",
           content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
   })
   @GetMapping("/{period}/categories")
@@ -125,7 +132,16 @@ public class AgentReportController {
 
     LocalDate targetDate = getDefaultTargetDate(period, date);
 
-    return ResponseEntity.ok(agentReportService.getCategories(period, finalEmpId, targetDate));
+    // 3. 서비스 호출
+    List<CategoryRankingDto> result = agentReportService.getCategories(period, finalEmpId, targetDate);
+
+    // [핵심 수정 부분] 리스트가 비어있다면 204 No Content 반환
+    if (result == null || result.isEmpty()) {
+      return ResponseEntity.noContent().build(); // HTTP 204 응답
+    }
+
+    // 데이터가 있으면 200 OK와 함께 리스트 반환
+    return ResponseEntity.ok(result);
   }
 
   /**
@@ -140,11 +156,10 @@ public class AgentReportController {
   @ApiResponses({
       @ApiResponse(responseCode = "200", description = "고객 만족도 조회 성공",
           content = @Content(schema = @Schema(implementation = AgentSatisfactionResponse.class))),
+      @ApiResponse(responseCode = "204", description = "해당 날짜에 대한 리포트 데이터가 존재하지 않음"),
       @ApiResponse(responseCode = "400", description = "상담사 ID 누락 (관리자 조회 시 필수)",
           content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
       @ApiResponse(responseCode = "401", description = "인증 실패 (JWT 토큰 없음/만료)",
-          content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
-      @ApiResponse(responseCode = "404", description = "존재하지 않는 상담사 또는 리포트 데이터 없음",
           content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
   })
   @GetMapping("/{period}/satisfaction")
@@ -170,7 +185,15 @@ public class AgentReportController {
 
     LocalDate targetDate = getDefaultTargetDate(period, date);
 
-    return ResponseEntity.ok(agentReportService.getSatisfaction(period, finalEmpId, targetDate));
+    // 3. 서비스 호출
+    AgentSatisfactionResponse result = agentReportService.getSatisfaction(period, finalEmpId, targetDate);
+
+    // [수정] 결과가 null이면 204 No Content 반환
+    if (result == null) {
+      return ResponseEntity.noContent().build();
+    }
+
+    return ResponseEntity.ok(result);
   }
 
   private LocalDate getDefaultTargetDate(String period, LocalDate date) {

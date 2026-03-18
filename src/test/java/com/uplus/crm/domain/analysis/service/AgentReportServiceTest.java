@@ -50,32 +50,52 @@ class AgentReportServiceTest {
   // --- [에러 케이스 테스트] ---
 
   @Test
-  @DisplayName("상담사 존재하지 않을 때 AGENT_NOT_FOUND 예외 발생")
+  @DisplayName("상담사 존재하지 않을 때 204")
   void getMetrics_AgentNotFound() {
     // given
     given(employeeRepository.existsById(EMP_ID)).willReturn(false);
 
-    // when & then
-    assertThatThrownBy(() -> agentReportService.getMetrics("daily", EMP_ID, DATE))
-        .isInstanceOf(BusinessException.class)
-        .hasFieldOrPropertyWithValue("errorCode", ErrorCode.AGENT_NOT_FOUND);
+    // when
+    AgentMetricsResponse result = agentReportService.getMetrics("daily", EMP_ID, DATE);
+
+    // then (이제 예외가 발생하지 않고 null이 나와야 함)
+    assertThat(result).isNull();
+
+//    // when & then
+//    assertThatThrownBy(() -> agentReportService.getMetrics("daily", EMP_ID, DATE))
+//        .isInstanceOf(BusinessException.class)
+//        .hasFieldOrPropertyWithValue("errorCode", ErrorCode.AGENT_NOT_FOUND);
   }
 
   @Test
   @DisplayName("몽고DB에 리포트 스냅샷 데이터가 없을 때 REPORT_DATA_NOT_FOUND 예외 발생")
   void getMetrics_ReportDataNotFound() {
+//    // given
+//    given(employeeRepository.existsById(EMP_ID)).willReturn(true);
+//    LocalDateTime targetTime = DATE.atStartOfDay();
+//
+//    // 내 스냅샷이 없는 경우 (Optional.empty 반환)
+//    given(dailyAgentRepo.findByAgentIdAndStartAt(EMP_ID.longValue(), targetTime))
+//        .willReturn(Optional.empty());
+//
+//    // when & then
+//    assertThatThrownBy(() -> agentReportService.getMetrics("daily", EMP_ID, DATE))
+//        .isInstanceOf(BusinessException.class)
+//        .hasFieldOrPropertyWithValue("errorCode", ErrorCode.REPORT_DATA_NOT_FOUND);
+
     // given
     given(employeeRepository.existsById(EMP_ID)).willReturn(true);
     LocalDateTime targetTime = DATE.atStartOfDay();
 
-    // 내 스냅샷이 없는 경우 (Optional.empty 반환)
+    // 내 스냅샷이 없는 경우
     given(dailyAgentRepo.findByAgentIdAndStartAt(EMP_ID.longValue(), targetTime))
         .willReturn(Optional.empty());
 
-    // when & then
-    assertThatThrownBy(() -> agentReportService.getMetrics("daily", EMP_ID, DATE))
-        .isInstanceOf(BusinessException.class)
-        .hasFieldOrPropertyWithValue("errorCode", ErrorCode.REPORT_DATA_NOT_FOUND);
+    // when
+    AgentMetricsResponse result = agentReportService.getMetrics("daily", EMP_ID, DATE);
+
+    // then
+    assertThat(result).isNull();
   }
 
   // --- [정상 로직 테스트] ---

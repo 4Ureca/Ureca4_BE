@@ -49,8 +49,7 @@ public enum ErrorCode {
     MANUAL_NOT_FOUND(HttpStatus.NOT_FOUND, "존재하지 않는 매뉴얼입니다."),
     CATEGORY_POLICY_NOT_FOUND(HttpStatus.NOT_FOUND, "존재하지 않는 카테고리 정책입니다."),
 
-    AGENT_NOT_FOUND(HttpStatus.NOT_FOUND, "존재하지 않는 상담사입니다."),
-    REPORT_DATA_NOT_FOUND(HttpStatus.NOT_FOUND, "요청한 날짜에 해당하는 리포트 데이터가 없습니다."),
+
     EVALUATION_NOT_FOUND(HttpStatus.NOT_FOUND, "해당 상담의 분석/평가 결과를 찾을 수 없습니다."),
     
     // 409 Conflict
@@ -60,7 +59,11 @@ public enum ErrorCode {
 
     // 500 Internal Server Error
     DATA_INTEGRITY_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "데이터 무결성 오류가 발생했습니다."),
-    GOOGLE_AUTH_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "Google OAuth 인증에 실패했습니다.");
+    GOOGLE_AUTH_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "Google OAuth 인증에 실패했습니다."),
+
+    // 204
+    AGENT_NOT_FOUND(HttpStatus.NOT_FOUND, "존재하지 않는 상담사입니다."),
+    REPORT_DATA_NOT_FOUND(HttpStatus.NOT_FOUND, "요청한 날짜에 해당하는 리포트 데이터가 없습니다.");
 
     private final HttpStatus status;
     private final String message;
