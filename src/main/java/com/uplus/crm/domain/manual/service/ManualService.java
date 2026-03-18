@@ -1,8 +1,9 @@
 package com.uplus.crm.domain.manual.service;
 
 import java.time.LocalDateTime;
-import java.util.List;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -67,30 +68,37 @@ public class ManualService {
         manual.setUpdatedAt(LocalDateTime.now());
     }
 
-    /** 3. 조회 (Read): 카테고리 코드가 있으면 유효성 검증 후 조회 ⭐ */
-    public List<ManualResponse> getHistory(String categoryCode) {
-        // 1. 카테고리 코드가 파라미터로 넘어온 경우, 실제 존재하는 코드인지 먼저 검증
+    /** 3. 조회 (Read): 페이징 + 카테고리/활성여부 필터링 추가 ⭐ */
+    public Page<ManualResponse> getHistory(String categoryCode, Boolean isActive, Pageable pageable) {
+        
+        // 1. 카테고리 코드 검증
         if (categoryCode != null && !categoryCode.isBlank()) {
             if (!policyRepository.existsById(categoryCode)) {
-                // 존재하지 않는 카테고리 코드라면 404 에러를 던짐
                 throw new BusinessException(ErrorCode.CATEGORY_POLICY_NOT_FOUND);
             }
         }
 
-        List<Manual> manuals;
-        
-        // 2. 필터링 조건에 따른 조회 수행
+        Page<Manual> manuals;
+
+        // 2. 필터 조합에 따른 분기 처리 🥊
         if (categoryCode == null || categoryCode.isBlank()) {
-            // 카테고리 코드가 없으면 전체 매뉴얼 최신순 조회
-            manuals = manualRepository.findAllByOrderByCreatedAtDesc();
+            // [케이스 A] 전체 카테고리 대상
+            if (isActive == null) {
+                manuals = manualRepository.findAll(pageable); // 필터 없음
+            } else {
+                manuals = manualRepository.findAllByIsActive(isActive, pageable); // 활성여부만
+            }
         } else {
-            // 카테고리 코드가 있으면 해당 카테고리의 매뉴얼만 최신순 조회
-            manuals = manualRepository.findAllByCategoryPolicy_CategoryCodeOrderByCreatedAtDesc(categoryCode);
+            // [케이스 B] 특정 카테고리 대상
+            if (isActive == null) {
+                manuals = manualRepository.findAllByCategoryPolicy_CategoryCode(categoryCode, pageable); // 카테고리만
+            } else {
+                manuals = manualRepository.findAllByCategoryPolicy_CategoryCodeAndIsActive(categoryCode, isActive, pageable); // 카테고리 + 활성여부
+            }
         }
 
-        return manuals.stream()
-            .map(ManualResponse::from)
-            .toList();
+        // 3. Page<Manual>을 Page<ManualResponse>로 변환하여 반환 🥊
+        return manuals.map(ManualResponse::from);
     }
 
     /** 4. 비활성화 (Deactivate) */
