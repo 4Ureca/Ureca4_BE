@@ -4,7 +4,12 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.mock;
 
+import com.uplus.crm.domain.account.entity.Department;
 import com.uplus.crm.domain.account.entity.Employee;
+import com.uplus.crm.domain.account.entity.JobRole;
+import com.uplus.crm.domain.account.repository.mysql.DepartmentRepository;
+import com.uplus.crm.domain.account.repository.mysql.JobRoleRepository;
+import com.uplus.crm.domain.common.dto.MetaDto.AccountMetaDto;
 import com.uplus.crm.domain.common.dto.MetaDto.AgentDto;
 import com.uplus.crm.domain.common.dto.MetaDto.CategoryDto;
 import com.uplus.crm.domain.common.dto.MetaDto.GradeDto;
@@ -17,6 +22,7 @@ import com.uplus.crm.domain.common.entity.ProductHome;
 import com.uplus.crm.domain.common.entity.ProductMobile;
 import com.uplus.crm.domain.common.entity.RiskLevelPolicy;
 import com.uplus.crm.domain.common.entity.RiskTypePolicy;
+import com.uplus.crm.domain.common.repository.AnalysisCodeRepository;
 import com.uplus.crm.domain.common.repository.ConsultationCategoryPolicyRepository;
 import com.uplus.crm.domain.common.repository.CustomerGradeRepository;
 import com.uplus.crm.domain.common.repository.EmployeeMetaRepository;
@@ -48,6 +54,9 @@ class MetaServiceTest {
   @Mock private CustomerGradeRepository gradeRepository;
   @Mock private RiskTypePolicyRepository riskTypeRepository;
   @Mock private RiskLevelPolicyRepository riskLevelRepository;
+  @Mock private AnalysisCodeRepository analysisCodeRepository;
+  @Mock private DepartmentRepository departmentRepository;
+  @Mock private JobRoleRepository jobRoleRepository;
 
   @Test
   @DisplayName("searchAgents - 사원 정보를 AgentDto로 변환해서 반환한다")
@@ -143,5 +152,27 @@ class MetaServiceTest {
     assertThat(grades.get(0).gradeCode()).isEqualTo("VIP");
     assertThat(riskTypes.get(0).typeCode()).isEqualTo("RT1");
     assertThat(riskLevels.get(0).levelCode()).isEqualTo("RL1");
+  }
+
+  @Test
+  @DisplayName("getAccountMeta - 부서와 직무 목록을 함께 반환한다")
+  void getAccountMeta_returnsDepartmentsAndJobRoles() {
+    given(departmentRepository.findAllByOrderByDeptIdAsc()).willReturn(List.of(
+        Department.builder().deptId(1).deptName("영업1팀").build(),
+        Department.builder().deptId(2).deptName("고객지원팀").build()
+    ));
+    given(jobRoleRepository.findAllByOrderByJobRoleIdAsc()).willReturn(List.of(
+        JobRole.builder().jobRoleId(10).roleName("상담사").build(),
+        JobRole.builder().jobRoleId(20).roleName("관리자").build()
+    ));
+
+    AccountMetaDto result = metaService.getAccountMeta();
+
+    assertThat(result.departments()).hasSize(2);
+    assertThat(result.departments().get(0).deptId()).isEqualTo(1);
+    assertThat(result.departments().get(0).deptName()).isEqualTo("영업1팀");
+    assertThat(result.jobRoles()).hasSize(2);
+    assertThat(result.jobRoles().get(0).jobRoleId()).isEqualTo(10);
+    assertThat(result.jobRoles().get(0).roleName()).isEqualTo("상담사");
   }
 }

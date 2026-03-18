@@ -1,13 +1,18 @@
 package com.uplus.crm.domain.common.service;
 
 import com.uplus.crm.domain.common.dto.MetaDto;
+import com.uplus.crm.domain.common.dto.MetaDto.AccountMetaDto;
 import com.uplus.crm.domain.common.dto.MetaDto.AgentDto;
 import com.uplus.crm.domain.common.dto.MetaDto.AnalysisCodeDto;
 import com.uplus.crm.domain.common.dto.MetaDto.CategoryDto;
+import com.uplus.crm.domain.common.dto.MetaDto.DepartmentDto;
 import com.uplus.crm.domain.common.dto.MetaDto.GradeDto;
+import com.uplus.crm.domain.common.dto.MetaDto.JobRoleDto;
 import com.uplus.crm.domain.common.dto.MetaDto.ProductDto;
 import com.uplus.crm.domain.common.dto.MetaDto.RiskLevelDto;
 import com.uplus.crm.domain.common.dto.MetaDto.RiskTypeDto;
+import com.uplus.crm.domain.account.repository.mysql.DepartmentRepository;
+import com.uplus.crm.domain.account.repository.mysql.JobRoleRepository;
 import com.uplus.crm.domain.common.repository.AnalysisCodeRepository;
 import com.uplus.crm.domain.common.repository.ConsultationCategoryPolicyRepository;
 import com.uplus.crm.domain.common.repository.CustomerGradeRepository;
@@ -37,6 +42,8 @@ public class MetaService {
   private final RiskTypePolicyRepository riskTypeRepository;
   private final RiskLevelPolicyRepository riskLevelRepository;
   private final AnalysisCodeRepository analysisCodeRepository;
+  private final DepartmentRepository departmentRepository;
+  private final JobRoleRepository jobRoleRepository;
 
   public List<AgentDto> searchAgents(String name) {
     return employeeRepository.searchAgents(name)
@@ -94,5 +101,18 @@ public class MetaService {
         .stream()
         .map(MetaDto.AnalysisCodeDto::from)
         .toList();
+  }
+
+  public AccountMetaDto getAccountMeta() {
+    List<DepartmentDto> departments = departmentRepository.findAllByOrderByDeptIdAsc()
+        .stream()
+        .map(DepartmentDto::from)
+        .toList();
+    List<JobRoleDto> jobRoles = jobRoleRepository.findAllByOrderByJobRoleIdAsc()
+        .stream()
+        .map(JobRoleDto::from)
+        .toList();
+
+    return new AccountMetaDto(departments, jobRoles);
   }
 }

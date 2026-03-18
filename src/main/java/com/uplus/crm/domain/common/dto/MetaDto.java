@@ -1,6 +1,8 @@
 package com.uplus.crm.domain.common.dto;
 
+import com.uplus.crm.domain.account.entity.Department;
 import com.uplus.crm.domain.account.entity.Employee;
+import com.uplus.crm.domain.account.entity.JobRole;
 import com.uplus.crm.domain.common.entity.AnalysisCode;
 import com.uplus.crm.domain.common.entity.CustomerGrade;
 import com.uplus.crm.domain.common.entity.ProductAdditional;
@@ -9,6 +11,7 @@ import com.uplus.crm.domain.common.entity.ProductMobile;
 import com.uplus.crm.domain.common.entity.RiskLevelPolicy;
 import com.uplus.crm.domain.common.entity.RiskTypePolicy;
 import com.uplus.crm.domain.consultation.entity.ConsultationCategoryPolicy;
+import java.util.List;
 
 public class MetaDto {
 
@@ -64,6 +67,21 @@ public class MetaDto {
           c.getClassification(),
           c.getDescription()
       );
+    }
+  }
+
+  public record AccountMetaDto(List<DepartmentDto> departments, List<JobRoleDto> jobRoles) {
+  }
+
+  public record DepartmentDto(Integer deptId, String deptName) {
+    public static DepartmentDto from(Department department) {
+      return new DepartmentDto(department.getDeptId(), department.getDeptName());
+    }
+  }
+
+  public record JobRoleDto(Integer jobRoleId, String roleName) {
+    public static JobRoleDto from(JobRole jobRole) {
+      return new JobRoleDto(jobRole.getJobRoleId(), jobRole.getRoleName());
     }
   }
 }

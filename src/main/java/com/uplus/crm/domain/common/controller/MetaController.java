@@ -1,5 +1,6 @@
 package com.uplus.crm.domain.common.controller;
 
+import com.uplus.crm.domain.common.dto.MetaDto.AccountMetaDto;
 import com.uplus.crm.domain.common.dto.MetaDto.AgentDto;
 import com.uplus.crm.domain.common.dto.MetaDto.AnalysisCodeDto;
 import com.uplus.crm.domain.common.dto.MetaDto.CategoryDto;
@@ -21,6 +22,11 @@ import org.springframework.web.bind.annotation.RestController;
 public class MetaController {
 
   private final MetaService metaService;
+
+  @GetMapping("/accounts")
+  public AccountMetaDto getAccountMeta() {
+    return metaService.getAccountMeta();
+  }
 
   @GetMapping("/agents")
   public List<AgentDto> searchAgents(@RequestParam(required = false, defaultValue = "") String name) {
