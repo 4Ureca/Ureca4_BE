@@ -5,6 +5,9 @@ import java.util.List;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.uplus.crm.common.exception.BusinessException;
+import com.uplus.crm.common.exception.ErrorCode;
+import com.uplus.crm.domain.extraction.dto.response.WeeklyCaseDetailResponse;
 import com.uplus.crm.domain.extraction.dto.response.WeeklyExcellentCaseResponse;
 import com.uplus.crm.domain.extraction.repository.WeeklyExcellentCaseRepository;
 
@@ -18,5 +21,9 @@ public class WeeklyExcellentCaseService {
 
     public List<WeeklyExcellentCaseResponse> getWeeklyBoard(Integer year, Integer week) {
         return weeklyRepository.findWeeklyCases(year, week);
+    }
+    public WeeklyCaseDetailResponse getWeeklyDetail(Long consultId) {
+        return weeklyRepository.findWeeklyDetail(consultId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.EVALUATION_NOT_FOUND));
     }
 }
