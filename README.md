@@ -120,6 +120,9 @@ curl http://localhost:9201
 http://localhost:15601
 ```
 
+## Swagger API
+- http://localhost:8080/api/swagger-ui/index.html#/
+
 ---
 # Github Convention
 
